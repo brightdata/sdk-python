@@ -1,7 +1,8 @@
 import os
 import re
+import json
 import openai
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Union, List
 from urllib.parse import urlparse
 
 from ..utils import get_logger
@@ -52,7 +53,7 @@ class ExtractAPI:
     def __init__(self, client):
         self.client = client
     
-    def extract(self, query: str, llm_key: str = None) -> Dict[str, Any]:
+    def extract(self, query: str, url: Union[str, List[str]] = None, output_scheme: Dict[str, Any] = None, llm_key: str = None) -> Dict[str, Any]:
         """
         ## Extract specific information from websites using AI
         
@@ -60,20 +61,72 @@ class ExtractAPI:
         from web pages based on natural language queries.
         
         ### Parameters:
-        - `query` (str): Natural language query containing what to extract and from which URL
-                        (e.g. "extract the most recent news from cnn.com")
+        - `query` (str): Natural language query describing what to extract. If `url` parameter is provided,
+                        this becomes the pure extraction query. If `url` is not provided, this should include 
+                        the URL (e.g. "extract the most recent news from cnn.com")
+        - `url` (str | List[str], optional): Direct URL(s) to scrape. If provided, bypasses URL extraction 
+                        from query and sends these URLs to the web unlocker API
+        - `output_scheme` (dict, optional): JSON Schema defining the expected structure for the LLM response.
+                        Uses OpenAI's Structured Outputs for reliable type-safe responses.
+                        Example: {"type": "object", "properties": {"title": {"type": "string"}, "date": {"type": "string"}}, "required": ["title", "date"]}
         - `llm_key` (str, optional): OpenAI API key. If not provided, uses OPENAI_API_KEY env variable
         
         ### Returns:
-        - `Dict[str, Any]`: Extracted information in structured format
+        - `ExtractResult`: String containing extracted content with metadata attributes access
         
         ### Example Usage:
         ```python
+        # Using URL parameter with structured output
+        result = client.extract(
+            query="extract the most recent news headlines",
+            url="https://cnn.com",
+            output_scheme={
+                "type": "object",
+                "properties": {
+                    "headlines": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "title": {"type": "string"},
+                                "date": {"type": "string"}
+                            },
+                            "required": ["title", "date"]
+                        }
+                    }
+                },
+                "required": ["headlines"]
+            }
+        )
+        
+        # Using URL in query (original behavior)
         result = client.extract(
             query="extract the most recent news from cnn.com",
             llm_key="your-openai-api-key"
         )
-        print(result['extracted_content'])
+        
+        # Multiple URLs with structured schema
+        result = client.extract(
+            query="extract main headlines", 
+            url=["https://cnn.com", "https://bbc.com"],
+            output_scheme={
+                "type": "object",
+                "properties": {
+                    "sources": {
+                        "type": "array",
+                        "items": {
+                            "type": "object", 
+                            "properties": {
+                                "source_name": {"type": "string"},
+                                "headlines": {"type": "array", "items": {"type": "string"}}
+                            },
+                            "required": ["source_name", "headlines"]
+                        }
+                    }
+                },
+                "required": ["sources"]
+            }
+        )
         ```
         
         ### Raises:
@@ -83,39 +136,84 @@ class ExtractAPI:
         if not query or not isinstance(query, str):
             raise ValidationError("Query must be a non-empty string")
         
+        query = query.strip()
+        if len(query) > 10000:
+            raise ValidationError("Query is too long (maximum 10,000 characters)")
+        if len(query) < 5:
+            raise ValidationError("Query is too short (minimum 5 characters)")
+        
         if not llm_key:
             llm_key = os.getenv('OPENAI_API_KEY')
         
         if not llm_key or not isinstance(llm_key, str):
             raise ValidationError("OpenAI API key is required. Provide it as parameter or set OPENAI_API_KEY environment variable")
         
+        if output_scheme is not None:
+            if not isinstance(output_scheme, dict):
+                raise ValidationError("output_scheme must be a dict containing a valid JSON Schema")
+            if "type" not in output_scheme:
+                raise ValidationError("output_scheme must have a 'type' property")
+            
+            self._validate_structured_outputs_schema(output_scheme)
+        
         logger.info(f"Processing extract query: {query[:50]}...")
         
         try:
-            parsed_query, url = self._parse_query_and_url(query)
-            logger.info(f"Parsed - Query: '{parsed_query}', URL: '{url}'")
+            if url is not None:
+                parsed_query = query.strip()
+                target_urls = url if isinstance(url, list) else [url]
+                logger.info(f"Using provided URL(s): {target_urls}")
+            else:
+                parsed_query, extracted_url = self._parse_query_and_url(query)
+                target_urls = [extracted_url]
+                logger.info(f"Parsed - Query: '{parsed_query}', URL: '{extracted_url}'")
             
-            scraped_content = self.client.scrape(url, response_format="raw")
-            logger.info(f"Scraped content from {url}")
+            if len(target_urls) == 1:
+                scraped_content = self.client.scrape(target_urls[0], response_format="raw")
+                source_url = target_urls[0]
+            else:
+                scraped_content = self.client.scrape(target_urls, response_format="raw")
+                source_url = ', '.join(target_urls)
             
-            parsed_content = self.client.parse_content(
-                scraped_content, 
-                extract_text=True, 
-                extract_links=False, 
-                extract_images=False
-            )
+            logger.info(f"Scraped content from {len(target_urls)} URL(s)")
+            
+            if isinstance(scraped_content, list):
+                all_text = []
+                all_titles = []
+                for i, content in enumerate(scraped_content):
+                    parsed = self.client.parse_content(
+                        content, 
+                        extract_text=True, 
+                        extract_links=False, 
+                        extract_images=False
+                    )
+                    all_text.append(f"--- Content from {target_urls[i]} ---\n{parsed.get('text', '')}")
+                    all_titles.append(parsed.get('title', 'Unknown'))
+                
+                combined_text = "\n\n".join(all_text)
+                combined_title = " | ".join(all_titles)
+                parsed_content = {'text': combined_text, 'title': combined_title}
+            else:
+                parsed_content = self.client.parse_content(
+                    scraped_content, 
+                    extract_text=True, 
+                    extract_links=False, 
+                    extract_images=False
+                )
+                
             logger.info(f"Parsed content - text length: {len(parsed_content.get('text', ''))}")
             
             extracted_info, token_usage = self._process_with_llm(
                 parsed_query, 
                 parsed_content.get('text', ''), 
                 llm_key,
-                url
+                source_url,
+                output_scheme
             )
             
             metadata = {
                 'query': parsed_query,
-                'url': url,
+                'url': source_url,
                 'extracted_content': extracted_info,
                 'source_title': parsed_content.get('title', 'Unknown'),
                 'content_length': len(parsed_content.get('text', '')),
@@ -194,7 +292,47 @@ class ExtractAPI:
         
         return url
     
-    def _process_with_llm(self, query: str, content: str, llm_key: str, source_url: str) -> Tuple[str, Dict[str, int]]:
+    def _validate_structured_outputs_schema(self, schema: Dict[str, Any], path: str = "") -> None:
+        """
+        Validate JSON Schema for OpenAI Structured Outputs compatibility
+        
+        Args:
+            schema: JSON Schema to validate
+            path: Current path in schema (for error reporting)
+        """
+        if not isinstance(schema, dict):
+            return
+            
+        schema_type = schema.get("type")
+        
+        if schema_type == "object":
+            if "properties" not in schema:
+                raise ValidationError(f"Object schema at '{path}' must have 'properties' defined")
+            if "required" not in schema:
+                raise ValidationError(f"Object schema at '{path}' must have 'required' array (OpenAI Structured Outputs requirement)")
+            if "additionalProperties" not in schema or schema["additionalProperties"] is not False:
+                raise ValidationError(f"Object schema at '{path}' must have 'additionalProperties': false (OpenAI Structured Outputs requirement)")
+                
+            properties = set(schema["properties"].keys())
+            required = set(schema["required"])
+            if properties != required:
+                missing = properties - required
+                extra = required - properties
+                error_msg = f"OpenAI Structured Outputs requires ALL properties to be in 'required' array at '{path}'."
+                if missing:
+                    error_msg += f" Missing from required: {list(missing)}"
+                if extra:
+                    error_msg += f" Extra in required: {list(extra)}"
+                raise ValidationError(error_msg)
+                
+            for prop_name, prop_schema in schema["properties"].items():
+                self._validate_structured_outputs_schema(prop_schema, f"{path}.{prop_name}")
+                
+        elif schema_type == "array":
+            if "items" in schema:
+                self._validate_structured_outputs_schema(schema["items"], f"{path}[]")
+    
+    def _process_with_llm(self, query: str, content: str, llm_key: str, source_url: str, output_scheme: Dict[str, Any] = None) -> Tuple[str, Dict[str, int]]:
         """
         Process scraped content with OpenAI to extract requested information
         
@@ -203,6 +341,7 @@ class ExtractAPI:
             content: Scraped and parsed text content
             llm_key: OpenAI API key
             source_url: Source URL for context
+            output_scheme: JSON Schema dict for structured outputs (optional)
             
         Returns:
             Tuple of (extracted information, token usage dict)
@@ -222,28 +361,48 @@ SOURCE: {source_url}
 
 INSTRUCTIONS:
 1. Extract ONLY the specific information requested
-2. Format output clearly with headings/bullet points when appropriate  
-3. Include relevant details (dates, numbers, names) when available
-4. If requested info isn't found, briefly state what content IS available
-5. Keep response concise but complete
-6. Use structured formatting for readability
-
-OUTPUT FORMAT: Present extracted information in an organized, easy-to-scan format."""
+2. Include relevant details (dates, numbers, names) when available
+3. If requested info isn't found, briefly state what content IS available
+4. Keep response concise but complete
+5. Be accurate and factual"""
 
         user_prompt = f"CONTENT TO ANALYZE:\n\n{content}\n\nEXTRACT: {query}"
         
         try:
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
+            call_params = {
+                "model": "gpt-4o-2024-08-06",
+                "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                max_tokens=1000,
-                temperature=0.1
-            )
+                "max_tokens": 1000,
+                "temperature": 0.1
+            }
             
+            if output_scheme:
+                call_params["response_format"] = {
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "extracted_content",
+                        "strict": True,
+                        "schema": output_scheme
+                    }
+                }
+                logger.info("Using OpenAI Structured Outputs with provided schema")
+            else:
+                logger.info("Using regular OpenAI completion (no structured schema provided)")
+            
+            response = client.chat.completions.create(**call_params)
+            
+            if not response.choices or not response.choices[0].message.content:
+                raise APIError("OpenAI returned empty response")
+                
             extracted_content = response.choices[0].message.content.strip()
+            
+            if output_scheme:
+                logger.info("Received structured JSON response from OpenAI")
+            else:
+                logger.info("Received text response from OpenAI")
             
             token_usage = {
                 'prompt_tokens': response.usage.prompt_tokens,

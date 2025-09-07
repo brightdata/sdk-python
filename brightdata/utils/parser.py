@@ -10,12 +10,12 @@ from typing import Any, Dict, List, Union, Optional
 from bs4 import BeautifulSoup
 
 
-def parse_content(data: Union[str, Dict, List], extract_text: bool = True, extract_links: bool = False, extract_images: bool = False) -> Dict[str, Any]:
+def parse_content(data: Union[str, Dict, List], extract_text: bool = True, extract_links: bool = False, extract_images: bool = False) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
     """
     Parse content from Bright Data API responses
     
+    Automatically detects and handles both single and multiple results from scrape/search operations.
     Can be used as a standalone function or called from the client.
-    Handles both JSON and raw HTML responses from scrape/search operations.
     
     Args:
         data: Response data from scrape() or search() - can be JSON dict/list or HTML string
@@ -24,7 +24,7 @@ def parse_content(data: Union[str, Dict, List], extract_text: bool = True, extra
         extract_images: Extract image URLs from content (default: False)
         
     Returns:
-        Dict containing parsed content with keys:
+        Dict containing parsed content for single results, or List[Dict] for multiple results with keys:
         - 'type': 'json' or 'html'
         - 'text': Cleaned text content (if extract_text=True)
         - 'links': List of extracted links (if extract_links=True)
@@ -32,6 +32,74 @@ def parse_content(data: Union[str, Dict, List], extract_text: bool = True, extra
         - 'title': Page title (if available)
         - 'raw_length': Length of original content
         - 'structured_data': Original JSON data (if type='json')
+    """
+    if _is_multiple_results(data):
+        return parse_multiple(data, extract_text=extract_text, extract_links=extract_links, extract_images=extract_images)
+    
+    return _parse_single_content(data, extract_text, extract_links, extract_images)
+
+
+def parse_multiple(data_list: List[Union[str, Dict]], extract_text: bool = True, extract_links: bool = False, extract_images: bool = False) -> List[Dict[str, Any]]:
+    """
+    Parse multiple content items (useful for batch scraping results)
+    
+    Args:
+        data_list: List of response data items
+        extract_text: Extract clean text content (default: True)
+        extract_links: Extract all links from content (default: False)
+        extract_images: Extract image URLs from content (default: False)
+        
+    Returns:
+        List of parsed content dictionaries
+    """
+    if not isinstance(data_list, list):
+        return []
+    
+    return [_parse_single_content(item, extract_text, extract_links, extract_images) for item in data_list]
+
+
+def _is_multiple_results(data: Union[str, Dict, List]) -> bool:
+    """
+    Detect if data contains multiple scraping/search results
+    
+    Args:
+        data: Response data to analyze
+        
+    Returns:
+        True if data appears to be multiple results, False otherwise
+    """
+    if not isinstance(data, list):
+        return False
+    
+    if len(data) <= 1:
+        return False
+    
+    multiple_result_indicators = 0
+    
+    for item in data[:3]:
+        if isinstance(item, dict):
+            common_keys = {'html', 'body', 'content', 'page_html', 'raw_html', 'url', 'status_code'}
+            if any(key in item for key in common_keys):
+                multiple_result_indicators += 1
+        elif isinstance(item, str) and len(item) > 100:
+            if '<html' in item.lower() or '<!doctype' in item.lower():
+                multiple_result_indicators += 1
+    
+    return multiple_result_indicators >= 2
+
+
+def _parse_single_content(data: Union[str, Dict, List], extract_text: bool = True, extract_links: bool = False, extract_images: bool = False) -> Dict[str, Any]:
+    """
+    Parse single content item from Bright Data API responses
+    
+    Args:
+        data: Single response data item - can be JSON dict or HTML string
+        extract_text: Extract clean text content (default: True)
+        extract_links: Extract all links from content (default: False)
+        extract_images: Extract image URLs from content (default: False)
+        
+    Returns:
+        Dict containing parsed content
     """
     result = {
         'type': None,
@@ -61,20 +129,6 @@ def parse_content(data: Union[str, Dict, List], extract_text: bool = True, extra
             _parse_html_content(data, result, extract_text, extract_links, extract_images)
     
     return result
-
-
-def parse_multiple(data_list: List[Union[str, Dict]], **kwargs) -> List[Dict[str, Any]]:
-    """
-    Parse multiple content items (useful for batch scraping results)
-    
-    Args:
-        data_list: List of response data items
-        **kwargs: Arguments passed to parse_content()
-        
-    Returns:
-        List of parsed content dictionaries
-    """
-    return [parse_content(item, **kwargs) for item in data_list]
 
 
 def extract_structured_data(data: Union[str, Dict, List]) -> Optional[Dict]:

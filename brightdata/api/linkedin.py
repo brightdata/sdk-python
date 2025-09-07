@@ -96,9 +96,16 @@ class LinkedInAPI:
         
         logger.info(f"Processing {len(url_list)} LinkedIn {dataset_type} URL(s) {'synchronously' if sync else 'asynchronously'}")
         
+        try:
+            from .. import __version__
+            user_agent = f"brightdata-sdk/{__version__}"
+        except ImportError:
+            user_agent = "brightdata-sdk/unknown"
+        
         headers = {
             "Authorization": f"Bearer {self.api_token}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "User-Agent": user_agent
         }
         
         if sync:
@@ -411,9 +418,16 @@ class LinkedInSearcher:
         
         api_url = "https://api.brightdata.com/datasets/v3/trigger"
             
+        try:
+            from .. import __version__
+            user_agent = f"brightdata-sdk/{__version__}"
+        except ImportError:
+            user_agent = "brightdata-sdk/unknown"
+        
         headers = {
             "Authorization": f"Bearer {self.linkedin_api.api_token}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "User-Agent": user_agent
         }
         params = {
             "dataset_id": self.linkedin_api.DATASET_IDS['profile'],
@@ -562,9 +576,16 @@ class LinkedInSearcher:
         
         api_url = "https://api.brightdata.com/datasets/v3/trigger"
             
+        try:
+            from .. import __version__
+            user_agent = f"brightdata-sdk/{__version__}"
+        except ImportError:
+            user_agent = "brightdata-sdk/unknown"
+        
         headers = {
             "Authorization": f"Bearer {self.linkedin_api.api_token}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "User-Agent": user_agent
         }
         params = {
             "dataset_id": self.linkedin_api.DATASET_IDS['job'],
@@ -600,9 +621,16 @@ class LinkedInSearcher:
         
         api_url = "https://api.brightdata.com/datasets/v3/trigger"
             
+        try:
+            from .. import __version__
+            user_agent = f"brightdata-sdk/{__version__}"
+        except ImportError:
+            user_agent = "brightdata-sdk/unknown"
+        
         headers = {
             "Authorization": f"Bearer {self.linkedin_api.api_token}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "User-Agent": user_agent
         }
         params = {
             "dataset_id": self.linkedin_api.DATASET_IDS['job'],
@@ -647,9 +675,16 @@ class LinkedInSearcher:
         
         api_url = "https://api.brightdata.com/datasets/v3/trigger"
             
+        try:
+            from .. import __version__
+            user_agent = f"brightdata-sdk/{__version__}"
+        except ImportError:
+            user_agent = "brightdata-sdk/unknown"
+        
         headers = {
             "Authorization": f"Bearer {self.linkedin_api.api_token}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "User-Agent": user_agent
         }
         params = {
             "dataset_id": self.linkedin_api.DATASET_IDS['post'],
@@ -678,9 +713,16 @@ class LinkedInSearcher:
         
         api_url = "https://api.brightdata.com/datasets/v3/trigger"
             
+        try:
+            from .. import __version__
+            user_agent = f"brightdata-sdk/{__version__}"
+        except ImportError:
+            user_agent = "brightdata-sdk/unknown"
+        
         headers = {
             "Authorization": f"Bearer {self.linkedin_api.api_token}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "User-Agent": user_agent
         }
         params = {
             "dataset_id": self.linkedin_api.DATASET_IDS['post'],
@@ -701,9 +743,16 @@ class LinkedInSearcher:
         
         api_url = "https://api.brightdata.com/datasets/v3/trigger"
             
+        try:
+            from .. import __version__
+            user_agent = f"brightdata-sdk/{__version__}"
+        except ImportError:
+            user_agent = "brightdata-sdk/unknown"
+        
         headers = {
             "Authorization": f"Bearer {self.linkedin_api.api_token}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "User-Agent": user_agent
         }
         params = {
             "dataset_id": self.linkedin_api.DATASET_IDS['post'],

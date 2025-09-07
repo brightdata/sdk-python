@@ -42,9 +42,16 @@ class ChatGPTAPI:
         - Dict containing response with snapshot_id or direct data (if sync=True)
         """
         url = "https://api.brightdata.com/datasets/v3/scrape" if sync else "https://api.brightdata.com/datasets/v3/trigger"
+        try:
+            from .. import __version__
+            user_agent = f"brightdata-sdk/{__version__}"
+        except ImportError:
+            user_agent = "brightdata-sdk/unknown"
+        
         headers = {
             "Authorization": f"Bearer {self.api_token}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "User-Agent": user_agent
         }
         params = {
             "dataset_id": "gd_m7aof0k82r803d5bjm",

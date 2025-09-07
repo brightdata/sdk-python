@@ -125,9 +125,16 @@ class DownloadAPI:
                 raise ValidationError("Part parameter requires batch_size to be specified")
         
         url = f"https://api.brightdata.com/datasets/v3/snapshot/{snapshot_id}"
+        try:
+            from .. import __version__
+            user_agent = f"brightdata-sdk/{__version__}"
+        except ImportError:
+            user_agent = "brightdata-sdk/unknown"
+        
         headers = {
             "Authorization": f"Bearer {self.api_token}",
-            "Accept": "application/json"
+            "Accept": "application/json",
+            "User-Agent": user_agent
         }
         params = {
             "format": format

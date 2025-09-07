@@ -5,7 +5,26 @@ from brightdata import bdclient
 
 client = bdclient()
 
-result = client.extract("Extract most watched news from CNN.com") # BRIGHTDATA_API_KEY and OPENAI_API_KEY API key can be set in .env
-
+# Basic extraction
+result = client.extract("Extract news headlines from CNN.com")
 print(result)
-print(f"Tokens used: {result.token_usage['total_tokens']}")
+
+# Using URL parameter with structured output
+schema = {
+    "type": "object",
+    "properties": {
+        "headlines": {
+            "type": "array",
+            "items": {"type": "string"}
+        }
+    },
+    "required": ["headlines"],
+    "additionalProperties": False
+}
+
+result = client.extract(
+    query="Extract main headlines",
+    url="https://cnn.com",
+    output_scheme=schema
+)
+print(result)

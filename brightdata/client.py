@@ -733,12 +733,12 @@ class bdclient:
         extract_text: bool = True,
         extract_links: bool = False,
         extract_images: bool = False
-    ) -> Dict[str, Any]:
+    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         """
         ## Parse content from API responses
         
         Extract and parse useful information from scraping, search, or crawling results.
-        Handles both JSON responses and raw HTML content.
+        Automatically detects and handles both single and multiple results from batch operations.
         
         ### Parameters:
         - `data` (str | Dict | List): Response data from scrape(), search(), or crawl() methods
@@ -747,28 +747,24 @@ class bdclient:
         - `extract_images` (bool, optional): Extract image URLs from content (default: False)
         
         ### Returns:
-        - `Dict[str, Any]`: Parsed content with keys like 'text', 'links', 'images', 'title', etc.
+        - `Dict[str, Any]`: Parsed content for single results
+        - `List[Dict[str, Any]]`: List of parsed content for multiple results (auto-detected)
         
         ### Example Usage:
         ```python
-        # Parse scraping results
+        # Parse single URL results
         scraped_data = client.scrape("https://example.com")
         parsed = client.parse_content(scraped_data, extract_text=True, extract_links=True)
         print(f"Title: {parsed['title']}")
-        print(f"Text length: {len(parsed['text'])}")
-        print(f"Found {len(parsed['links'])} links")
         
-        # Parse search results
-        search_data = client.search("python tutorials")
-        parsed = client.parse_content(search_data, extract_text=True)
-        
-        # Parse multiple results
-        from brightdata.utils import parse_multiple
-        results = [scraped_data1, scraped_data2, scraped_data3]
-        parsed_results = parse_multiple(results, extract_text=True)
+        # Parse multiple URL results (auto-detected)
+        scraped_data = client.scrape(["https://example1.com", "https://example2.com"])
+        parsed_list = client.parse_content(scraped_data, extract_text=True)
+        for result in parsed_list:
+            print(f"Title: {result['title']}")
         ```
         
-        ### Available Fields in Result:
+        ### Available Fields in Each Result:
         - `type`: 'json' or 'html' - indicates the source data type
         - `text`: Cleaned text content (if extract_text=True)
         - `links`: List of {'url': str, 'text': str} objects (if extract_links=True)
@@ -776,13 +772,6 @@ class bdclient:
         - `title`: Page title (if available)
         - `raw_length`: Length of original content
         - `structured_data`: Original JSON data (if type='json')
-        
-        ### Note:
-        This function can also be imported and used standalone:
-        ```python
-        from brightdata.utils import parse_content
-        result = parse_content(data, extract_text=True)
-        ```
         """
         return parse_content(
             data=data,
@@ -791,7 +780,7 @@ class bdclient:
             extract_images=extract_images
         )
 
-    def extract(self, query: str, llm_key: str = None) -> str:
+    def extract(self, query: str, url: Union[str, List[str]] = None, output_scheme: Dict[str, Any] = None, llm_key: str = None) -> str:
         """
         ## Extract specific information from websites using AI
         
@@ -800,8 +789,14 @@ class bdclient:
         optimizes content for efficient LLM processing.
         
         ### Parameters:
-        - `query` (str): Natural language query containing what to extract and from which URL
-                        (e.g. "extract the most recent news from cnn.com")
+        - `query` (str): Natural language query describing what to extract. If `url` parameter is provided,
+                        this becomes the pure extraction query. If `url` is not provided, this should include 
+                        the URL (e.g. "extract the most recent news from cnn.com")
+        - `url` (str | List[str], optional): Direct URL(s) to scrape. If provided, bypasses URL extraction 
+                        from query and sends these URLs to the web unlocker API
+        - `output_scheme` (dict, optional): JSON Schema defining the expected structure for the LLM response.
+                        Uses OpenAI's Structured Outputs for reliable type-safe responses.
+                        Example: {"type": "object", "properties": {"title": {"type": "string"}, "date": {"type": "string"}}, "required": ["title", "date"]}
         - `llm_key` (str, optional): OpenAI API key. If not provided, uses OPENAI_API_KEY env variable
         
         ### Returns:
@@ -809,9 +804,55 @@ class bdclient:
         
         ### Example Usage:
         ```python
-        # Simple usage - prints extracted content directly
-        result = client.extract("extract the most recent news from cnn.com")
+        # Using URL parameter with structured output (new)
+        result = client.extract(
+            query="extract the most recent news headlines",
+            url="https://cnn.com",
+            output_scheme={
+                "type": "object",
+                "properties": {
+                    "headlines": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "title": {"type": "string"},
+                                "date": {"type": "string"}
+                            },
+                            "required": ["title", "date"]
+                        }
+                    }
+                },
+                "required": ["headlines"]
+            }
+        )
         print(result)  # Prints the extracted news content
+        
+        # Using URL in query (original behavior)
+        result = client.extract("extract the most recent news from cnn.com")
+        
+        # Multiple URLs with structured schema
+        result = client.extract(
+            query="extract main headlines", 
+            url=["https://cnn.com", "https://bbc.com"],
+            output_scheme={
+                "type": "object",
+                "properties": {
+                    "sources": {
+                        "type": "array",
+                        "items": {
+                            "type": "object", 
+                            "properties": {
+                                "source_name": {"type": "string"},
+                                "headlines": {"type": "array", "items": {"type": "string"}}
+                            },
+                            "required": ["source_name", "headlines"]
+                        }
+                    }
+                },
+                "required": ["sources"]
+            }
+        )
         
         # Access metadata attributes
         print(f"Source: {result.url}")
@@ -820,12 +861,10 @@ class bdclient:
         
         # Use with custom OpenAI key
         result = client.extract(
-            query="get the price and description from amazon.com/dp/B079QHML21",
+            query="get the price and description",
+            url="https://amazon.com/dp/B079QHML21",
             llm_key="your-openai-api-key"
         )
-        
-        # Access full metadata dictionary
-        metadata = result.metadata
         ```
         
         ### Environment Variable Setup:
@@ -855,4 +894,4 @@ class bdclient:
         - `ValidationError`: Invalid query format, missing URL, or invalid LLM key
         - `APIError`: Web scraping failed or LLM processing error
         """
-        return self.extract_api.extract(query, llm_key)
+        return self.extract_api.extract(query, url, output_scheme, llm_key)

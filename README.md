@@ -152,19 +152,28 @@ print(f"Found {len(parsed['links'])} links")
 
 #### `extract()`
 ```python
-# Simple AI-powered extraction using natural language
-result = client.extract("extract the latest news headlines from bbc.com")
-print(result)  # Prints extracted headlines directly
+# Basic extraction (URL in query)
+result = client.extract("Extract news headlines from CNN.com")
+print(result)
 
-# Extract specific information with custom query
-result = client.extract("get product name and price from amazon.com/dp/B079QHML21")
-print(f"Product info: {result}")
-print(f"Source: {result.url}")
-print(f"Tokens used: {result.token_usage['total_tokens']}")
+# Using URL parameter with structured output
+schema = {
+    "type": "object",
+    "properties": {
+        "headlines": {
+            "type": "array",
+            "items": {"type": "string"}
+        }
+    },
+    "required": ["headlines"]
+}
 
-# Extract structured data
-result = client.extract("find contact information and business hours from company-website.com")
-print(result)  # AI-formatted contact details
+result = client.extract(
+    query="Extract main headlines",
+    url="https://cnn.com",
+    output_scheme=schema
+)
+print(result)  # Returns structured JSON matching the schema
 ```
 
 #### `connect_browser()`
@@ -265,13 +274,15 @@ Extract and parse useful information from API responses.
 <details>
     <summary>🤖 <strong>extract(...)</strong></summary>
 
-Extract specific information from websites using AI-powered natural language processing.
+Extract specific information from websites using AI-powered natural language processing with OpenAI.
 
 ```python
-- `query`: Natural language query containing what to extract and from which URL (required)
+- `query`: Natural language query describing what to extract (required)
+- `url`: Single URL or list of URLs to extract from (optional - if not provided, extracts URL from query)
+- `output_scheme`: JSON Schema for OpenAI Structured Outputs (optional - enables reliable JSON responses)
 - `llm_key`: OpenAI API key (optional - uses OPENAI_API_KEY env variable if not provided)
 
-# Returns: Extracted content as string with metadata attributes
+# Returns: ExtractResult object (string-like with metadata attributes)
 # Available attributes: .url, .query, .source_title, .token_usage, .content_length
 ```
 
