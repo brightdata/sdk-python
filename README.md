@@ -9,13 +9,6 @@ To install the package, open your terminal:
 
 ```python
 pip install brightdata-sdk
-```
-> If using macOS, first open a virtual environment for your project
-
-## Quick Start
-
-Create a [Bright Data](https://brightdata.com/cp/setting/) account and copy your API key
-
 ### Initialize the Client
 
 ```python
@@ -25,7 +18,11 @@ client = bdclient(api_token="your_api_token_here") # can also be defined as BRIG
 ```
 
 ### Launch first request
+<<<<<<< HEAD
 Add to your code a serp function
+=======
+Add to your code a serp function.
+>>>>>>> old/main
 ```python
 results = client.search("best selling shoes")
 
@@ -38,10 +35,17 @@ print(client.parse_content(results))
 
 | Feature                        | Functions                   | Description
 |--------------------------|-----------------------------|-------------------------------------
+<<<<<<< HEAD
 | **Scrape every website** | `scrape`                    | Scrape every website using Bright's scraping and unti bot-detection capabilities
 | **Web search**           | `search`                    | Search google and other search engines by query (supports batch searches)
 | **Web crawling**         | `crawl`                     | Discover and scrape multiple pages from websites with advanced filtering and depth control
 | **AI-powered extraction** | `extract`                  | Extract specific information from websites using natural language queries and OpenAI
+=======
+| **Scrape any website** | `scrape`                    | Scrape every website using Bright's scraping and unti bot-detection capabilities
+| **Web search(SERP)**           | `search`                    | Search google and other search engines by query (supports batch searches)
+| **Web crawling**         | `crawl`                     | Discover and scrape multiple pages from websites with advanced filtering and depth control
+| **AI extraction** | `extract`                  | Extract specific information from websites using natural language queries and OpenAI
+>>>>>>> old/main
 | **Content parsing**      | `parse_content`             | Extract text, links, images and structured data from API responses (JSON or HTML)
 | **Browser automation**   | `connect_browser`           | Get WebSocket endpoint for Playwright/Selenium integration with Bright Data's scraping browser
 | **Search chatGPT**       | `search_chatGPT`            | Prompt chatGPT and scrape its answers, support multiple inputs and follow-up prompts
@@ -51,11 +55,19 @@ print(client.parse_content(results))
 | **Client class**         | `bdclient`         | Handles authentication, automatic zone creation and managment, and options for robust error handling
 | **Parallel processing**  | **all functions**  | All functions use Concurrent processing for multiple URLs or queries, and support multiple Output Formats
 
+<<<<<<< HEAD
 ### Try usig one of the functions
 
 #### `Search()`
 ```python
 # Simple single query search
+=======
+### Try using one of the functions
+
+#### `Search()`
+```python
+# Single query search
+>>>>>>> old/main
 result = client.search("pizza restaurants")
 
 # Try using multiple queries (parallel processing), with custom configuration
@@ -69,7 +81,11 @@ results = client.search(
 ```
 #### `scrape()`
 ```python
+<<<<<<< HEAD
 # Simple single URL scrape
+=======
+# Single URL scrape
+>>>>>>> old/main
 result = client.scrape("https://example.com")
 
 # Multiple URLs (parallel processing) with custom options
@@ -83,6 +99,7 @@ results = client.scrape(
 ```
 #### `search_chatGPT()`
 ```python
+<<<<<<< HEAD
 result = client.search_chatGPT(
     prompt="what day is it today?"
     # prompt=["What are the top 3 programming languages in 2024?", "Best hotels in New York", "Explain quantum computing"],
@@ -90,6 +107,22 @@ result = client.search_chatGPT(
 )
 
 client.download_content(result) # In case of timeout error, your snapshot_id is presented and you will downloaded it using download_snapshot()
+=======
+# Sync mode (immediate result)
+result = client.search_gpt(
+    prompt="Top startups in Tel Aviv",
+    country="IL",
+    web_search=True
+)
+print(result)
+
+# Async mode (retrieve snapshot later)
+result = client.search_gpt(
+    prompt="Top startups in 2024",
+    sync=False
+)
+print(result["snapshot_id"])
+>>>>>>> old/main
 ```
 
 #### `search_linkedin.`
@@ -125,7 +158,11 @@ print(results) # will print the snapshot_id, which can be downloaded using the d
 result = client.crawl(
     url="https://example.com/",
     depth=2,
+<<<<<<< HEAD
     filter="/product/",           # Only crawl URLs containing "/product/"
+=======
+    include_filter="/product/",           # Only crawl URLs containing "/product/"
+>>>>>>> old/main
     exclude_filter="/ads/",       # Exclude URLs containing "/ads/"
     custom_output_fields=["markdown", "url", "page_title"]
 )
@@ -202,12 +239,23 @@ client.download_content(data)
 ```
 **`download_snapshot`** (for async requests)
 ```python
+<<<<<<< HEAD
 # Save this function to seperate file
 client.download_snapshot("") # Insert your snapshot_id
 ```
 
 > [!TIP]
 > Hover over the "search" or each function in the package, to see all its available parameters.
+=======
+# Save this function to a seperate file
+# Download snapshot
+snapshot_id = "your_snapshot_id_here"  # <-- Replace with your actual snapshot ID
+client.download_snapshot(snapshot_id)  # Insert your snapshot_id
+```
+
+> [!TIP]
+> Hover over the "search" or each function in the package to see all its available parameters.
+>>>>>>> old/main
 
 ![Hover-Over1](https://github.com/user-attachments/assets/51324485-5769-48d5-8f13-0b534385142e)
 
@@ -251,7 +299,11 @@ Discover and scrape multiple pages from websites with advanced filtering.
 - `url`: Single URL string or list of URLs to crawl (required)
 - `ignore_sitemap`: Ignore sitemap when crawling (optional)
 - `depth`: Maximum crawl depth relative to entered URL (optional)
+<<<<<<< HEAD
 - `filter`: Regex to include only certain URLs (e.g. "/product/")
+=======
+- `include_filter`: Regex to include only certain URLs (e.g. "/product/")
+>>>>>>> old/main
 - `exclude_filter`: Regex to exclude certain URLs (e.g. "/ads/")
 - `custom_output_fields`: List of output fields to include (optional)
 - `include_errors`: Include errors in response (default: True)
