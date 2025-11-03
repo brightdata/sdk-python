@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """
 Setup script for Bright Data SDK
 
@@ -51,6 +52,29 @@ setup(
     install_requires=[
         "requests>=2.25.0",
         "python-dotenv>=0.19.0",
+=======
+from setuptools import setup, find_packages
+
+setup(
+    name="brightdata-sdk",
+    version="1.1.3",
+    description="Python SDK for Bright Data Web Scraping and SERP APIs",
+    author="Bright Data",
+    author_email="support@brightdata.com",
+    maintainer="Bright Data",
+    maintainer_email="idanv@brightdata.com",
+    license="MIT",
+    packages=find_packages(where="src"),
+    package_dir={"": "src"},
+    include_package_data=True,
+    python_requires=">=3.8",
+    install_requires=[
+        "requests>=2.25.0",
+        "python-dotenv>=0.19.0",
+        "aiohttp>=3.8.0",
+        "beautifulsoup4>=4.9.0",
+        "openai>=1.0.0",
+>>>>>>> mywork/main
     ],
     extras_require={
         "dev": [
@@ -59,6 +83,7 @@ setup(
             "black>=21.0.0",
             "isort>=5.0.0",
             "flake8>=3.8.0",
+<<<<<<< HEAD
         ],
     },
     keywords="brightdata, web scraping, proxy, serp, api, data extraction",
@@ -68,3 +93,35 @@ setup(
         "Source": "https://github.com/brightdata/brightdata-sdk-python",
     },
 )
+=======
+            "mypy>=0.900",
+        ],
+        "test": [
+            "pytest>=6.0.0",
+            "pytest-cov>=2.10.0",
+        ],
+    },
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Topic :: Internet :: WWW/HTTP",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+    ],
+    project_urls={
+        "Homepage": "https://github.com/brightdata/bright-data-sdk-python",
+        "Documentation": "https://github.com/brightdata/bright-data-sdk-python#readme",
+        "Repository": "https://github.com/brightdata/bright-data-sdk-python",
+        "Bug Reports": "https://github.com/brightdata/bright-data-sdk-python/issues",
+        "Changelog": "https://github.com/brightdata/bright-data-sdk-python/blob/main/CHANGELOG.md",
+    },
+)
+>>>>>>> mywork/main

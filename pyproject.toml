@@ -60,6 +60,9 @@ Repository = "https://github.com/brightdata/bright-data-sdk-python"
 "Bug Reports" = "https://github.com/brightdata/bright-data-sdk-python/issues"
 Changelog = "https://github.com/brightdata/bright-data-sdk-python/blob/main/CHANGELOG.md"
 
+[tool.setuptools]
+package-dir = {"" = "src"}
+
 [tool.setuptools.packages.find]
 include = ["brightdata*"]
 exclude = ["tests*"]
