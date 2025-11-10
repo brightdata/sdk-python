@@ -194,6 +194,18 @@ Based on https://brightdata.com/ and https://docs.brightdata.com/api-reference/S
 
 ## PROPOSED FILE STRUCTURE
 
+> **Note**: This structure has been refined based on industry best practices analysis. Key improvements:
+> - Removed redundant `core/session.py` (engine manages sessions)
+> - Renamed `api/scraper.py` → `api/web_unlocker.py` for clarity
+> - Renamed `api/search.py` → `api/serp.py` for clarity
+> - Moved `browser/` → `api/browser/` for consistency
+> - Added `config.py` for centralized configuration (Pydantic Settings)
+> - Added `types.py` for type aliases
+> - Added `core/hooks.py` for event system
+> - Added `core/logging.py` for structured logging
+> - Added `py.typed` marker for PEP 561 type stubs
+> - Added `.pre-commit-config.yaml` for code quality
+
 ```
 new-sdk/
 ├── README.md                           # Comprehensive documentation
@@ -204,6 +216,7 @@ new-sdk/
 ├── requirements.txt                    # Runtime dependencies
 ├── requirements-dev.txt                # Development dependencies
 ├── .gitignore
+├── .pre-commit-config.yaml             # Pre-commit hooks
 ├── .github/
 │   └── workflows/
 │       ├── test.yml                    # CI/CD pipeline
@@ -214,29 +227,38 @@ new-sdk/
 │   └── brightdata/
 │       ├── __init__.py                 # Main exports
 │       ├── _version.py                 # Version management
+│       ├── py.typed                    # PEP 561 type stubs marker
 │       │
 │       ├── client.py                   # Main BrightData client (slim)
 │       ├── auto.py                     # Simplified API (scrape_url, etc.)
+│       ├── config.py                   # Configuration (Pydantic Settings)
+│       ├── types.py                    # Type aliases and unions
 │       ├── models.py                   # Result objects (dataclasses)
 │       ├── protocols.py                # Interface definitions (typing.Protocol)
 │       ├── constants.py                # Shared constants
 │       │
 │       ├── core/                       # Core infrastructure
 │       │   ├── __init__.py
-│       │   ├── engine.py               # HTTP client (aiohttp-based)
-│       │   ├── session.py              # Session management
+│       │   ├── engine.py               # HTTP client (aiohttp-based, manages sessions)
 │       │   ├── auth.py                 # Authentication handling
-│       │   └── zone_manager.py         # Zone operations
+│       │   ├── zone_manager.py         # Zone operations
+│       │   ├── hooks.py                # Event hooks system
+│       │   └── logging.py              # Structured logging
 │       │
 │       ├── api/                        # API implementations
 │       │   ├── __init__.py
 │       │   ├── base.py                 # Base API class
-│       │   ├── scraper.py              # Web Unlocker API
-│       │   ├── search.py               # SERP API
+│       │   ├── web_unlocker.py         # Web Unlocker API (renamed from scraper.py)
+│       │   ├── serp.py                 # SERP API (renamed from search.py)
 │       │   ├── crawl.py                # Web Crawl API
-│       │   ├── browser.py              # Browser API
 │       │   ├── datasets.py             # Datasets API
-│       │   └── download.py             # Download/snapshot operations
+│       │   ├── download.py             # Download/snapshot operations
+│       │   └── browser/                # Browser API (moved from browser/)
+│       │       ├── __init__.py
+│       │       ├── browser_api.py      # Main browser API
+│       │       ├── browser_pool.py     # Connection pooling
+│       │       ├── config.py           # Browser configuration
+│       │       └── session.py          # Browser sessions
 │       │
 │       ├── scrapers/                   # Specialized scrapers
 │       │   ├── __init__.py
@@ -256,13 +278,6 @@ new-sdk/
 │       │   │   └── scraper.py
 │       │   └── ...                     # Other platforms
 │       │
-│       ├── browser/                    # Browser automation
-│       │   ├── __init__.py
-│       │   ├── browser_api.py          # Main browser API
-│       │   ├── browser_pool.py         # Connection pooling
-│       │   ├── config.py               # Browser configuration
-│       │   └── session.py              # Browser sessions
-│       │
 │       ├── utils/                      # Utilities
 │       │   ├── __init__.py
 │       │   ├── validation.py           # Input validation
@@ -278,7 +293,7 @@ new-sdk/
 │       │
 │       └── _internal/                  # Private implementation details
 │           ├── __init__.py
-│           └── compat.py               # Python version compatibility
+│           └── compat.py               # Python version compatibility (if needed)
 │
 ├── tests/                              # Comprehensive test suite
 │   ├── __init__.py
@@ -292,8 +307,8 @@ new-sdk/
 │   │   └── test_models.py
 │   │
 │   ├── integration/                    # Integration tests
-│   │   ├── test_scraper_api.py
-│   │   ├── test_search_api.py
+│   │   ├── test_web_unlocker_api.py
+│   │   ├── test_serp_api.py
 │   │   ├── test_crawl_api.py
 │   │   └── test_browser_api.py
 │   │
@@ -354,6 +369,8 @@ dependencies = [
     "requests>=2.31.0",
     "python-dotenv>=1.0.0",
     "tldextract>=5.0.0",
+    "pydantic>=2.0.0",  # For config.py Settings
+    "pydantic-settings>=2.0.0",  # For environment variable support
 ]
 
 [project.optional-dependencies]
@@ -373,7 +390,30 @@ browser = [
 all = ["brightdata-sdk[dev,browser]"]
 ```
 
-#### 1.2 Core Models
+#### 1.2 Configuration Module
+```python
+# src/brightdata/config.py
+from pydantic_settings import BaseSettings
+from typing import Optional
+
+class BrightDataConfig(BaseSettings):
+    """Centralized configuration for Bright Data SDK."""
+    
+    api_token: Optional[str] = None
+    default_timeout: int = 30
+    default_poll_interval: int = 10
+    default_poll_timeout: int = 600
+    auto_create_zones: bool = True
+    web_unlocker_zone: str = "sdk_unlocker"
+    serp_zone: str = "sdk_serp"
+    browser_zone: str = "sdk_browser"
+    
+    class Config:
+        env_prefix = "BRIGHTDATA_"
+        case_sensitive = False
+```
+
+#### 1.3 Core Models
 ```python
 # src/brightdata/models.py
 from dataclasses import dataclass, field
@@ -421,7 +461,7 @@ class CrawlResult:
     # ...
 ```
 
-#### 1.3 Exception Hierarchy
+#### 1.4 Exception Hierarchy
 ```python
 # src/brightdata/exceptions/errors.py
 class BrightDataError(Exception):
@@ -656,15 +696,15 @@ class BaseAPI(ABC):
         return run_sync(self._execute_async(*args, **kwargs))
 ```
 
-#### 3.2 Scraper API
+#### 3.2 Web Unlocker API
 ```python
-# src/brightdata/api/scraper.py
+# src/brightdata/api/web_unlocker.py
 from typing import Union, List
 from .base import BaseAPI
 from ..models import ScrapeResult
 from ..utils.validation import validate_url
 
-class ScraperAPI(BaseAPI):
+class WebUnlockerAPI(BaseAPI):
     """Web Unlocker API implementation."""
     
     async def scrape_async(
@@ -836,7 +876,7 @@ import os
 from typing import Optional, List, Dict, Union
 from .models import ScrapeResult
 from .scrapers.registry import get_scraper_for
-from .browser.browser_api import BrowserAPI
+from .api.browser.browser_api import BrowserAPI
 
 async def scrape_url_async(
     url: str,
@@ -948,10 +988,10 @@ import os
 from typing import Optional, Union, List, Dict, Any
 from .core.engine import AsyncEngine
 from .core.zone_manager import ZoneManager
-from .api.scraper import ScraperAPI
-from .api.search import SearchAPI
+from .api.web_unlocker import WebUnlockerAPI
+from .api.serp import SerpAPI
 from .api.crawl import CrawlAPI
-from .api.browser import BrowserConnector
+from .api.browser.browser_api import BrowserConnector
 from .api.datasets import DatasetsAPI
 from .models import ScrapeResult, CrawlResult
 from .exceptions import ValidationError
@@ -1006,8 +1046,8 @@ class BrightData:
         self._zone_manager = ZoneManager(self.engine)
         
         # Initialize API implementations
-        self._scraper_api = ScraperAPI(self.engine)
-        self._search_api = SearchAPI(self.engine)
+        self._web_unlocker_api = WebUnlockerAPI(self.engine)
+        self._serp_api = SerpAPI(self.engine)
         self._crawl_api = CrawlAPI(self.engine)
         self._browser_connector = BrowserConnector()
         self._datasets_api = DatasetsAPI(self.engine)
@@ -1035,7 +1075,7 @@ class BrightData:
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """Scrape URL(s) asynchronously using Web Unlocker API."""
         zone = zone or self.web_unlocker_zone
-        return await self._scraper_api.scrape_async(url, zone, country, response_format)
+        return await self._web_unlocker_api.scrape_async(url, zone, country, response_format)
     
     def scrape(self, *args, **kwargs):
         """Scrape URL(s) synchronously."""
@@ -1053,7 +1093,7 @@ class BrightData:
     ):
         """Perform web search asynchronously."""
         zone = zone or self.serp_zone
-        return await self._search_api.search_async(query, search_engine, zone, country)
+        return await self._serp_api.search_async(query, search_engine, zone, country)
     
     def search(self, *args, **kwargs):
         """Perform web search synchronously."""
@@ -1171,7 +1211,7 @@ def test_scrape_result_creation():
     assert result.url == "https://example.com"
     assert result.data["key"] == "value"
 
-# tests/integration/test_scraper_api.py
+# tests/integration/test_web_unlocker_api.py
 @pytest.mark.asyncio
 async def test_scrape_single_url(async_client):
     """Test scraping a single URL."""
@@ -1315,6 +1355,8 @@ aiohttp>=3.9.0           # Async HTTP client
 requests>=2.31.0          # Sync HTTP client (backward compat)
 python-dotenv>=1.0.0      # Environment variables
 tldextract>=5.0.0         # Domain extraction for registry
+pydantic>=2.0.0           # Data validation and settings
+pydantic-settings>=2.0.0  # Environment variable support for config
 ```
 
 ### Development
