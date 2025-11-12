@@ -15,6 +15,7 @@ from urllib.parse import quote_plus
 
 from .base import BaseAPI
 from ..models import SearchResult
+from ..types import NormalizedSERPData, URLParam, OptionalURLParam
 from ..exceptions import ValidationError, APIError
 from ..utils.validation import validate_zone_name, validate_country_code
 
@@ -254,7 +255,7 @@ class BaseSERPService(BaseAPI):
         """
         raise NotImplementedError("Subclasses must implement _build_search_url")
     
-    def normalize_serp_data(self, data: Any) -> Dict[str, Any]:
+    def normalize_serp_data(self, data: Any) -> NormalizedSERPData:
         """
         Normalize SERP data to consistent format.
         
@@ -394,7 +395,7 @@ class GoogleSERPService(BaseSERPService):
         # Look up in mapping
         return location_map.get(location_lower, "us")  # Default to US
     
-    def normalize_serp_data(self, data: Any) -> Dict[str, Any]:
+    def normalize_serp_data(self, data: Any) -> NormalizedSERPData:
         """
         Normalize Google SERP data to consistent format.
         

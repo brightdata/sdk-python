@@ -294,18 +294,26 @@ class TestScrapeVsSearchDistinction:
         assert 'urls' in sig.parameters
     
     def test_search_methods_are_parameter_based(self):
-        """Test search methods accept keywords/parameters."""
-        amazon = AmazonScraper(bearer_token="test_token_123456789")
-        linkedin = LinkedInScraper(bearer_token="test_token_123456789")
+        """Test search methods (discovery) accept keywords/parameters."""
+        # Search methods are in search services, not scrapers
+        # Scrapers are now URL-based only per API spec
         
-        # Amazon products() should accept keyword
+        from brightdata.scrapers.linkedin import LinkedInSearchService
+        linkedin_search = LinkedInSearchService(bearer_token="test_token_123456789")
+        
         import inspect
-        sig = inspect.signature(amazon.products)
-        assert 'keyword' in sig.parameters
         
-        # LinkedIn jobs() should accept keyword
-        sig = inspect.signature(linkedin.jobs)
-        assert 'keyword' in sig.parameters
+        # LinkedIn search jobs() should accept keyword (parameter-based discovery)
+        jobs_sig = inspect.signature(linkedin_search.jobs)
+        assert 'keyword' in jobs_sig.parameters
+        
+        # LinkedIn search profiles() should accept firstName (parameter-based discovery)
+        profiles_sig = inspect.signature(linkedin_search.profiles)
+        assert 'firstName' in profiles_sig.parameters
+        
+        # LinkedIn search posts() should accept profile_url (parameter-based discovery)
+        posts_sig = inspect.signature(linkedin_search.posts)
+        assert 'profile_url' in posts_sig.parameters
     
     def test_all_platform_scrapers_have_scrape(self):
         """Test all platform scrapers have scrape() method."""
@@ -322,15 +330,18 @@ class TestScrapeVsSearchDistinction:
     def test_platforms_have_consistent_async_sync_pairs(self):
         """Test all methods have async/sync pairs."""
         amazon = AmazonScraper(bearer_token="test_token_123456789")
+        linkedin = LinkedInScraper(bearer_token="test_token_123456789")
         
-        # scrape/scrape_async
-        assert hasattr(amazon, 'scrape') and hasattr(amazon, 'scrape_async')
-        
-        # products/products_async
+        # Amazon - all URL-based scrape methods
         assert hasattr(amazon, 'products') and hasattr(amazon, 'products_async')
-        
-        # reviews/reviews_async
         assert hasattr(amazon, 'reviews') and hasattr(amazon, 'reviews_async')
+        assert hasattr(amazon, 'sellers') and hasattr(amazon, 'sellers_async')
+        
+        # LinkedIn - URL-based scrape methods
+        assert hasattr(linkedin, 'posts') and hasattr(linkedin, 'posts_async')
+        assert hasattr(linkedin, 'jobs') and hasattr(linkedin, 'jobs_async')
+        assert hasattr(linkedin, 'profiles') and hasattr(linkedin, 'profiles_async')
+        assert hasattr(linkedin, 'companies') and hasattr(linkedin, 'companies_async')
 
 
 class TestClientIntegration:
@@ -434,18 +445,22 @@ class TestPhilosophicalPrinciples:
     
     def test_scrape_vs_search_is_clear(self):
         """Test scrape vs search distinction is clear."""
-        scraper = AmazonScraper(bearer_token="test_token_123456789")
+        amazon = AmazonScraper(bearer_token="test_token_123456789")
         
         import inspect
         
-        # scrape() signature = URL-based
-        scrape_sig = inspect.signature(scraper.scrape)
-        assert 'urls' in scrape_sig.parameters
+        # Amazon products() is now URL-based scraping (not search)
+        products_sig = inspect.signature(amazon.products)
+        assert 'url' in products_sig.parameters
+        assert 'sync' in products_sig.parameters
         
-        # products() signature = parameter-based
-        products_sig = inspect.signature(scraper.products)
-        assert 'keyword' in products_sig.parameters
-        assert 'urls' not in products_sig.parameters
+        # For search methods, check LinkedInSearchService
+        from brightdata.scrapers.linkedin import LinkedInSearchService
+        linkedin_search = LinkedInSearchService(bearer_token="test_token_123456789")
+        
+        # Search jobs() signature = parameter-based (has keyword, not url required)
+        jobs_sig = inspect.signature(linkedin_search.jobs)
+        assert 'keyword' in jobs_sig.parameters
     
     def test_architecture_supports_future_auto_routing(self):
         """Test architecture is ready for future auto-routing."""

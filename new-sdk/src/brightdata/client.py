@@ -15,7 +15,8 @@ from datetime import datetime, timezone
 
 from .core.engine import AsyncEngine
 from .api.web_unlocker import WebUnlockerService
-from .models import ScrapeResult
+from .models import ScrapeResult, SearchResult
+from .types import AccountInfo, URLParam, OptionalURLParam
 from .exceptions import (
     ValidationError,
     AuthenticationError,
@@ -318,7 +319,7 @@ class BrightDataClient:
             self._is_connected = False
             return False
     
-    async def get_account_info(self) -> Dict[str, Any]:
+    async def get_account_info(self) -> AccountInfo:
         """
         Get account information including usage, limits, and quotas.
         
@@ -382,7 +383,7 @@ class BrightDataClient:
         except Exception as e:
             raise APIError(f"Unexpected error getting account info: {str(e)}")
     
-    def get_account_info_sync(self) -> Dict[str, Any]:
+    def get_account_info_sync(self) -> AccountInfo:
         """Synchronous version of get_account_info()."""
         return asyncio.run(self.get_account_info())
     
@@ -596,6 +597,8 @@ class SearchService:
         self._google_service: Optional['GoogleSERPService'] = None
         self._bing_service: Optional['BingSERPService'] = None
         self._yandex_service: Optional['YandexSERPService'] = None
+        self._linkedin_search: Optional['LinkedInSearchService'] = None
+        self._chatgpt_search: Optional['ChatGPTSearchService'] = None
     
     async def google_async(
         self,
@@ -720,6 +723,68 @@ class SearchService:
     def yandex(self, query: Union[str, List[str]], **kwargs):
         """Search Yandex synchronously."""
         return asyncio.run(self.yandex_async(query, **kwargs))
+    
+    @property
+    def linkedin(self):
+        """
+        Access LinkedIn search service for parameter-based discovery.
+        
+        Returns:
+            LinkedInSearchService for discovering posts, profiles, and jobs
+        
+        Example:
+            >>> # Discover posts from profile
+            >>> result = client.search.linkedin.posts(
+            ...     profile_url="https://linkedin.com/in/johndoe",
+            ...     start_date="2024-01-01",
+            ...     end_date="2024-12-31"
+            ... )
+            >>> 
+            >>> # Find profiles by name
+            >>> result = client.search.linkedin.profiles(
+            ...     firstName="John",
+            ...     lastName="Doe"
+            ... )
+            >>> 
+            >>> # Find jobs by criteria
+            >>> result = client.search.linkedin.jobs(
+            ...     keyword="python developer",
+            ...     location="New York",
+            ...     remote=True
+            ... )
+        """
+        if self._linkedin_search is None:
+            from .scrapers.linkedin.search import LinkedInSearchService
+            self._linkedin_search = LinkedInSearchService(bearer_token=self._client.token)
+        return self._linkedin_search
+    
+    @property
+    def chatGPT(self):
+        """
+        Access ChatGPT search service for prompt-based discovery.
+        
+        Returns:
+            ChatGPTSearchService for sending prompts to ChatGPT
+        
+        Example:
+            >>> # Single prompt
+            >>> result = client.search.chatGPT(
+            ...     prompt="Explain Python async programming",
+            ...     country="us",
+            ...     webSearch=True
+            ... )
+            >>> 
+            >>> # Batch prompts
+            >>> result = client.search.chatGPT(
+            ...     prompt=["What is Python?", "What is JavaScript?"],
+            ...     country=["us", "us"],
+            ...     webSearch=[False, True]
+            ... )
+        """
+        if self._chatgpt_search is None:
+            from .scrapers.chatgpt.search import ChatGPTSearchService
+            self._chatgpt_search = ChatGPTSearchService(bearer_token=self._client.token)
+        return self._chatgpt_search
 
 
 class CrawlerService:

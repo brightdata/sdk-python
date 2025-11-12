@@ -273,6 +273,8 @@ class BaseWebScraper(ABC):
         """
         Poll snapshot until ready, then fetch results.
         
+        Uses shared polling utility for consistent behavior.
+        
         Args:
             snapshot_id: Snapshot identifier
             poll_interval: Seconds between polls
@@ -283,73 +285,25 @@ class BaseWebScraper(ABC):
         Returns:
             ScrapeResult with data or error/timeout status
         """
-        start_time = datetime.now(timezone.utc)
-        snapshot_polled_at = []
+        from ..utils.polling import poll_until_ready
         
-        while True:
-            elapsed = (datetime.now(timezone.utc) - start_time).total_seconds()
-            
-            if elapsed > poll_timeout:
-                return ScrapeResult(
-                    success=False,
-                    url="",
-                    status="timeout",
-                    error=f"Polling timeout after {poll_timeout}s",
-                    snapshot_id=snapshot_id,
-                    request_sent_at=request_sent_at,
-                    snapshot_id_received_at=snapshot_id_received_at,
-                    snapshot_polled_at=snapshot_polled_at,
-                    data_received_at=datetime.now(timezone.utc),
-                    platform=self.PLATFORM_NAME or None,
-                )
-            
-            # Check status
-            poll_time = datetime.now(timezone.utc)
-            snapshot_polled_at.append(poll_time)
-            
-            status = await self._get_status_async(snapshot_id)
-            
-            if status == "ready":
-                # Fetch results
-                data_received_at = datetime.now(timezone.utc)
-                data = await self._fetch_result_async(snapshot_id)
-                
-                # Normalize and calculate metrics
-                normalized_data = self.normalize_result(data)
-                row_count = len(normalized_data) if isinstance(normalized_data, list) else None
-                cost = (row_count * self.COST_PER_RECORD) if row_count else None
-                
-                return ScrapeResult(
-                    success=True,
-                    url="",
-                    status="ready",
-                    data=normalized_data,
-                    snapshot_id=snapshot_id,
-                    cost=cost,
-                    request_sent_at=request_sent_at,
-                    snapshot_id_received_at=snapshot_id_received_at,
-                    snapshot_polled_at=snapshot_polled_at,
-                    data_received_at=data_received_at,
-                    platform=self.PLATFORM_NAME or None,
-                    row_count=row_count,
-                )
-            
-            elif status in ("error", "failed"):
-                return ScrapeResult(
-                    success=False,
-                    url="",
-                    status="error",
-                    error=f"Job failed with status: {status}",
-                    snapshot_id=snapshot_id,
-                    request_sent_at=request_sent_at,
-                    snapshot_id_received_at=snapshot_id_received_at,
-                    snapshot_polled_at=snapshot_polled_at,
-                    data_received_at=datetime.now(timezone.utc),
-                    platform=self.PLATFORM_NAME or None,
-                )
-            
-            # Still in progress - wait and poll again
-            await asyncio.sleep(poll_interval)
+        result = await poll_until_ready(
+            get_status_func=self._get_status_async,
+            fetch_result_func=self._fetch_result_async,
+            snapshot_id=snapshot_id,
+            poll_interval=poll_interval,
+            poll_timeout=poll_timeout,
+            request_sent_at=request_sent_at,
+            snapshot_id_received_at=snapshot_id_received_at,
+            platform=self.PLATFORM_NAME or None,
+            cost_per_record=self.COST_PER_RECORD,
+        )
+        
+        # Apply normalization if we got data
+        if result.success and result.data:
+            result.data = self.normalize_result(result.data)
+        
+        return result
     
     async def _get_status_async(self, snapshot_id: str) -> str:
         """Get snapshot status."""
@@ -451,6 +405,172 @@ class BaseWebScraper(ABC):
     # - LinkedInScraper: jobs(), profiles(), companies()
     # - AmazonScraper: products(), reviews()
     # - InstagramScraper: posts(), profiles()
+    
+    # ============================================================================
+    # SYNC/ASYNC MODE SUPPORT (for platforms that need it)
+    # ============================================================================
+    
+    SCRAPE_URL_SYNC = "https://api.brightdata.com/datasets/v3/scrape"
+    
+    async def _execute_with_sync_mode(
+        self,
+        payload: List[Dict[str, Any]],
+        dataset_id: str,
+        timeout: int,
+    ) -> ScrapeResult:
+        """
+        Execute scrape using sync mode (/scrape endpoint - immediate response).
+        
+        Shared implementation for platforms that support sync mode.
+        Returns results immediately without polling.
+        
+        Args:
+            payload: Request payload
+            dataset_id: Dataset identifier
+            timeout: Request timeout in seconds
+        
+        Returns:
+            ScrapeResult with immediate data or error
+        """
+        request_sent_at = datetime.now(timezone.utc)
+        
+        params = {"dataset_id": dataset_id}
+        
+        async with self.engine._session.post(
+            self.SCRAPE_URL_SYNC,
+            json=payload,
+            params=params,
+            headers=self.engine._session.headers,
+            timeout=timeout
+        ) as response:
+            data_received_at = datetime.now(timezone.utc)
+            
+            if response.status == 200:
+                data = await response.json()
+                row_count = len(data) if isinstance(data, list) else None
+                cost = (row_count * self.COST_PER_RECORD) if row_count else None
+                
+                return ScrapeResult(
+                    success=True,
+                    url="",
+                    status="ready",
+                    data=data,
+                    cost=cost,
+                    platform=self.PLATFORM_NAME or None,
+                    request_sent_at=request_sent_at,
+                    data_received_at=data_received_at,
+                    row_count=row_count,
+                )
+            else:
+                error_text = await response.text()
+                return ScrapeResult(
+                    success=False,
+                    url="",
+                    status="error",
+                    error=f"Scrape failed (HTTP {response.status}): {error_text}",
+                    platform=self.PLATFORM_NAME or None,
+                    request_sent_at=request_sent_at,
+                    data_received_at=data_received_at,
+                )
+    
+    async def _execute_with_async_mode(
+        self,
+        payload: List[Dict[str, Any]],
+        dataset_id: str,
+        timeout: int,
+    ) -> ScrapeResult:
+        """
+        Execute scrape using async mode (/trigger endpoint - requires polling).
+        
+        Shared implementation for platforms that support async mode.
+        Triggers job, then polls until ready.
+        
+        Args:
+            payload: Request payload
+            dataset_id: Dataset identifier
+            timeout: Maximum wait time in seconds
+        
+        Returns:
+            ScrapeResult with polled data or error
+        """
+        request_sent_at = datetime.now(timezone.utc)
+        
+        # Trigger
+        snapshot_id = await self._trigger_async(
+            payload=payload,
+            include_errors=True,
+            dataset_id=dataset_id
+        )
+        
+        if not snapshot_id:
+            return ScrapeResult(
+                success=False,
+                url="",
+                status="error",
+                error="No snapshot_id returned from trigger",
+                platform=self.PLATFORM_NAME or None,
+                request_sent_at=request_sent_at,
+                data_received_at=datetime.now(timezone.utc),
+            )
+        
+        snapshot_id_received_at = datetime.now(timezone.utc)
+        
+        # Use shared polling utility
+        from ..utils.polling import poll_until_ready
+        
+        result = await poll_until_ready(
+            get_status_func=self._get_status_async,
+            fetch_result_func=self._fetch_result_async,
+            snapshot_id=snapshot_id,
+            poll_interval=10,
+            poll_timeout=timeout,
+            request_sent_at=request_sent_at,
+            snapshot_id_received_at=snapshot_id_received_at,
+            platform=self.PLATFORM_NAME or None,
+            cost_per_record=self.COST_PER_RECORD,
+        )
+        
+        return result
+    
+    async def _trigger_async(
+        self,
+        payload: List[Dict[str, Any]],
+        include_errors: bool,
+        dataset_id: str | None = None,
+    ) -> str | None:
+        """
+        Trigger dataset collection with optional dataset override.
+        
+        Args:
+            payload: Request payload
+            include_errors: Include error records
+            dataset_id: Dataset ID (uses self.DATASET_ID if None)
+        
+        Returns:
+            snapshot_id or None if trigger failed
+        """
+        ds_id = dataset_id or self.DATASET_ID
+        
+        params = {
+            "dataset_id": ds_id,
+            "include_errors": str(include_errors).lower(),
+        }
+        
+        async with self.engine._session.post(
+            self.TRIGGER_URL,
+            json=payload,
+            params=params,
+            headers=self.engine._session.headers
+        ) as response:
+            if response.status == 200:
+                data = await response.json()
+                return data.get("snapshot_id")
+            else:
+                error_text = await response.text()
+                raise APIError(
+                    f"Trigger failed (HTTP {response.status}): {error_text}",
+                    status_code=response.status
+                )
     
     # ============================================================================
     # UTILITY METHODS
