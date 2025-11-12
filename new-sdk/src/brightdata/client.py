@@ -127,7 +127,7 @@ class BrightDataClient:
         self._search_service: Optional['SearchService'] = None
         self._crawler_service: Optional['CrawlerService'] = None
         self._web_unlocker_service: Optional[WebUnlockerService] = None
-        
+    
         # Connection state
         self._is_connected = False
         self._account_info: Optional[Dict[str, Any]] = None
@@ -575,49 +575,151 @@ class SearchService:
     """
     Search service namespace (SERP API).
     
-    Provides access to search engine scrapers.
+    Provides access to search engine result scrapers with normalized
+    data across different search engines.
+    
+    Example:
+        >>> # Google search
+        >>> result = client.search.google(
+        ...     query="python tutorial",
+        ...     location="United States"
+        ... )
+        >>> 
+        >>> # Access results
+        >>> for item in result.data:
+        ...     print(item['title'], item['url'])
     """
     
     def __init__(self, client: BrightDataClient):
         """Initialize search service with client reference."""
         self._client = client
-        self._linkedin_search = None
+        self._google_service: Optional['GoogleSERPService'] = None
+        self._bing_service: Optional['BingSERPService'] = None
+        self._yandex_service: Optional['YandexSERPService'] = None
     
-    async def google(
+    async def google_async(
         self,
-        query: str,
+        query: Union[str, List[str]],
+        location: Optional[str] = None,
+        language: str = "en",
+        device: str = "desktop",
         num_results: int = 10,
-        country: str = "us",
-    ) -> Dict[str, Any]:
+        zone: Optional[str] = None,
+        **kwargs
+    ) -> Union['SearchResult', List['SearchResult']]:
         """
-        Search Google (to be implemented).
+        Search Google asynchronously.
         
         Args:
-            query: Search query
-            num_results: Number of results to return
-            country: Country code for localized results
+            query: Search query or list of queries
+            location: Geographic location (e.g., "United States", "New York")
+            language: Language code (e.g., "en", "es", "fr")
+            device: Device type ("desktop", "mobile", "tablet")
+            num_results: Number of results to return (default: 10)
+            zone: SERP zone (uses client default if not provided)
+            **kwargs: Additional Google-specific parameters
         
         Returns:
-            Search results
+            SearchResult with normalized Google search data
+        
+        Example:
+            >>> result = await client.search.google_async(
+            ...     query="python tutorial",
+            ...     location="United States",
+            ...     num_results=20
+            ... )
         """
-        raise NotImplementedError("Google search will be implemented in SERP API module")
+        from ..api.serp import GoogleSERPService
+        
+        if self._google_service is None:
+            self._google_service = GoogleSERPService(self._client.engine)
+        
+        zone = zone or self._client.serp_zone
+        return await self._google_service.search_async(
+            query=query,
+            zone=zone,
+            location=location,
+            language=language,
+            device=device,
+            num_results=num_results,
+            **kwargs
+        )
     
-    async def bing(
+    def google(
         self,
-        query: str,
-        num_results: int = 10,
-        country: str = "us",
-    ) -> Dict[str, Any]:
-        """Search Bing (to be implemented)."""
-        raise NotImplementedError("Bing search will be implemented in SERP API module")
+        query: Union[str, List[str]],
+        **kwargs
+    ) -> Union['SearchResult', List['SearchResult']]:
+        """
+        Search Google synchronously.
+        
+        See google_async() for full documentation.
+        
+        Example:
+            >>> result = client.search.google(
+            ...     query="python tutorial",
+            ...     location="United States"
+            ... )
+        """
+        return asyncio.run(self.google_async(query, **kwargs))
     
-    @property
-    def linkedin(self):
-        """Access LinkedIn search capabilities."""
-        if self._linkedin_search is None:
-            # Will be implemented when LinkedIn search is ready
-            raise NotImplementedError("LinkedIn search will be implemented in scrapers module")
-        return self._linkedin_search
+    async def bing_async(
+        self,
+        query: Union[str, List[str]],
+        location: Optional[str] = None,
+        language: str = "en",
+        num_results: int = 10,
+        zone: Optional[str] = None,
+        **kwargs
+    ) -> Union['SearchResult', List['SearchResult']]:
+        """Search Bing asynchronously."""
+        from ..api.serp import BingSERPService
+        
+        if self._bing_service is None:
+            self._bing_service = BingSERPService(self._client.engine)
+        
+        zone = zone or self._client.serp_zone
+        return await self._bing_service.search_async(
+            query=query,
+            zone=zone,
+            location=location,
+            language=language,
+            num_results=num_results,
+            **kwargs
+        )
+    
+    def bing(self, query: Union[str, List[str]], **kwargs):
+        """Search Bing synchronously."""
+        return asyncio.run(self.bing_async(query, **kwargs))
+    
+    async def yandex_async(
+        self,
+        query: Union[str, List[str]],
+        location: Optional[str] = None,
+        language: str = "ru",
+        num_results: int = 10,
+        zone: Optional[str] = None,
+        **kwargs
+    ) -> Union['SearchResult', List['SearchResult']]:
+        """Search Yandex asynchronously."""
+        from ..api.serp import YandexSERPService
+        
+        if self._yandex_service is None:
+            self._yandex_service = YandexSERPService(self._client.engine)
+        
+        zone = zone or self._client.serp_zone
+        return await self._yandex_service.search_async(
+            query=query,
+            zone=zone,
+            location=location,
+            language=language,
+            num_results=num_results,
+            **kwargs
+        )
+    
+    def yandex(self, query: Union[str, List[str]], **kwargs):
+        """Search Yandex synchronously."""
+        return asyncio.run(self.yandex_async(query, **kwargs))
 
 
 class CrawlerService:

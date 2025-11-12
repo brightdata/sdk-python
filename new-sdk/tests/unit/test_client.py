@@ -152,13 +152,13 @@ class TestClientServiceProperties:
         search_service = client.search
         assert search_service is not None
         
-        # Methods should exist and be callable
+        # All search methods should exist and be callable
         assert callable(search_service.google)
+        assert callable(search_service.google_async)
         assert callable(search_service.bing)
-        
-        # LinkedIn search not implemented yet - should raise NotImplementedError
-        with pytest.raises(NotImplementedError):
-            _ = search_service.linkedin
+        assert callable(search_service.bing_async)
+        assert callable(search_service.yandex)
+        assert callable(search_service.yandex_async)
     
     def test_crawler_service_property(self):
         """Test crawler service property returns CrawlerService."""

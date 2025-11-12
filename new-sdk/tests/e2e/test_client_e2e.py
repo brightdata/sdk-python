@@ -81,13 +81,13 @@ class TestHierarchicalServiceAccess:
         
         search = client.search
         
-        # Should have search methods (callable)
+        # All search engines should be callable
         assert callable(search.google)
+        assert callable(search.google_async)
         assert callable(search.bing)
-        
-        # LinkedIn search not yet implemented
-        with pytest.raises(NotImplementedError):
-            _ = search.linkedin
+        assert callable(search.bing_async)
+        assert callable(search.yandex)
+        assert callable(search.yandex_async)
     
     def test_crawler_service_has_crawl_methods(self, api_token):
         """Test crawler service provides crawling methods."""
