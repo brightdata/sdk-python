@@ -137,10 +137,9 @@ class BaseSERPService(BaseAPI):
         
         try:
             # Make request
-            async with self.engine._session.post(
+            async with self.engine.post_to_url(
                 f"{self.engine.BASE_URL}{self.ENDPOINT}",
-                json=payload,
-                headers=self.engine._session.headers
+                json_data=payload
             ) as response:
                 data_received_at = datetime.now(timezone.utc)
                 

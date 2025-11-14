@@ -119,10 +119,9 @@ class WebUnlockerService(BaseAPI):
         
         try:
             # Make the request and read response body immediately
-            async with self.engine._session.post(
+            async with self.engine.post_to_url(
                 f"{self.engine.BASE_URL}{self.ENDPOINT}",
-                json=payload,
-                headers=self.engine._session.headers
+                json_data=payload
             ) as response:
                 data_received_at = datetime.now(timezone.utc)
                 

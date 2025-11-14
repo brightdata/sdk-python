@@ -406,11 +406,10 @@ class LinkedInSearchService:
             "include_errors": "true",
         }
         
-        async with self.engine._session.post(
+        async with self.engine.post_to_url(
             self.TRIGGER_URL,
-            json=payload,
-            params=params,
-            headers=self.engine._session.headers
+            json_data=payload,
+            params=params
         ) as response:
             if response.status == 200:
                 data = await response.json()
@@ -453,10 +452,7 @@ class LinkedInSearchService:
         """Get snapshot status."""
         url = f"{self.STATUS_URL}/{snapshot_id}"
         
-        async with self.engine._session.get(
-            url,
-            headers=self.engine._session.headers
-        ) as response:
+        async with self.engine.get_from_url(url) as response:
             if response.status == 200:
                 data = await response.json()
                 return data.get("status", "unknown")
@@ -467,11 +463,7 @@ class LinkedInSearchService:
         url = f"{self.RESULT_URL}/{snapshot_id}"
         params = {"format": "json"}
         
-        async with self.engine._session.get(
-            url,
-            params=params,
-            headers=self.engine._session.headers
-        ) as response:
+        async with self.engine.get_from_url(url, params=params) as response:
             if response.status == 200:
                 return await response.json()
             else:

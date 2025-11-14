@@ -26,17 +26,17 @@ try:
     env_file = Path(__file__).parent / '.env'
     if env_file.exists():
         load_dotenv(env_file)
-        print(f"✅ Loaded environment from: {env_file}")
+        print(f"[OK] Loaded environment from: {env_file}")
     else:
-        print("⚠️  No .env file found, using system environment variables")
+        print("[WARN] No .env file found, using system environment variables")
 except ImportError:
-    print("⚠️  python-dotenv not installed")
+    print("[WARN] python-dotenv not installed")
 
 from brightdata import BrightDataClient
 from brightdata.scrapers import get_registered_platforms
 
 print("=" * 80)
-print("🚀 BRIGHTDATA SDK - COMPREHENSIVE INTERACTIVE DEMO")
+print("BRIGHTDATA SDK - COMPREHENSIVE INTERACTIVE DEMO")
 print("=" * 80)
 print()
 
@@ -44,18 +44,18 @@ print()
 # Step 1: Initialize Client
 # ============================================================================
 
-print("📋 Step 1: Initialize Client")
+print("Step 1: Initialize Client")
 print("-" * 80)
 
 try:
     client = BrightDataClient()
-    print(f"✅ Client initialized: {client}")
+    print(f"[OK] Client initialized: {client}")
     print(f"   Token: {client.token[:15]}...{client.token[-5:]}")
     print(f"   Timeout: {client.timeout}s")
     print(f"   Zones: unlocker={client.web_unlocker_zone}, serp={client.serp_zone}")
     print()
 except Exception as e:
-    print(f"❌ Failed to initialize client: {e}")
+    print(f"[FAIL] Failed to initialize client: {e}")
     print()
     print("Make sure BRIGHTDATA_API_TOKEN is set in your environment")
     sys.exit(1)
@@ -64,7 +64,7 @@ except Exception as e:
 # Step 2: Test Connection
 # ============================================================================
 
-print("🔌 Step 2: Test Connection & Account Info")
+print("Step 2: Test Connection & Account Info")
 print("-" * 80)
 
 async def test_connection():
@@ -72,7 +72,7 @@ async def test_connection():
         is_connected = await client.test_connection()
         
         if is_connected:
-            print("✅ Connection successful!")
+            print("[OK] Connection successful!")
             
             # Get account info
             info = await client.get_account_info()
@@ -87,28 +87,28 @@ async def test_connection():
             print()
             return True
         else:
-            print("❌ Connection failed")
+            print("[FAIL] Connection failed")
             print()
             return False
 
 connected = asyncio.run(test_connection())
 
 if not connected:
-    print("⚠️  Cannot connect to API. Continuing with limited demo...")
+    print("[WARN] Cannot connect to API. Continuing with limited demo...")
     print()
 
 # ============================================================================
 # Step 3: Show Complete API Structure
 # ============================================================================
 
-print("🌐 Step 3: Complete API Structure")
+print("Step 3: Complete API Structure")
 print("-" * 80)
 
 platforms = get_registered_platforms()
-print(f"✅ {len(platforms)} platforms registered: {', '.join(platforms)}")
+print(f"[OK] {len(platforms)} platforms registered: {', '.join(platforms)}")
 print()
 
-print("📦 CLIENT.SCRAPE.* (URL-based extraction):")
+print("CLIENT.SCRAPE.* (URL-based extraction):")
 print("   • generic.url(url)")
 print("   • amazon.products(url, sync, timeout)")
 print("   • amazon.reviews(url, pastDays, keyWord, numOfReviews, sync, timeout)")
@@ -119,7 +119,7 @@ print("   • linkedin.profiles(url, sync, timeout)")
 print("   • linkedin.companies(url, sync, timeout)")
 print()
 
-print("🔍 CLIENT.SEARCH.* (Parameter-based discovery):")
+print("CLIENT.SEARCH.* (Parameter-based discovery):")
 print("   • google(query, location, language, num_results)")
 print("   • bing(query, location, language)")
 print("   • yandex(query, location, language)")
@@ -133,7 +133,7 @@ print()
 # Step 4: Test Generic Web Scraper
 # ============================================================================
 
-print("🕷️  Step 4: Generic Web Scraper Demo")
+print("Step 4: Generic Web Scraper Demo")
 print("-" * 80)
 print("Scraping https://httpbin.org/json (test URL)...")
 
@@ -141,7 +141,7 @@ try:
     result = client.scrape.generic.url("https://httpbin.org/json")
     
     if result.success:
-        print("✅ Generic scrape successful!")
+        print("[OK] Generic scrape successful!")
         print(f"   URL: {result.url}")
         print(f"   Status: {result.status}")
         print(f"   Domain: {result.root_domain}")
@@ -149,9 +149,9 @@ try:
         print(f"   Time: {result.elapsed_ms():.2f}ms")
         print(f"   Data preview: {str(result.data)[:150]}...")
     else:
-        print(f"❌ Failed: {result.error}")
+        print(f"[FAIL] Failed: {result.error}")
 except Exception as e:
-    print(f"❌ Error: {e}")
+    print(f"[FAIL] Error: {e}")
 
 print()
 
@@ -159,7 +159,7 @@ print()
 # Interactive Menu
 # ============================================================================
 
-print("🎮 Interactive Testing Menu")
+print("Interactive Testing Menu")
 print("=" * 80)
 print()
 
@@ -197,23 +197,23 @@ def test_generic_scrape():
     result = client.scrape.generic.url(url)
     
     if result.success:
-        print(f"✅ Success!")
+        print(f"[OK] Success!")
         print(f"   Status: {result.status}")
         print(f"   Size: {result.html_char_size} chars")
         print(f"   Time: {result.elapsed_ms():.2f}ms")
         print(f"   Data preview: {str(result.data)[:200]}...")
     else:
-        print(f"❌ Failed: {result.error}")
+        print(f"[FAIL] Failed: {result.error}")
 
 def test_amazon_products():
     """Test Amazon product scraping (URL-based)."""
     url = input("Enter Amazon product URL (e.g., https://amazon.com/dp/B123): ").strip()
     if not url:
-        print("❌ URL required")
+        print("[FAIL] URL required")
         return
     
     print(f"\nScraping Amazon product: {url}")
-    print("⚠️  This will use Bright Data credits!")
+    print("[WARN] This will use Bright Data credits!")
     confirm = input("Continue? (y/n): ").strip().lower()
     
     if confirm != 'y':
@@ -224,7 +224,7 @@ def test_amazon_products():
         result = client.scrape.amazon.products(url=url, sync=True, timeout=65)
         
         if result.success:
-            print(f"✅ Success!")
+            print(f"[OK] Success!")
             if isinstance(result.data, dict):
                 print(f"   Title: {result.data.get('title', 'N/A')[:60]}")
                 print(f"   Price: {result.data.get('price', 'N/A')}")
@@ -232,15 +232,15 @@ def test_amazon_products():
             print(f"   Cost: ${result.cost:.4f}" if result.cost else "   Cost: N/A")
             print(f"   Time: {result.elapsed_ms():.2f}ms")
         else:
-            print(f"❌ Failed: {result.error}")
+            print(f"[FAIL] Failed: {result.error}")
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[FAIL] Error: {e}")
 
 def test_amazon_reviews():
     """Test Amazon reviews scraping with filters."""
     url = input("Enter Amazon product URL: ").strip()
     if not url:
-        print("❌ URL required")
+        print("[FAIL] URL required")
         return
     
     print("\nOptional filters:")
@@ -249,7 +249,7 @@ def test_amazon_reviews():
     num_reviews = input("  Number of reviews (or Enter for default): ").strip()
     
     print(f"\nScraping reviews from: {url}")
-    print("⚠️  This will use Bright Data credits!")
+    print("[WARN] This will use Bright Data credits!")
     confirm = input("Continue? (y/n): ").strip().lower()
     
     if confirm != 'y':
@@ -266,23 +266,23 @@ def test_amazon_reviews():
         )
         
         if result.success:
-            print(f"✅ Success!")
+            print(f"[OK] Success!")
             print(f"   Reviews: {result.row_count}")
             print(f"   Cost: ${result.cost:.4f}" if result.cost else "   Cost: N/A")
         else:
-            print(f"❌ Failed: {result.error}")
+            print(f"[FAIL] Failed: {result.error}")
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[FAIL] Error: {e}")
 
 def test_linkedin_profiles():
     """Test LinkedIn profile scraping (URL-based)."""
     url = input("Enter LinkedIn profile URL (e.g., https://linkedin.com/in/johndoe): ").strip()
     if not url:
-        print("❌ URL required")
+        print("[FAIL] URL required")
         return
     
     print(f"\nScraping LinkedIn profile: {url}")
-    print("⚠️  This will use Bright Data credits!")
+    print("[WARN] This will use Bright Data credits!")
     confirm = input("Continue? (y/n): ").strip().lower()
     
     if confirm != 'y':
@@ -293,26 +293,26 @@ def test_linkedin_profiles():
         result = client.scrape.linkedin.profiles(url=url, sync=True)
         
         if result.success:
-            print(f"✅ Success!")
+            print(f"[OK] Success!")
             print(f"   Cost: ${result.cost:.4f}" if result.cost else "   Cost: N/A")
             print(f"   Time: {result.elapsed_ms():.2f}ms")
             if isinstance(result.data, dict):
                 print(f"   Name: {result.data.get('name', 'N/A')}")
                 print(f"   Headline: {result.data.get('headline', 'N/A')[:60]}")
         else:
-            print(f"❌ Failed: {result.error}")
+            print(f"[FAIL] Failed: {result.error}")
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[FAIL] Error: {e}")
 
 def test_linkedin_jobs_url():
     """Test LinkedIn job scraping (URL-based)."""
     url = input("Enter LinkedIn job URL (e.g., https://linkedin.com/jobs/view/123): ").strip()
     if not url:
-        print("❌ URL required")
+        print("[FAIL] URL required")
         return
     
     print(f"\nScraping LinkedIn job: {url}")
-    print("⚠️  This will use Bright Data credits!")
+    print("[WARN] This will use Bright Data credits!")
     confirm = input("Continue? (y/n): ").strip().lower()
     
     if confirm != 'y':
@@ -323,24 +323,24 @@ def test_linkedin_jobs_url():
         result = client.scrape.linkedin.jobs(url=url, sync=True)
         
         if result.success:
-            print(f"✅ Success!")
+            print(f"[OK] Success!")
             print(f"   Cost: ${result.cost:.4f}" if result.cost else "   Cost: N/A")
         else:
-            print(f"❌ Failed: {result.error}")
+            print(f"[FAIL] Failed: {result.error}")
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[FAIL] Error: {e}")
 
 def test_google_search():
     """Test Google SERP search."""
     query = input("Enter search query: ").strip()
     if not query:
-        print("❌ Query required")
+        print("[FAIL] Query required")
         return
     
     location = input("Enter location (e.g., 'United States', or Enter for default): ").strip()
     
     print(f"\nSearching Google: {query}")
-    print("⚠️  This will use Bright Data credits!")
+    print("[WARN] This will use Bright Data credits!")
     confirm = input("Continue? (y/n): ").strip().lower()
     
     if confirm != 'y':
@@ -355,7 +355,7 @@ def test_google_search():
         )
         
         if result.success:
-            print(f"✅ Success!")
+            print(f"[OK] Success!")
             print(f"   Total found: {result.total_found:,}" if result.total_found else "   Total: N/A")
             print(f"   Results returned: {len(result.data)}")
             print(f"   Cost: ${result.cost:.4f}" if result.cost else "   Cost: N/A")
@@ -366,9 +366,9 @@ def test_google_search():
                     print(f"   {i}. {item.get('title', 'N/A')[:60]}")
                     print(f"      {item.get('url', 'N/A')[:70]}")
         else:
-            print(f"❌ Failed: {result.error}")
+            print(f"[FAIL] Failed: {result.error}")
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[FAIL] Error: {e}")
 
 def test_linkedin_job_search():
     """Test LinkedIn job search (discovery)."""
@@ -377,7 +377,7 @@ def test_linkedin_job_search():
     remote = input("Remote only? (y/n, or Enter to skip): ").strip().lower()
     
     if not keyword:
-        print("❌ Keyword required")
+        print("[FAIL] Keyword required")
         return
     
     print(f"\nSearching LinkedIn jobs: {keyword}")
@@ -385,7 +385,7 @@ def test_linkedin_job_search():
         print(f"Location: {location}")
     if remote == 'y':
         print("Remote: Yes")
-    print("⚠️  This will use Bright Data credits!")
+    print("[WARN] This will use Bright Data credits!")
     confirm = input("Continue? (y/n): ").strip().lower()
     
     if confirm != 'y':
@@ -401,13 +401,13 @@ def test_linkedin_job_search():
         )
         
         if result.success:
-            print(f"✅ Success!")
+            print(f"[OK] Success!")
             print(f"   Jobs found: {result.row_count}")
             print(f"   Cost: ${result.cost:.4f}" if result.cost else "   Cost: N/A")
         else:
-            print(f"❌ Failed: {result.error}")
+            print(f"[FAIL] Failed: {result.error}")
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[FAIL] Error: {e}")
 
 def test_linkedin_profile_search():
     """Test LinkedIn profile search by name."""
@@ -415,11 +415,11 @@ def test_linkedin_profile_search():
     last_name = input("Enter last name (or Enter to skip): ").strip()
     
     if not first_name:
-        print("❌ First name required")
+        print("[FAIL] First name required")
         return
     
     print(f"\nSearching LinkedIn profiles: {first_name} {last_name}")
-    print("⚠️  This will use Bright Data credits!")
+    print("[WARN] This will use Bright Data credits!")
     confirm = input("Continue? (y/n): ").strip().lower()
     
     if confirm != 'y':
@@ -434,20 +434,20 @@ def test_linkedin_profile_search():
         )
         
         if result.success:
-            print(f"✅ Success!")
+            print(f"[OK] Success!")
             print(f"   Profiles found: {result.row_count}")
             print(f"   Cost: ${result.cost:.4f}" if result.cost else "   Cost: N/A")
         else:
-            print(f"❌ Failed: {result.error}")
+            print(f"[FAIL] Failed: {result.error}")
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[FAIL] Error: {e}")
 
 def test_chatgpt_search():
     """Test ChatGPT search."""
     prompt = input("Enter prompt for ChatGPT: ").strip()
     
     if not prompt:
-        print("❌ Prompt required")
+        print("[FAIL] Prompt required")
         return
     
     web_search = input("Enable web search? (y/n): ").strip().lower()
@@ -455,7 +455,7 @@ def test_chatgpt_search():
     print(f"\nSending prompt to ChatGPT: {prompt}")
     if web_search == 'y':
         print("Web search: Enabled")
-    print("⚠️  This will use Bright Data credits!")
+    print("[WARN] This will use Bright Data credits!")
     confirm = input("Continue? (y/n): ").strip().lower()
     
     if confirm != 'y':
@@ -470,13 +470,13 @@ def test_chatgpt_search():
         )
         
         if result.success:
-            print(f"✅ Success!")
+            print(f"[OK] Success!")
             print(f"   Cost: ${result.cost:.4f}" if result.cost else "   Cost: N/A")
             print(f"   Response preview: {str(result.data)[:200]}...")
         else:
-            print(f"❌ Failed: {result.error}")
+            print(f"[FAIL] Failed: {result.error}")
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[FAIL] Error: {e}")
 
 def test_batch_scraping():
     """Test batch scraping (multiple URLs)."""
@@ -498,18 +498,18 @@ def test_batch_scraping():
         
         elapsed = time.time() - start
         
-        print(f"✅ Completed in {elapsed:.2f}s")
+        print(f"[OK] Completed in {elapsed:.2f}s")
         print()
         
         for i, result in enumerate(results, 1):
-            status = "✅" if result.success else "❌"
+            status = "[OK]" if result.success else "[FAIL]"
             print(f"{status} {i}. {result.url[:50]}")
             print(f"   Status: {result.status}, Size: {result.html_char_size} chars")
         
         print(f"\nTotal time: {elapsed:.2f}s")
         print(f"Average per URL: {elapsed/len(urls):.2f}s")
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[FAIL] Error: {e}")
 
 def test_sync_vs_async():
     """Test sync vs async mode comparison."""
@@ -517,7 +517,7 @@ def test_sync_vs_async():
     url = url or "https://httpbin.org/html"
     
     print(f"\nComparing sync vs async modes for: {url}")
-    print("⚠️  This will use Bright Data credits!")
+    print("[WARN] This will use Bright Data credits!")
     confirm = input("Continue? (y/n): ").strip().lower()
     
     if confirm != 'y':
@@ -545,12 +545,12 @@ def test_sync_vs_async():
         print("     result = client.scrape.linkedin.profiles(url='...', sync=False)")
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[FAIL] Error: {e}")
 
 def show_complete_interface():
     """Show complete client interface reference."""
     print("\n" + "=" * 80)
-    print("📖 COMPLETE CLIENT INTERFACE REFERENCE")
+    print("COMPLETE CLIENT INTERFACE REFERENCE")
     print("=" * 80)
     print()
     
@@ -608,7 +608,7 @@ while True:
         print()
         
         if choice == "0":
-            print("👋 Goodbye!")
+            print("Goodbye!")
             break
         elif choice == "1":
             test_generic_scrape()
@@ -635,13 +635,13 @@ while True:
         elif choice == "12":
             show_complete_interface()
         else:
-            print("❌ Invalid choice. Please enter 0-12.")
+            print("[FAIL] Invalid choice. Please enter 0-12.")
     
     except KeyboardInterrupt:
-        print("\n\n👋 Interrupted. Goodbye!")
+        print("\n\nInterrupted. Goodbye!")
         break
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\n[FAIL] Error: {e}")
         import traceback
         traceback.print_exc()
 

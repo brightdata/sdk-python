@@ -9,6 +9,7 @@ Philosophy:
 """
 
 import asyncio
+import aiohttp
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional, Union
 from datetime import datetime, timezone
@@ -230,27 +231,32 @@ class BaseWebScraper(ABC):
         self,
         payload: List[Dict[str, Any]],
         include_errors: bool,
+        dataset_id: Optional[str] = None,
     ) -> Optional[str]:
         """
         Trigger dataset collection and get snapshot_id.
         
+        Unified method for triggering dataset collection with optional dataset override.
+        
         Args:
             payload: Request payload
             include_errors: Include error records
+            dataset_id: Dataset ID (uses self.DATASET_ID if None)
         
         Returns:
             snapshot_id or None if trigger failed
         """
+        ds_id = dataset_id or self.DATASET_ID
+        
         params = {
-            "dataset_id": self.DATASET_ID,
+            "dataset_id": ds_id,
             "include_errors": str(include_errors).lower(),
         }
         
-        async with self.engine._session.post(
+        async with self.engine.post_to_url(
             self.TRIGGER_URL,
-            json=payload,
-            params=params,
-            headers=self.engine._session.headers
+            json_data=payload,
+            params=params
         ) as response:
             if response.status == 200:
                 data = await response.json()
@@ -309,10 +315,7 @@ class BaseWebScraper(ABC):
         """Get snapshot status."""
         url = f"{self.STATUS_URL}/{snapshot_id}"
         
-        async with self.engine._session.get(
-            url,
-            headers=self.engine._session.headers
-        ) as response:
+        async with self.engine.get_from_url(url) as response:
             if response.status == 200:
                 data = await response.json()
                 return data.get("status", "unknown")
@@ -324,11 +327,7 @@ class BaseWebScraper(ABC):
         url = f"{self.RESULT_URL}/{snapshot_id}"
         params = {"format": "json"}
         
-        async with self.engine._session.get(
-            url,
-            params=params,
-            headers=self.engine._session.headers
-        ) as response:
+        async with self.engine.get_from_url(url, params=params) as response:
             if response.status == 200:
                 return await response.json()
             else:
@@ -436,12 +435,12 @@ class BaseWebScraper(ABC):
         
         params = {"dataset_id": dataset_id}
         
-        async with self.engine._session.post(
+        timeout_obj = aiohttp.ClientTimeout(total=timeout)
+        async with self.engine.post_to_url(
             self.SCRAPE_URL_SYNC,
-            json=payload,
+            json_data=payload,
             params=params,
-            headers=self.engine._session.headers,
-            timeout=timeout
+            timeout=timeout_obj
         ) as response:
             data_received_at = datetime.now(timezone.utc)
             
@@ -532,45 +531,6 @@ class BaseWebScraper(ABC):
         
         return result
     
-    async def _trigger_async(
-        self,
-        payload: List[Dict[str, Any]],
-        include_errors: bool,
-        dataset_id: str | None = None,
-    ) -> str | None:
-        """
-        Trigger dataset collection with optional dataset override.
-        
-        Args:
-            payload: Request payload
-            include_errors: Include error records
-            dataset_id: Dataset ID (uses self.DATASET_ID if None)
-        
-        Returns:
-            snapshot_id or None if trigger failed
-        """
-        ds_id = dataset_id or self.DATASET_ID
-        
-        params = {
-            "dataset_id": ds_id,
-            "include_errors": str(include_errors).lower(),
-        }
-        
-        async with self.engine._session.post(
-            self.TRIGGER_URL,
-            json=payload,
-            params=params,
-            headers=self.engine._session.headers
-        ) as response:
-            if response.status == 200:
-                data = await response.json()
-                return data.get("snapshot_id")
-            else:
-                error_text = await response.text()
-                raise APIError(
-                    f"Trigger failed (HTTP {response.status}): {error_text}",
-                    status_code=response.status
-                )
     
     # ============================================================================
     # UTILITY METHODS

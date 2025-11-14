@@ -37,40 +37,40 @@ def test_option(option_num, inputs, description):
         
         # Check for errors
         if "Traceback" in output or "Error:" in result.stderr:
-            print(f"❌ FAILED - Exception occurred")
+            print(f"[FAIL] FAILED - Exception occurred")
             print(f"Error output:\n{result.stderr[:500]}")
             return False
         
         # Check for expected success indicators
-        if option_num == 1 and "✅ Success!" in output:
-            print(f"✅ PASSED - Generic scraping works")
+        if option_num == 1 and ("Success!" in output or "✅ Success!" in output):
+            print(f"[PASS] PASSED - Generic scraping works")
             return True
         elif option_num == 10 and "Completed in" in output:
-            print(f"✅ PASSED - Batch scraping works")
+            print(f"[PASS] PASSED - Batch scraping works")
             return True
         elif option_num == 11 and "Sync mode" in output:
-            print(f"✅ PASSED - Sync vs async comparison works")
+            print(f"[PASS] PASSED - Sync vs async comparison works")
             return True
         elif option_num == 12 and "COMPLETE CLIENT INTERFACE" in output:
-            print(f"✅ PASSED - Interface reference works")
+            print(f"[PASS] PASSED - Interface reference works")
             return True
         elif option_num in [2, 3, 4, 5, 6, 7, 8, 9]:
             if "Cancelled" in output or "required" in output:
-                print(f"✅ PASSED - Option accessible (would need inputs/credits)")
+                print(f"[PASS] PASSED - Option accessible (would need inputs/credits)")
                 return True
         elif option_num == 0:
             if "Goodbye!" in output:
-                print(f"✅ PASSED - Exit works")
+                print(f"[PASS] PASSED - Exit works")
                 return True
         
-        print(f"⚠️  PARTIAL - No errors, but unclear result")
+        print(f"[WARN] PARTIAL - No errors, but unclear result")
         return True
         
     except subprocess.TimeoutExpired:
-        print(f"❌ FAILED - Timeout after 60s (connection or API too slow)")
+        print(f"[FAIL] FAILED - Timeout after 60s (connection or API too slow)")
         return False
     except Exception as e:
-        print(f"❌ FAILED - {str(e)}")
+        print(f"[FAIL] FAILED - {str(e)}")
         return False
 
 # Test cases
@@ -111,7 +111,7 @@ passed_count = sum(1 for _, _, p in results if p)
 total_count = len(results)
 
 for option, desc, passed in results:
-    status = "✅" if passed else "❌"
+    status = "[PASS]" if passed else "[FAIL]"
     print(f"{status} Option {option:2}: {desc}")
 
 print()
@@ -119,9 +119,9 @@ print(f"Results: {passed_count}/{total_count} passed ({100*passed_count//total_c
 print()
 
 if passed_count == total_count:
-    print("🎉 ALL OPTIONS WORKING!")
+    print("[SUCCESS] ALL OPTIONS WORKING!")
     sys.exit(0)
 else:
-    print("⚠️  Some options failed")
+    print("[WARN] Some options failed")
     sys.exit(1)
 

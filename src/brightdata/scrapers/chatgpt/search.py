@@ -218,12 +218,13 @@ class ChatGPTSearchService:
         
         params = {"dataset_id": self.DATASET_ID}
         
-        async with self.engine._session.post(
+        import aiohttp
+        timeout_obj = aiohttp.ClientTimeout(total=timeout)
+        async with self.engine.post_to_url(
             self.SCRAPE_URL,
-            json=payload,
+            json_data=payload,
             params=params,
-            headers=self.engine._session.headers,
-            timeout=timeout
+            timeout=timeout_obj
         ) as response:
             data_received_at = datetime.now(timezone.utc)
             
@@ -307,11 +308,10 @@ class ChatGPTSearchService:
             "include_errors": "true",
         }
         
-        async with self.engine._session.post(
+        async with self.engine.post_to_url(
             self.TRIGGER_URL,
-            json=payload,
-            params=params,
-            headers=self.engine._session.headers
+            json_data=payload,
+            params=params
         ) as response:
             if response.status == 200:
                 data = await response.json()
@@ -364,10 +364,7 @@ class ChatGPTSearchService:
         """Get snapshot status."""
         url = f"{self.STATUS_URL}/{snapshot_id}"
         
-        async with self.engine._session.get(
-            url,
-            headers=self.engine._session.headers
-        ) as response:
+        async with self.engine.get_from_url(url) as response:
             if response.status == 200:
                 data = await response.json()
                 return data.get("status", "unknown")
@@ -378,11 +375,7 @@ class ChatGPTSearchService:
         url = f"{self.RESULT_URL}/{snapshot_id}"
         params = {"format": "json"}
         
-        async with self.engine._session.get(
-            url,
-            params=params,
-            headers=self.engine._session.headers
-        ) as response:
+        async with self.engine.get_from_url(url, params=params) as response:
             if response.status == 200:
                 return await response.json()
             else:

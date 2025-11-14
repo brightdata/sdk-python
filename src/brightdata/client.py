@@ -74,6 +74,8 @@ class BrightDataClient:
         browser_zone: Optional[str] = None,
         auto_create_zones: bool = False,
         validate_token: bool = False,
+        rate_limit: Optional[float] = None,
+        rate_period: float = 1.0,
     ):
         """
         Initialize Bright Data client.
@@ -91,6 +93,8 @@ class BrightDataClient:
             browser_zone: Zone name for browser API (default: "sdk_browser")
             auto_create_zones: Automatically create zones if they don't exist (default: False)
             validate_token: Validate token by testing connection on init (default: False)
+            rate_limit: Maximum requests per rate_period (default: 10). Set to None to disable.
+            rate_period: Time period in seconds for rate limit (default: 1.0)
         
         Raises:
             ValidationError: If token is not provided and not found in environment
@@ -120,8 +124,13 @@ class BrightDataClient:
         self.browser_zone = browser_zone or self.DEFAULT_BROWSER_ZONE
         self.auto_create_zones = auto_create_zones
         
-        # Initialize core engine
-        self.engine = AsyncEngine(self.token, timeout=timeout)
+        # Initialize core engine with rate limiting
+        self.engine = AsyncEngine(
+            self.token, 
+            timeout=timeout,
+            rate_limit=rate_limit,
+            rate_period=rate_period
+        )
         
         # Service instances (lazy initialization)
         self._scrape_service: Optional['ScrapeService'] = None
@@ -302,9 +311,8 @@ class BrightDataClient:
             async with self.engine:
                 # Try to get zones list - lightweight API call
                 # Use direct session request to read response within context
-                async with self.engine._session.get(
-                    f"{self.engine.BASE_URL}/zone/get_active_zones",
-                    headers=self.engine._session.headers
+                async with self.engine.get_from_url(
+                    f"{self.engine.BASE_URL}/zone/get_active_zones"
                 ) as response:
                     if response.status == 200:
                         self._is_connected = True
@@ -348,9 +356,8 @@ class BrightDataClient:
         try:
             async with self.engine:
                 # Get zones - read response within context
-                async with self.engine._session.get(
-                    f"{self.engine.BASE_URL}/zone/get_active_zones",
-                    headers=self.engine._session.headers
+                async with await self.engine.get_from_url(
+                    f"{self.engine.BASE_URL}/zone/get_active_zones"
                 ) as zones_response:
                     if zones_response.status == 200:
                         zones = await zones_response.json()
