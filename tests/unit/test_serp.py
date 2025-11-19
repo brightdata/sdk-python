@@ -32,15 +32,16 @@ class TestBaseSERPService:
         assert callable(service.search)
         assert callable(service.search_async)
     
-    def test_base_serp_has_normalize_method(self):
-        """Test base SERP has normalize_serp_data method."""
+    def test_base_serp_has_data_normalizer(self):
+        """Test base SERP has data_normalizer."""
         from brightdata.core.engine import AsyncEngine
         
         engine = AsyncEngine("test_token_123456789")
         service = GoogleSERPService(engine)
         
-        assert hasattr(service, 'normalize_serp_data')
-        assert callable(service.normalize_serp_data)
+        assert hasattr(service, 'data_normalizer')
+        assert hasattr(service.data_normalizer, 'normalize')
+        assert callable(service.data_normalizer.normalize)
 
 
 class TestGoogleSERPService:
@@ -57,7 +58,7 @@ class TestGoogleSERPService:
         engine = AsyncEngine("test_token_123456789")
         service = GoogleSERPService(engine)
         
-        url = service._build_search_url(
+        url = service.url_builder.build(
             query="python tutorial",
             location="United States",
             language="en",
@@ -78,7 +79,7 @@ class TestGoogleSERPService:
         engine = AsyncEngine("test_token_123456789")
         service = GoogleSERPService(engine)
         
-        url = service._build_search_url(
+        url = service.url_builder.build(
             query="python & javascript",
             location=None,
             language="en",
@@ -92,19 +93,16 @@ class TestGoogleSERPService:
     
     def test_google_serp_location_parsing(self):
         """Test location name to country code parsing."""
-        from brightdata.core.engine import AsyncEngine
-        
-        engine = AsyncEngine("test_token_123456789")
-        service = GoogleSERPService(engine)
+        from brightdata.utils.location import LocationService, LocationFormat
         
         # Test country name mappings
-        assert service._parse_location_to_code("United States") == "us"
-        assert service._parse_location_to_code("United Kingdom") == "gb"
-        assert service._parse_location_to_code("Canada") == "ca"
+        assert LocationService.parse_location("United States", LocationFormat.GOOGLE) == "us"
+        assert LocationService.parse_location("United Kingdom", LocationFormat.GOOGLE) == "gb"
+        assert LocationService.parse_location("Canada", LocationFormat.GOOGLE) == "ca"
         
         # Test direct codes
-        assert service._parse_location_to_code("US") == "US"
-        assert service._parse_location_to_code("GB") == "GB"
+        assert LocationService.parse_location("US", LocationFormat.GOOGLE) == "us"
+        assert LocationService.parse_location("GB", LocationFormat.GOOGLE) == "gb"
     
     def test_google_serp_normalize_data(self):
         """Test Google SERP data normalization."""
@@ -130,7 +128,7 @@ class TestGoogleSERPService:
             "total_results": 1000000,
         }
         
-        normalized = service.normalize_serp_data(raw_data)
+        normalized = service.data_normalizer.normalize(raw_data)
         
         assert "results" in normalized
         assert len(normalized["results"]) == 2
@@ -164,7 +162,7 @@ class TestBingSERPService:
         engine = AsyncEngine("test_token_123456789")
         service = BingSERPService(engine)
         
-        url = service._build_search_url(
+        url = service.url_builder.build(
             query="python tutorial",
             location="United States",
             language="en",
@@ -191,7 +189,7 @@ class TestYandexSERPService:
         engine = AsyncEngine("test_token_123456789")
         service = YandexSERPService(engine)
         
-        url = service._build_search_url(
+        url = service.url_builder.build(
             query="python tutorial",
             location="Russia",
             language="ru",
@@ -221,7 +219,7 @@ class TestSERPNormalization:
             ]
         }
         
-        normalized = service.normalize_serp_data(raw_data)
+        normalized = service.data_normalizer.normalize(raw_data)
         
         # Each result should have position starting from 1
         for i, result in enumerate(normalized["results"], 1):
@@ -240,7 +238,7 @@ class TestSERPNormalization:
             ]
         }
         
-        normalized = service.normalize_serp_data(raw_data)
+        normalized = service.data_normalizer.normalize(raw_data)
         result = normalized["results"][0]
         
         # Required fields
@@ -347,7 +345,7 @@ class TestPhilosophicalPrinciples:
         
         # Both engines should normalize to same format
         google_service = GoogleSERPService(engine)
-        google_normalized = google_service.normalize_serp_data(raw_data)
+        google_normalized = google_service.data_normalizer.normalize(raw_data)
         
         # Normalized format should have:
         assert "results" in google_normalized
@@ -366,9 +364,9 @@ class TestPhilosophicalPrinciples:
         yandex = YandexSERPService(engine)
         
         # But all build URLs transparently
-        google_url = google._build_search_url("test", None, "en", "desktop", 10)
-        bing_url = bing._build_search_url("test", None, "en", "desktop", 10)
-        yandex_url = yandex._build_search_url("test", None, "ru", "desktop", 10)
+        google_url = google.url_builder.build("test", None, "en", "desktop", 10)
+        bing_url = bing.url_builder.build("test", None, "en", "desktop", 10)
+        yandex_url = yandex.url_builder.build("test", None, "ru", "desktop", 10)
         
         # Each should have their engine's domain
         assert "google.com" in google_url
@@ -395,7 +393,7 @@ class TestPhilosophicalPrinciples:
             ]
         }
         
-        normalized = service.normalize_serp_data(raw_data)
+        normalized = service.data_normalizer.normalize(raw_data)
         
         # Positions should be 1, 2, 3
         positions = [r["position"] for r in normalized["results"]]
@@ -421,7 +419,7 @@ class TestSERPFeatureExtraction:
             }
         }
         
-        normalized = service.normalize_serp_data(raw_data)
+        normalized = service.data_normalizer.normalize(raw_data)
         
         assert "featured_snippet" in normalized
         assert normalized["featured_snippet"]["title"] == "What is Python?"
@@ -442,7 +440,7 @@ class TestSERPFeatureExtraction:
             }
         }
         
-        normalized = service.normalize_serp_data(raw_data)
+        normalized = service.data_normalizer.normalize(raw_data)
         
         assert "knowledge_panel" in normalized
         assert normalized["knowledge_panel"]["title"] == "Python"
@@ -462,7 +460,7 @@ class TestSERPFeatureExtraction:
             ]
         }
         
-        normalized = service.normalize_serp_data(raw_data)
+        normalized = service.data_normalizer.normalize(raw_data)
         
         assert "people_also_ask" in normalized
         assert len(normalized["people_also_ask"]) == 2
@@ -478,7 +476,7 @@ class TestLocationLanguageSupport:
         engine = AsyncEngine("test_token_123456789")
         service = GoogleSERPService(engine)
         
-        url = service._build_search_url(
+        url = service.url_builder.build(
             query="restaurants",
             location="New York",
             language="en",
@@ -496,9 +494,9 @@ class TestLocationLanguageSupport:
         engine = AsyncEngine("test_token_123456789")
         service = GoogleSERPService(engine)
         
-        url_en = service._build_search_url("test", None, "en", "desktop", 10)
-        url_es = service._build_search_url("test", None, "es", "desktop", 10)
-        url_fr = service._build_search_url("test", None, "fr", "desktop", 10)
+        url_en = service.url_builder.build("test", None, "en", "desktop", 10)
+        url_es = service.url_builder.build("test", None, "es", "desktop", 10)
+        url_fr = service.url_builder.build("test", None, "fr", "desktop", 10)
         
         assert "hl=en" in url_en
         assert "hl=es" in url_es
@@ -511,8 +509,8 @@ class TestLocationLanguageSupport:
         engine = AsyncEngine("test_token_123456789")
         service = GoogleSERPService(engine)
         
-        url_desktop = service._build_search_url("test", None, "en", "desktop", 10)
-        url_mobile = service._build_search_url("test", None, "en", "mobile", 10)
+        url_desktop = service.url_builder.build("test", None, "en", "desktop", 10)
+        url_mobile = service.url_builder.build("test", None, "en", "mobile", 10)
         
         # Mobile should have mobile-specific parameter
         assert "mobile" in url_mobile.lower() or "mobileaction" in url_mobile

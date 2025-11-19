@@ -77,7 +77,10 @@ class SearchService:
         from .serp import GoogleSERPService
         
         if self._google_service is None:
-            self._google_service = GoogleSERPService(self._client.engine)
+            self._google_service = GoogleSERPService(
+                engine=self._client.engine,
+                timeout=self._client.timeout,
+            )
         
         zone = zone or self._client.serp_zone
         return await self._google_service.search_async(
@@ -121,7 +124,10 @@ class SearchService:
         from .serp import BingSERPService
         
         if self._bing_service is None:
-            self._bing_service = BingSERPService(self._client.engine)
+            self._bing_service = BingSERPService(
+                engine=self._client.engine,
+                timeout=self._client.timeout,
+            )
         
         zone = zone or self._client.serp_zone
         return await self._bing_service.search_async(
@@ -150,7 +156,10 @@ class SearchService:
         from .serp import YandexSERPService
         
         if self._yandex_service is None:
-            self._yandex_service = YandexSERPService(self._client.engine)
+            self._yandex_service = YandexSERPService(
+                engine=self._client.engine,
+                timeout=self._client.timeout,
+            )
         
         zone = zone or self._client.serp_zone
         return await self._yandex_service.search_async(
