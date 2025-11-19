@@ -9,10 +9,6 @@ from typing import TypedDict, Optional, List, Literal, Union, Any, Dict
 from typing_extensions import NotRequired
 
 
-# ============================================================================
-# API PAYLOADS
-# ============================================================================
-
 class DatasetTriggerPayload(TypedDict, total=False):
     """Payload for /datasets/v3/trigger endpoint."""
     url: str
@@ -96,10 +92,6 @@ class ChatGPTPromptPayload(TypedDict, total=False):
     additional_prompt: NotRequired[str]
 
 
-# ============================================================================
-# API RESPONSES
-# ============================================================================
-
 class TriggerResponse(TypedDict):
     """Response from /datasets/v3/trigger."""
     snapshot_id: str
@@ -125,10 +117,6 @@ class ZoneInfo(TypedDict, total=False):
     created: NotRequired[str]
 
 
-# ============================================================================
-# CONFIGURATION TYPES
-# ============================================================================
-
 DeviceType = Literal["desktop", "mobile", "tablet"]
 ResponseFormat = Literal["raw", "json"]
 HTTPMethod = Literal["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]
@@ -136,20 +124,11 @@ SearchEngine = Literal["google", "bing", "yandex"]
 Platform = Literal["amazon", "linkedin", "chatgpt", "instagram", "reddit"]
 
 
-# ============================================================================
-# FUNCTION SIGNATURES (for type checking)
-# ============================================================================
-
-# Type aliases for common parameter patterns
 URLParam = Union[str, List[str]]
 OptionalURLParam = Optional[Union[str, List[str]]]
 StringParam = Union[str, List[str]]
 OptionalStringParam = Optional[Union[str, List[str]]]
 
-
-# ============================================================================
-# ACCOUNT INFO
-# ============================================================================
 
 class AccountInfo(TypedDict):
     """Account information returned by get_account_info()."""
@@ -159,10 +138,6 @@ class AccountInfo(TypedDict):
     token_valid: bool
     retrieved_at: str
 
-
-# ============================================================================
-# SERP TYPES
-# ============================================================================
 
 class SERPOrganicResult(TypedDict, total=False):
     """Single organic search result."""
@@ -199,10 +174,6 @@ class NormalizedSERPData(TypedDict, total=False):
     search_info: NotRequired[Dict[str, Any]]
     raw_html: NotRequired[str]
 
-
-# ============================================================================
-# EXPORTS
-# ============================================================================
 
 __all__ = [
     # Payloads

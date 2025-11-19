@@ -48,11 +48,10 @@ class BaseWebScraper(ABC):
         ...         pass
     """
     
-    # Class attributes (must be overridden by subclasses)
     DATASET_ID: str = ""
     PLATFORM_NAME: str = ""
-    MIN_POLL_TIMEOUT: int = 180  # Minimum recommended timeout for this platform
-    COST_PER_RECORD: float = 0.001  # Approximate cost per record
+    MIN_POLL_TIMEOUT: int = 180
+    COST_PER_RECORD: float = 0.001
     
     def __init__(self, bearer_token: Optional[str] = None):
         """
@@ -73,7 +72,6 @@ class BaseWebScraper(ABC):
                 f"Provide bearer_token parameter or set BRIGHTDATA_API_TOKEN environment variable."
             )
         
-        # Initialize core components
         self.engine = AsyncEngine(self.bearer_token)
         self.api_client = DatasetAPIClient(self.engine)
         self.workflow_executor = WorkflowExecutor(
@@ -82,15 +80,11 @@ class BaseWebScraper(ABC):
             cost_per_record=self.COST_PER_RECORD,
         )
         
-        # Verify subclass defined required attributes
         if not self.DATASET_ID:
             raise NotImplementedError(
                 f"{self.__class__.__name__} must define DATASET_ID class attribute"
             )
     
-    # ============================================================================
-    # CORE SCRAPING METHODS (URL-based extraction)
-    # ============================================================================
     
     async def scrape_async(
         self,
@@ -126,20 +120,15 @@ class BaseWebScraper(ABC):
             >>> result = await scraper.scrape_async("https://amazon.com/dp/B123")
             >>> print(result.data)
         """
-        # Normalize to list
         is_single = isinstance(urls, str)
         url_list = [urls] if is_single else urls
         
-        # Validate URLs
         if is_single:
             validate_url(urls)
         else:
             validate_url_list(url_list)
         
-        # Build payload
         payload = self._build_scrape_payload(url_list, **kwargs)
-        
-        # Execute trigger/poll/fetch workflow
         timeout = poll_timeout or self.MIN_POLL_TIMEOUT
         result = await self.workflow_executor.execute(
             payload=payload,
@@ -150,9 +139,7 @@ class BaseWebScraper(ABC):
             normalize_func=self.normalize_result,
         )
         
-        # Return single result or list based on input
         if is_single and isinstance(result.data, list) and len(result.data) == 1:
-            # Extract single result from list
             result.url = urls
             result.data = result.data[0]
             return result
@@ -176,9 +163,6 @@ class BaseWebScraper(ABC):
         return asyncio.run(self.scrape_async(urls, **kwargs))
     
     
-    # ============================================================================
-    # DATA NORMALIZATION (Override in subclasses if needed)
-    # ============================================================================
     
     def normalize_result(self, data: Any) -> Any:
         """
@@ -203,9 +187,6 @@ class BaseWebScraper(ABC):
         """
         return data
     
-    # ============================================================================
-    # PAYLOAD BUILDING (Override in subclasses for custom parameters)
-    # ============================================================================
     
     def _build_scrape_payload(
         self,
@@ -226,27 +207,12 @@ class BaseWebScraper(ABC):
             Payload list for Datasets API
         
         Example:
-            >>> # Base implementation
             >>> [{"url": "https://example.com"}]
             >>> 
-            >>> # Platform override might add parameters:
             >>> [{"url": "https://amazon.com/dp/B123", "reviews_count": 100}]
         """
         return [{"url": url} for url in urls]
     
-    # ============================================================================
-    # ABSTRACT METHODS (Platform-specific search - must implement)
-    # ============================================================================
-    
-    # NOTE: Search methods are platform-specific and defined in subclasses
-    # Examples:
-    # - LinkedInScraper: jobs(), profiles(), companies()
-    # - AmazonScraper: products(), reviews()
-    # - InstagramScraper: posts(), profiles()
-    
-    # ============================================================================
-    # UTILITY METHODS
-    # ============================================================================
     
     def __repr__(self) -> str:
         """String representation for debugging."""
@@ -254,10 +220,6 @@ class BaseWebScraper(ABC):
         dataset_id = self.DATASET_ID[:20] + "..." if len(self.DATASET_ID) > 20 else self.DATASET_ID
         return f"<{platform}Scraper dataset_id={dataset_id}>"
 
-
-# ============================================================================
-# HELPER FUNCTION
-# ============================================================================
 
 def _run_blocking(coro):
     """
@@ -267,11 +229,9 @@ def _run_blocking(coro):
     """
     try:
         loop = asyncio.get_running_loop()
-        # Inside event loop - use thread pool
         import concurrent.futures
         with concurrent.futures.ThreadPoolExecutor() as pool:
             future = pool.submit(asyncio.run, coro)
             return future.result()
     except RuntimeError:
-        # No event loop - use asyncio.run()
         return asyncio.run(coro)

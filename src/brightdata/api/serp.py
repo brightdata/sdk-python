@@ -267,7 +267,6 @@ class BaseSERPService(BaseAPI):
         - knowledge_panel: Knowledge panel if present
         - ads: Sponsored results if present
         """
-        # Base implementation returns data as-is
         if isinstance(data, dict):
             return data
         
@@ -328,26 +327,19 @@ class GoogleSERPService(BaseSERPService):
         
         # Base Google search URL
         url = f"https://www.google.com/search?q={encoded_query}"
-        
-        # Add number of results
         url += f"&num={num_results}"
         
-        # Add language
         if language:
             url += f"&hl={language}"
         
-        # Add location (Google uses gl parameter for country)
         if location:
-            # Convert location to country code if needed
             location_code = self._parse_location_to_code(location)
             if location_code:
                 url += f"&gl={location_code}"
         
-        # Device-specific parameters
         if device == "mobile":
             url += "&mobileaction=1"
         
-        # Additional parameters
         if "safe_search" in kwargs:
             url += f"&safe={'active' if kwargs['safe_search'] else 'off'}"
         
@@ -392,7 +384,7 @@ class GoogleSERPService(BaseSERPService):
             return location_lower.upper()
         
         # Look up in mapping
-        return location_map.get(location_lower, "us")  # Default to US
+        return location_map.get(location_lower, "us")
     
     def normalize_serp_data(self, data: Any) -> NormalizedSERPData:
         """
@@ -482,11 +474,8 @@ class BingSERPService(BaseSERPService):
         """Build Bing search URL."""
         encoded_query = quote_plus(query)
         url = f"https://www.bing.com/search?q={encoded_query}"
-        
-        # Add count parameter
         url += f"&count={num_results}"
         
-        # Add market (language_COUNTRY format)
         if location:
             market = f"{language}_{self._parse_location_to_code(location)}"
             url += f"&mkt={market}"
@@ -495,7 +484,6 @@ class BingSERPService(BaseSERPService):
     
     def _parse_location_to_code(self, location: str) -> str:
         """Parse location to Bing market code."""
-        # Simplified - use same logic as Google for now
         if len(location) == 2:
             return location.upper()
         
@@ -529,11 +517,8 @@ class YandexSERPService(BaseSERPService):
         """Build Yandex search URL."""
         encoded_query = quote_plus(query)
         url = f"https://yandex.com/search/?text={encoded_query}"
-        
-        # Add number of results
         url += f"&numdoc={num_results}"
         
-        # Add language/region
         if location:
             region_code = self._parse_location_to_code(location)
             url += f"&lr={region_code}"
@@ -542,12 +527,10 @@ class YandexSERPService(BaseSERPService):
     
     def _parse_location_to_code(self, location: str) -> str:
         """Parse location to Yandex region code."""
-        # Yandex uses numeric region IDs
-        # Simplified mapping
         region_map = {
             "russia": "225",
             "ukraine": "187",
             "belarus": "149",
         }
         
-        return region_map.get(location.lower(), "225")  # Default to Russia
+        return region_map.get(location.lower(), "225")

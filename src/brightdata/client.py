@@ -13,12 +13,10 @@ import asyncio
 from typing import Optional, Dict, Any, Union, List
 from datetime import datetime, timezone
 
-# Try to load .env file if python-dotenv is available
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
-    # python-dotenv not installed, skip .env loading
     pass
 
 from .core.engine import AsyncEngine
@@ -117,20 +115,14 @@ class BrightDataClient:
             ...     validate_token=True
             ... )
         """
-        # Token management - try multiple environment variables
         self.token = self._load_token(token)
-        
-        # Customer ID (optional)
         self.customer_id = customer_id or os.getenv("BRIGHTDATA_CUSTOMER_ID")
-        
-        # Configuration
         self.timeout = timeout
         self.web_unlocker_zone = web_unlocker_zone or self.DEFAULT_WEB_UNLOCKER_ZONE
         self.serp_zone = serp_zone or self.DEFAULT_SERP_ZONE
         self.browser_zone = browser_zone or self.DEFAULT_BROWSER_ZONE
         self.auto_create_zones = auto_create_zones
         
-        # Initialize core engine with rate limiting
         self.engine = AsyncEngine(
             self.token, 
             timeout=timeout,
@@ -138,17 +130,13 @@ class BrightDataClient:
             rate_period=rate_period
         )
         
-        # Service instances (lazy initialization)
         self._scrape_service: Optional[ScrapeService] = None
         self._search_service: Optional[SearchService] = None
         self._crawler_service: Optional[CrawlerService] = None
         self._web_unlocker_service: Optional[WebUnlockerService] = None
-    
-        # Connection state
         self._is_connected = False
         self._account_info: Optional[Dict[str, Any]] = None
         
-        # Validate token if requested
         if validate_token:
             self._validate_token_sync()
     
@@ -211,9 +199,6 @@ class BrightDataClient:
                 f"Check your token at: https://brightdata.com/cp/api_keys"
             )
     
-    # ============================================================================
-    # SERVICE PROPERTIES (Hierarchical Access)
-    # ============================================================================
     
     @property
     def scrape(self) -> ScrapeService:
@@ -282,9 +267,6 @@ class BrightDataClient:
             self._crawler_service = CrawlerService(self)
         return self._crawler_service
     
-    # ============================================================================
-    # CONNECTION MANAGEMENT
-    # ============================================================================
     
     async def test_connection(self) -> bool:
         """
@@ -306,14 +288,12 @@ class BrightDataClient:
         Example:
             >>> is_valid = await client.test_connection()
             >>> if is_valid:
-            ...     print("✅ Connected successfully!")
+            ...     print("Connected successfully!")
             >>> else:
-            ...     print("❌ Connection failed")
+            ...     print("Connection failed")
         """
         try:
             async with self.engine:
-                # Try to get zones list - lightweight API call
-                # Use direct session request to read response within context
                 async with self.engine.get_from_url(
                     f"{self.engine.BASE_URL}/zone/get_active_zones"
                 ) as response:
@@ -321,12 +301,10 @@ class BrightDataClient:
                         self._is_connected = True
                         return True
                     else:
-                        # Any non-200 status means connection test failed
                         self._is_connected = False
                         return False
         
-        except Exception as e:
-            # Never raise exceptions from test_connection - always return False
+        except Exception:
             self._is_connected = False
             return False
     
@@ -358,7 +336,6 @@ class BrightDataClient:
         
         try:
             async with self.engine:
-                # Get zones - read response within context
                 async with await self.engine.get_from_url(
                     f"{self.engine.BASE_URL}/zone/get_active_zones"
                 ) as zones_response:
@@ -404,9 +381,6 @@ class BrightDataClient:
         except Exception:
             return False
     
-    # ============================================================================
-    # LEGACY COMPATIBILITY (Flat API - for backward compatibility)
-    # ============================================================================
     
     async def scrape_url_async(
         self,
@@ -441,9 +415,6 @@ class BrightDataClient:
         """Synchronous version of scrape_url_async()."""
         return asyncio.run(self.scrape_url_async(*args, **kwargs))
     
-    # ============================================================================
-    # CONTEXT MANAGER SUPPORT
-    # ============================================================================
     
     async def __aenter__(self):
         """Async context manager entry."""
@@ -457,13 +428,8 @@ class BrightDataClient:
     def __repr__(self) -> str:
         """String representation for debugging."""
         token_preview = f"{self.token[:10]}...{self.token[-5:]}" if self.token else "None"
-        status = "✓ Connected" if self._is_connected else "⚠ Not tested"
+        status = "Connected" if self._is_connected else "Not tested"
         return f"<BrightDataClient token={token_preview} status='{status}'>"
 
 
-# ============================================================================
-# CONVENIENCE ALIASES
-# ============================================================================
-
-# Alias for backward compatibility
 BrightData = BrightDataClient

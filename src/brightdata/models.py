@@ -129,7 +129,7 @@ class BaseResult:
     
     def __repr__(self) -> str:
         """String representation for debugging."""
-        status = "✓" if self.success else "✗"
+        status = "success" if self.success else "error"
         cost_str = f"${self.cost:.4f}" if self.cost else "N/A"
         elapsed = f"{self.elapsed_ms():.2f}ms" if self.elapsed_ms() else "N/A"
         return f"<{self.__class__.__name__} {status} cost={cost_str} elapsed={elapsed}>"

@@ -66,7 +66,6 @@ class WorkflowExecutor:
         """
         trigger_sent_at = datetime.now(timezone.utc)
         
-        # Step 1: Trigger collection
         try:
             snapshot_id = await self.api_client.trigger(
                 payload=payload,
@@ -99,7 +98,6 @@ class WorkflowExecutor:
         
         snapshot_id_received_at = datetime.now(timezone.utc)
         
-        # Step 2 & 3: Poll until ready and fetch data
         result = await self._poll_and_fetch(
             snapshot_id=snapshot_id,
             poll_interval=poll_interval,
@@ -151,7 +149,6 @@ class WorkflowExecutor:
             cost_per_record=self.cost_per_record,
         )
         
-        # Apply normalization if we got data and have a normalize function
         if result.success and result.data and normalize_func:
             result.data = normalize_func(result.data)
         
