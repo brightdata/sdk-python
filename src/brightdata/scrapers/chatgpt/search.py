@@ -13,9 +13,10 @@ from typing import Union, List, Optional, Dict, Any
 from datetime import datetime, timezone
 
 from ...core.engine import AsyncEngine
-
 from ...models import ScrapeResult
 from ...exceptions import ValidationError, APIError
+from ...utils.function_detection import get_caller_function_name
+from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT
 from ..api_client import DatasetAPIClient
 from ..workflow import WorkflowExecutor
 
@@ -67,7 +68,7 @@ class ChatGPTSearchService:
         country: Optional[Union[str, List[str]]] = None,
         secondaryPrompt: Optional[Union[str, List[str]]] = None,
         webSearch: Optional[Union[bool, List[bool]]] = None,
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
         Send prompt(s) to ChatGPT (async).
@@ -149,7 +150,7 @@ class ChatGPTSearchService:
         country: Optional[Union[str, List[str]]] = None,
         secondaryPrompt: Optional[Union[str, List[str]]] = None,
         webSearch: Optional[Union[bool, List[bool]]] = None,
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
         Send prompt(s) to ChatGPT (sync wrapper).
@@ -215,16 +216,12 @@ class ChatGPTSearchService:
     ) -> ScrapeResult:
         """Execute using standard async workflow (/trigger endpoint with polling)."""
         # Use workflow executor for trigger/poll/fetch
-        import inspect
-        frame = inspect.currentframe()
-        sdk_function = None
-        if frame and frame.f_back:
-            sdk_function = frame.f_back.f_code.co_name
+        sdk_function = get_caller_function_name()
         
         result = await self.workflow_executor.execute(
             payload=payload,
             dataset_id=self.DATASET_ID,
-            poll_interval=10,
+            poll_interval=DEFAULT_POLL_INTERVAL,
             poll_timeout=timeout,
             include_errors=True,
             sdk_function=sdk_function,

@@ -26,6 +26,8 @@ from ..base import BaseWebScraper
 from ..registry import register
 from ...models import ScrapeResult
 from ...utils.validation import validate_url, validate_url_list
+from ...utils.function_detection import get_caller_function_name
+from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM
 from ...exceptions import ValidationError
 
 
@@ -59,7 +61,7 @@ class FacebookScraper(BaseWebScraper):
     DATASET_ID_REELS = "gd_lyclm3ey2q6rww027t"  # Reels by Profile URL
     
     PLATFORM_NAME = "facebook"
-    MIN_POLL_TIMEOUT = 240
+    MIN_POLL_TIMEOUT = DEFAULT_TIMEOUT_MEDIUM
     COST_PER_RECORD = 0.002
     
     # ============================================================================
@@ -73,7 +75,7 @@ class FacebookScraper(BaseWebScraper):
         posts_to_not_include: Optional[List[str]] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Collect posts from Facebook profile URL (async).
@@ -124,7 +126,7 @@ class FacebookScraper(BaseWebScraper):
         posts_to_not_include: Optional[List[str]] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """Collect posts from Facebook profile URL (sync wrapper)."""
         return asyncio.run(self.posts_by_profile_async(
@@ -142,7 +144,7 @@ class FacebookScraper(BaseWebScraper):
         posts_to_not_include: Optional[List[str]] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Collect posts from Facebook group URL (async).
@@ -191,7 +193,7 @@ class FacebookScraper(BaseWebScraper):
         posts_to_not_include: Optional[List[str]] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """Collect posts from Facebook group URL (sync wrapper)."""
         return asyncio.run(self.posts_by_group_async(
@@ -205,7 +207,7 @@ class FacebookScraper(BaseWebScraper):
     async def posts_by_url_async(
         self,
         url: Union[str, List[str]],
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Collect detailed data from specific Facebook post URLs (async).
@@ -241,7 +243,7 @@ class FacebookScraper(BaseWebScraper):
     def posts_by_url(
         self,
         url: Union[str, List[str]],
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """Collect detailed data from specific Facebook post URLs (sync wrapper)."""
         return asyncio.run(self.posts_by_url_async(url, timeout))
@@ -257,7 +259,7 @@ class FacebookScraper(BaseWebScraper):
         comments_to_not_include: Optional[List[str]] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Collect comments from Facebook post URL (async).
@@ -308,7 +310,7 @@ class FacebookScraper(BaseWebScraper):
         comments_to_not_include: Optional[List[str]] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """Collect comments from Facebook post URL (sync wrapper)."""
         return asyncio.run(self.comments_async(
@@ -326,7 +328,7 @@ class FacebookScraper(BaseWebScraper):
         posts_to_not_include: Optional[List[str]] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Collect reels from Facebook profile URL (async).
@@ -375,7 +377,7 @@ class FacebookScraper(BaseWebScraper):
         posts_to_not_include: Optional[List[str]] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """Collect reels from Facebook profile URL (sync wrapper)."""
         return asyncio.run(self.reels_async(
@@ -406,10 +408,7 @@ class FacebookScraper(BaseWebScraper):
             ScrapeResult(s)
         """
         if sdk_function is None:
-            import inspect
-            frame = inspect.currentframe()
-            if frame and frame.f_back:
-                sdk_function = frame.f_back.f_code.co_name
+            sdk_function = get_caller_function_name()
         
         is_single = isinstance(url, str)
         url_list = [url] if is_single else url
@@ -419,7 +418,7 @@ class FacebookScraper(BaseWebScraper):
         result = await self.workflow_executor.execute(
             payload=payload,
             dataset_id=dataset_id,
-            poll_interval=10,
+            poll_interval=DEFAULT_POLL_INTERVAL,
             poll_timeout=timeout,
             include_errors=True,
             normalize_func=self.normalize_result,
@@ -442,7 +441,7 @@ class FacebookScraper(BaseWebScraper):
         comments_to_not_include: Optional[List[str]] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
         sdk_function: Optional[str] = None,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
@@ -487,7 +486,7 @@ class FacebookScraper(BaseWebScraper):
         result = await self.workflow_executor.execute(
             payload=payload,
             dataset_id=dataset_id,
-            poll_interval=10,
+            poll_interval=DEFAULT_POLL_INTERVAL,
             poll_timeout=timeout,
             include_errors=True,
             normalize_func=self.normalize_result,

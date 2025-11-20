@@ -14,14 +14,15 @@ from datetime import datetime, timezone
 
 from ..models import ScrapeResult
 from ..exceptions import APIError
+from ..constants import DEFAULT_POLL_INTERVAL, DEFAULT_POLL_TIMEOUT
 
 
 async def poll_until_ready(
     get_status_func: Callable[[str], Awaitable[str]],
     fetch_result_func: Callable[[str], Awaitable[Any]],
     snapshot_id: str,
-    poll_interval: int = 10,
-    poll_timeout: int = 600,
+    poll_interval: int = DEFAULT_POLL_INTERVAL,
+    poll_timeout: int = DEFAULT_POLL_TIMEOUT,
     trigger_sent_at: datetime | None = None,
     snapshot_id_received_at: datetime | None = None,
     platform: str | None = None,

@@ -14,6 +14,8 @@ from ...core.engine import AsyncEngine
 from ...models import ScrapeResult
 from ...exceptions import ValidationError, APIError
 from ...utils.validation import validate_url, validate_url_list
+from ...utils.function_detection import get_caller_function_name
+from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM
 from ..api_client import DatasetAPIClient
 from ..workflow import WorkflowExecutor
 
@@ -70,7 +72,7 @@ class InstagramSearchScraper:
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         post_type: Optional[str] = None,
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Discover recent Instagram posts from a public profile (async).
@@ -124,7 +126,7 @@ class InstagramSearchScraper:
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         post_type: Optional[str] = None,
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """Discover recent Instagram posts from a public profile (sync wrapper)."""
         return asyncio.run(self.posts_async(
@@ -142,7 +144,7 @@ class InstagramSearchScraper:
         posts_to_not_include: Optional[List[str]] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Discover Instagram Reels from profile or search URL (async).
@@ -193,7 +195,7 @@ class InstagramSearchScraper:
         posts_to_not_include: Optional[List[str]] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """Discover Instagram Reels from profile or search URL (sync wrapper)."""
         return asyncio.run(self.reels_async(
@@ -213,7 +215,7 @@ class InstagramSearchScraper:
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         post_type: Optional[str] = None,
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Discover content with additional parameters using standard async workflow.
@@ -252,15 +254,12 @@ class InstagramSearchScraper:
             payload.append(item)
         
         if sdk_function is None:
-            import inspect
-            frame = inspect.currentframe()
-            if frame and frame.f_back:
-                sdk_function = frame.f_back.f_code.co_name
+            sdk_function = get_caller_function_name()
         
         result = await self.workflow_executor.execute(
             payload=payload,
             dataset_id=dataset_id,
-            poll_interval=10,
+            poll_interval=DEFAULT_POLL_INTERVAL,
             poll_timeout=timeout,
             include_errors=True,
             normalize_func=None,

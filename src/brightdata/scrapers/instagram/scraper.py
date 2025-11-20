@@ -26,6 +26,8 @@ from ..base import BaseWebScraper
 from ..registry import register
 from ...models import ScrapeResult
 from ...utils.validation import validate_url, validate_url_list
+from ...utils.function_detection import get_caller_function_name
+from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM
 from ...exceptions import ValidationError
 
 
@@ -58,7 +60,7 @@ class InstagramScraper(BaseWebScraper):
     DATASET_ID_REELS = "gd_lyclm20il4r5helnj"  # Reels by URL
     
     PLATFORM_NAME = "instagram"
-    MIN_POLL_TIMEOUT = 240
+    MIN_POLL_TIMEOUT = DEFAULT_TIMEOUT_MEDIUM
     COST_PER_RECORD = 0.002
     
     # ============================================================================
@@ -68,7 +70,7 @@ class InstagramScraper(BaseWebScraper):
     async def profiles_async(
         self,
         url: Union[str, List[str]],
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Collect profile details from Instagram profile URL (async).
@@ -104,7 +106,7 @@ class InstagramScraper(BaseWebScraper):
     def profiles(
         self,
         url: Union[str, List[str]],
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """Collect profile details from Instagram profile URL (sync wrapper)."""
         return asyncio.run(self.profiles_async(url, timeout))
@@ -116,7 +118,7 @@ class InstagramScraper(BaseWebScraper):
     async def posts_async(
         self,
         url: Union[str, List[str]],
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Collect detailed data from Instagram post URLs (async).
@@ -152,7 +154,7 @@ class InstagramScraper(BaseWebScraper):
     def posts(
         self,
         url: Union[str, List[str]],
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """Collect detailed data from Instagram post URLs (sync wrapper)."""
         return asyncio.run(self.posts_async(url, timeout))
@@ -164,7 +166,7 @@ class InstagramScraper(BaseWebScraper):
     async def comments_async(
         self,
         url: Union[str, List[str]],
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Collect comments from Instagram post URL (async).
@@ -200,7 +202,7 @@ class InstagramScraper(BaseWebScraper):
     def comments(
         self,
         url: Union[str, List[str]],
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """Collect comments from Instagram post URL (sync wrapper)."""
         return asyncio.run(self.comments_async(url, timeout))
@@ -212,7 +214,7 @@ class InstagramScraper(BaseWebScraper):
     async def reels_async(
         self,
         url: Union[str, List[str]],
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Collect detailed data from Instagram reel URLs (async).
@@ -248,7 +250,7 @@ class InstagramScraper(BaseWebScraper):
     def reels(
         self,
         url: Union[str, List[str]],
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """Collect detailed data from Instagram reel URLs (sync wrapper)."""
         return asyncio.run(self.reels_async(url, timeout))
@@ -277,10 +279,7 @@ class InstagramScraper(BaseWebScraper):
             ScrapeResult(s)
         """
         if sdk_function is None:
-            import inspect
-            frame = inspect.currentframe()
-            if frame and frame.f_back:
-                sdk_function = frame.f_back.f_code.co_name
+            sdk_function = get_caller_function_name()
         
         is_single = isinstance(url, str)
         url_list = [url] if is_single else url
@@ -290,7 +289,7 @@ class InstagramScraper(BaseWebScraper):
         result = await self.workflow_executor.execute(
             payload=payload,
             dataset_id=dataset_id,
-            poll_interval=10,
+            poll_interval=DEFAULT_POLL_INTERVAL,
             poll_timeout=timeout,
             include_errors=True,
             normalize_func=self.normalize_result,

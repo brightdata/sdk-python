@@ -13,6 +13,8 @@ from typing import List, Dict, Any, Optional, Union
 from ..base import BaseWebScraper
 from ..registry import register
 from ...models import ScrapeResult
+from ...utils.function_detection import get_caller_function_name
+from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_LONG
 from ...exceptions import ValidationError
 
 
@@ -39,7 +41,7 @@ class ChatGPTScraper(BaseWebScraper):
     
     DATASET_ID = "gd_m7aof0k82r803d5bjm"  # ChatGPT dataset
     PLATFORM_NAME = "chatgpt"
-    MIN_POLL_TIMEOUT = 120  # ChatGPT usually responds faster
+    MIN_POLL_TIMEOUT = DEFAULT_TIMEOUT_LONG  # ChatGPT usually responds faster
     COST_PER_RECORD = 0.005  # ChatGPT interactions cost more
     
     # ============================================================================
@@ -52,7 +54,7 @@ class ChatGPTScraper(BaseWebScraper):
         country: str = "us",
         web_search: bool = False,
         additional_prompt: Optional[str] = None,
-        poll_interval: int = 10,
+        poll_interval: int = DEFAULT_POLL_INTERVAL,
         poll_timeout: Optional[int] = None,
     ) -> ScrapeResult:
         """
@@ -91,11 +93,7 @@ class ChatGPTScraper(BaseWebScraper):
         
         # Execute workflow
         timeout = poll_timeout or self.MIN_POLL_TIMEOUT
-        import inspect
-        frame = inspect.currentframe()
-        sdk_function = None
-        if frame and frame.f_back:
-            sdk_function = frame.f_back.f_code.co_name
+        sdk_function = get_caller_function_name()
         
         result = await self.workflow_executor.execute(
             payload=payload,
@@ -130,7 +128,7 @@ class ChatGPTScraper(BaseWebScraper):
         countries: Optional[List[str]] = None,
         web_searches: Optional[List[bool]] = None,
         additional_prompts: Optional[List[str]] = None,
-        poll_interval: int = 10,
+        poll_interval: int = DEFAULT_POLL_INTERVAL,
         poll_timeout: Optional[int] = None,
     ) -> ScrapeResult:
         """
@@ -176,11 +174,7 @@ class ChatGPTScraper(BaseWebScraper):
         
         # Execute workflow
         timeout = poll_timeout or self.MIN_POLL_TIMEOUT
-        import inspect
-        frame = inspect.currentframe()
-        sdk_function = None
-        if frame and frame.f_back:
-            sdk_function = frame.f_back.f_code.co_name
+        sdk_function = get_caller_function_name()
         
         result = await self.workflow_executor.execute(
             payload=payload,

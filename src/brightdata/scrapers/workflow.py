@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 
 from ..models import ScrapeResult
 from ..exceptions import APIError
+from ..constants import DEFAULT_POLL_INTERVAL, DEFAULT_POLL_TIMEOUT
 from .api_client import DatasetAPIClient
 
 
@@ -45,8 +46,8 @@ class WorkflowExecutor:
         self,
         payload: List[Dict[str, Any]],
         dataset_id: str,
-        poll_interval: int = 10,
-        poll_timeout: int = 600,
+        poll_interval: int = DEFAULT_POLL_INTERVAL,
+        poll_timeout: int = DEFAULT_POLL_TIMEOUT,
         include_errors: bool = True,
         normalize_func: Optional[Callable[[Any], Any]] = None,
         sdk_function: Optional[str] = None,

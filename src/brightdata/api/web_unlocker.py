@@ -16,6 +16,7 @@ from ..utils.validation import (
     validate_http_method,
 )
 from ..utils.url import extract_root_domain
+from ..utils.function_detection import get_caller_function_name
 from ..exceptions import ValidationError, APIError
 
 
@@ -117,10 +118,9 @@ class WebUnlockerService(BaseAPI):
         if country:
             payload["country"] = country.upper()
         
-        import inspect
-        frame = inspect.currentframe()
-        if frame and frame.f_back:
-            payload["sdk_function"] = frame.f_back.f_code.co_name
+        sdk_function = get_caller_function_name()
+        if sdk_function:
+            payload["sdk_function"] = sdk_function
         
         try:
             # Make the request and read response body immediately

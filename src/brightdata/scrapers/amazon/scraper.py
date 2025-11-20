@@ -17,6 +17,8 @@ from ..base import BaseWebScraper
 from ..registry import register
 from ...models import ScrapeResult
 from ...utils.validation import validate_url, validate_url_list
+from ...utils.function_detection import get_caller_function_name
+from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM
 from ...exceptions import ValidationError, APIError
 
 
@@ -46,7 +48,7 @@ class AmazonScraper(BaseWebScraper):
     DATASET_ID_SELLERS = "gd_lwjkkolem8c4o7j3s"  # Amazon Sellers
     
     PLATFORM_NAME = "amazon"
-    MIN_POLL_TIMEOUT = 240  # Amazon scrapes can take longer
+    MIN_POLL_TIMEOUT = DEFAULT_TIMEOUT_MEDIUM  # Amazon scrapes can take longer
     COST_PER_RECORD = 0.001
     
     # ============================================================================
@@ -56,7 +58,7 @@ class AmazonScraper(BaseWebScraper):
     async def products_async(
         self,
         url: Union[str, List[str]],
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Scrape Amazon products from URLs (async).
@@ -91,7 +93,7 @@ class AmazonScraper(BaseWebScraper):
     def products(
         self,
         url: Union[str, List[str]],
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Scrape Amazon products (sync wrapper).
@@ -116,7 +118,7 @@ class AmazonScraper(BaseWebScraper):
         pastDays: Optional[int] = None,
         keyWord: Optional[str] = None,
         numOfReviews: Optional[int] = None,
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Scrape Amazon product reviews from URLs (async).
@@ -167,16 +169,12 @@ class AmazonScraper(BaseWebScraper):
         # Use reviews dataset with standard async workflow
         is_single = isinstance(url, str)
         
-        import inspect
-        frame = inspect.currentframe()
-        sdk_function = None
-        if frame and frame.f_back:
-            sdk_function = frame.f_back.f_code.co_name
+        sdk_function = get_caller_function_name()
         
         result = await self.workflow_executor.execute(
             payload=payload,
             dataset_id=self.DATASET_ID_REVIEWS,
-            poll_interval=10,
+            poll_interval=DEFAULT_POLL_INTERVAL,
             poll_timeout=timeout,
             include_errors=True,
             sdk_function=sdk_function,
@@ -196,7 +194,7 @@ class AmazonScraper(BaseWebScraper):
         pastDays: Optional[int] = None,
         keyWord: Optional[str] = None,
         numOfReviews: Optional[int] = None,
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Scrape Amazon reviews (sync wrapper).
@@ -220,7 +218,7 @@ class AmazonScraper(BaseWebScraper):
     async def sellers_async(
         self,
         url: Union[str, List[str]],
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Scrape Amazon seller information from URLs (async).
@@ -255,7 +253,7 @@ class AmazonScraper(BaseWebScraper):
     def sellers(
         self,
         url: Union[str, List[str]],
-        timeout: int = 240,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Scrape Amazon sellers (sync wrapper).
@@ -293,16 +291,12 @@ class AmazonScraper(BaseWebScraper):
         payload = [{"url": u} for u in url_list]
         
         # Use standard async workflow (trigger/poll/fetch)
-        import inspect
-        frame = inspect.currentframe()
-        sdk_function = None
-        if frame and frame.f_back:
-            sdk_function = frame.f_back.f_code.co_name
+        sdk_function = get_caller_function_name()
         
         result = await self.workflow_executor.execute(
             payload=payload,
             dataset_id=dataset_id,
-            poll_interval=10,
+            poll_interval=DEFAULT_POLL_INTERVAL,
             poll_timeout=timeout,
             include_errors=True,
             normalize_func=self.normalize_result,

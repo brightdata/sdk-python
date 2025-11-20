@@ -12,9 +12,10 @@ from typing import Union, List, Optional, Dict, Any
 from datetime import datetime, timezone
 
 from ...core.engine import AsyncEngine
-
 from ...models import ScrapeResult
 from ...exceptions import ValidationError, APIError
+from ...utils.function_detection import get_caller_function_name
+from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT
 from ..api_client import DatasetAPIClient
 from ..workflow import WorkflowExecutor
 
@@ -69,7 +70,7 @@ class LinkedInSearchScraper:
         profile_url: Union[str, List[str]],
         start_date: Optional[Union[str, List[str]]] = None,
         end_date: Optional[Union[str, List[str]]] = None,
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
         Discover posts from LinkedIn profile(s) within date range.
@@ -119,7 +120,7 @@ class LinkedInSearchScraper:
         profile_url: Union[str, List[str]],
         start_date: Optional[Union[str, List[str]]] = None,
         end_date: Optional[Union[str, List[str]]] = None,
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
         Discover posts from profile(s) (sync).
@@ -136,7 +137,7 @@ class LinkedInSearchScraper:
         self,
         firstName: Union[str, List[str]],
         lastName: Optional[Union[str, List[str]]] = None,
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
         Find LinkedIn profiles by name.
@@ -179,7 +180,7 @@ class LinkedInSearchScraper:
         self,
         firstName: Union[str, List[str]],
         lastName: Optional[Union[str, List[str]]] = None,
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
         Find profiles by name (sync).
@@ -204,7 +205,7 @@ class LinkedInSearchScraper:
         remote: Optional[bool] = None,
         company: Optional[Union[str, List[str]]] = None,
         locationRadius: Optional[Union[str, List[str]]] = None,
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
         Discover LinkedIn jobs by criteria.
@@ -306,7 +307,7 @@ class LinkedInSearchScraper:
         remote: Optional[bool] = None,
         company: Optional[Union[str, List[str]]] = None,
         locationRadius: Optional[Union[str, List[str]]] = None,
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
         Discover jobs (sync).
@@ -380,16 +381,12 @@ class LinkedInSearchScraper:
             ScrapeResult with search results
         """
         # Use workflow executor for trigger/poll/fetch
-        import inspect
-        frame = inspect.currentframe()
-        sdk_function = None
-        if frame and frame.f_back:
-            sdk_function = frame.f_back.f_code.co_name
+        sdk_function = get_caller_function_name()
         
         result = await self.workflow_executor.execute(
             payload=payload,
             dataset_id=dataset_id,
-            poll_interval=10,
+            poll_interval=DEFAULT_POLL_INTERVAL,
             poll_timeout=timeout,
             include_errors=True,
             sdk_function=sdk_function,

@@ -13,6 +13,7 @@ from ...types import NormalizedSERPData
 from ...exceptions import ValidationError, APIError
 from ...utils.validation import validate_zone_name
 from ...utils.retry import retry_with_backoff
+from ...utils.function_detection import get_caller_function_name
 
 
 class BaseSERPService:
@@ -137,10 +138,9 @@ class BaseSERPService:
             "method": "GET",
         }
         
-        import inspect
-        frame = inspect.currentframe()
-        if frame and frame.f_back:
-            payload["sdk_function"] = frame.f_back.f_code.co_name
+        sdk_function = get_caller_function_name()
+        if sdk_function:
+            payload["sdk_function"] = sdk_function
         
         async def _make_request():
             async with self.engine.post_to_url(

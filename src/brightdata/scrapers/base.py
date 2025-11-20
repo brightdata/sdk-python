@@ -17,6 +17,12 @@ from ..core.engine import AsyncEngine
 from ..models import ScrapeResult
 from ..exceptions import ValidationError
 from ..utils.validation import validate_url, validate_url_list
+from ..utils.function_detection import get_caller_function_name
+from ..constants import (
+    DEFAULT_POLL_INTERVAL,
+    DEFAULT_MIN_POLL_TIMEOUT,
+    DEFAULT_COST_PER_RECORD,
+)
 from .api_client import DatasetAPIClient
 from .workflow import WorkflowExecutor
 
@@ -50,8 +56,8 @@ class BaseWebScraper(ABC):
     
     DATASET_ID: str = ""
     PLATFORM_NAME: str = ""
-    MIN_POLL_TIMEOUT: int = 180
-    COST_PER_RECORD: float = 0.001
+    MIN_POLL_TIMEOUT: int = DEFAULT_MIN_POLL_TIMEOUT
+    COST_PER_RECORD: float = DEFAULT_COST_PER_RECORD
     
     def __init__(self, bearer_token: Optional[str] = None):
         """
@@ -90,7 +96,7 @@ class BaseWebScraper(ABC):
         self,
         urls: Union[str, List[str]],
         include_errors: bool = True,
-        poll_interval: int = 10,
+        poll_interval: int = DEFAULT_POLL_INTERVAL,
         poll_timeout: Optional[int] = None,
         **kwargs
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
@@ -131,11 +137,7 @@ class BaseWebScraper(ABC):
         payload = self._build_scrape_payload(url_list, **kwargs)
         timeout = poll_timeout or self.MIN_POLL_TIMEOUT
         
-        import inspect
-        frame = inspect.currentframe()
-        sdk_function = None
-        if frame and frame.f_back:
-            sdk_function = frame.f_back.f_code.co_name
+        sdk_function = get_caller_function_name()
         
         result = await self.workflow_executor.execute(
             payload=payload,

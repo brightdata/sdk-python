@@ -26,6 +26,8 @@ from ..base import BaseWebScraper
 from ..registry import register
 from ...models import ScrapeResult
 from ...utils.validation import validate_url, validate_url_list
+from ...utils.function_detection import get_caller_function_name
+from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT
 from ...exceptions import ValidationError, APIError
 
 
@@ -57,7 +59,7 @@ class LinkedInScraper(BaseWebScraper):
     DATASET_ID_POSTS = "gd_lwae11111pwxp6c4ea"  # Posts
     
     PLATFORM_NAME = "linkedin"
-    MIN_POLL_TIMEOUT = 180
+    MIN_POLL_TIMEOUT = DEFAULT_TIMEOUT_SHORT
     COST_PER_RECORD = 0.002
     
     # ============================================================================
@@ -67,7 +69,7 @@ class LinkedInScraper(BaseWebScraper):
     async def posts_async(
         self,
         url: Union[str, List[str]],
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Scrape LinkedIn posts from URLs (async).
@@ -102,7 +104,7 @@ class LinkedInScraper(BaseWebScraper):
     def posts(
         self,
         url: Union[str, List[str]],
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Scrape LinkedIn posts (sync wrapper).
@@ -118,7 +120,7 @@ class LinkedInScraper(BaseWebScraper):
     async def jobs_async(
         self,
         url: Union[str, List[str]],
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Scrape LinkedIn jobs from URLs (async).
@@ -152,7 +154,7 @@ class LinkedInScraper(BaseWebScraper):
     def jobs(
         self,
         url: Union[str, List[str]],
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """Scrape LinkedIn jobs (sync wrapper)."""
         return asyncio.run(self.jobs_async(url, timeout))
@@ -164,7 +166,7 @@ class LinkedInScraper(BaseWebScraper):
     async def profiles_async(
         self,
         url: Union[str, List[str]],
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Scrape LinkedIn profiles from URLs (async).
@@ -198,7 +200,7 @@ class LinkedInScraper(BaseWebScraper):
     def profiles(
         self,
         url: Union[str, List[str]],
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """Scrape LinkedIn profiles (sync wrapper)."""
         return asyncio.run(self.profiles_async(url, timeout))
@@ -210,7 +212,7 @@ class LinkedInScraper(BaseWebScraper):
     async def companies_async(
         self,
         url: Union[str, List[str]],
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Scrape LinkedIn companies from URLs (async).
@@ -244,7 +246,7 @@ class LinkedInScraper(BaseWebScraper):
     def companies(
         self,
         url: Union[str, List[str]],
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """Scrape LinkedIn companies (sync wrapper)."""
         return asyncio.run(self.companies_async(url, timeout))
@@ -278,16 +280,12 @@ class LinkedInScraper(BaseWebScraper):
         payload = [{"url": u} for u in url_list]
         
         # Use standard async workflow (trigger/poll/fetch)
-        import inspect
-        frame = inspect.currentframe()
-        sdk_function = None
-        if frame and frame.f_back:
-            sdk_function = frame.f_back.f_code.co_name
+        sdk_function = get_caller_function_name()
         
         result = await self.workflow_executor.execute(
             payload=payload,
             dataset_id=dataset_id,
-            poll_interval=10,
+            poll_interval=DEFAULT_POLL_INTERVAL,
             poll_timeout=timeout,
             include_errors=True,
             sdk_function=sdk_function,
