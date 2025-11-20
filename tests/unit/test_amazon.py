@@ -47,11 +47,10 @@ class TestAmazonScraperURLBased:
         assert 'url' in sig.parameters
         
         # Optional: sync and timeout
-        assert 'sync' in sig.parameters
+        assert 'sync' not in sig.parameters
         assert 'timeout' in sig.parameters
         
         # Defaults
-        assert sig.parameters['sync'].default is True
         assert sig.parameters['timeout'].default == 65
     
     def test_reviews_method_signature(self):
@@ -68,11 +67,10 @@ class TestAmazonScraperURLBased:
         assert 'pastDays' in sig.parameters
         assert 'keyWord' in sig.parameters
         assert 'numOfReviews' in sig.parameters
-        assert 'sync' in sig.parameters
+        assert 'sync' not in sig.parameters
         assert 'timeout' in sig.parameters
         
         # Defaults
-        assert sig.parameters['sync'].default is True
         assert sig.parameters['timeout'].default == 65
     
     def test_sellers_method_signature(self):
@@ -83,9 +81,8 @@ class TestAmazonScraperURLBased:
         sig = inspect.signature(scraper.sellers)
         
         assert 'url' in sig.parameters
-        assert 'sync' in sig.parameters
+        assert 'sync' not in sig.parameters
         assert 'timeout' in sig.parameters
-        assert sig.parameters['sync'].default is True
         assert sig.parameters['timeout'].default == 65
 
 
@@ -118,25 +115,24 @@ class TestAmazonDatasetIDs:
 class TestAmazonSyncVsAsyncMode:
     """Test sync vs async mode handling."""
     
-    def test_sync_true_uses_correct_timeout(self):
-        """Test sync=True uses 65s default timeout."""
+    def test_default_timeout_is_correct(self):
+        """Test default timeout is 240s for async workflow."""
         import inspect
         
         scraper = AmazonScraper(bearer_token="test_token_123456789")
         sig = inspect.signature(scraper.products)
         
-        assert sig.parameters['timeout'].default == 65
+        assert sig.parameters['timeout'].default == 240
     
-    def test_all_methods_have_sync_parameter(self):
-        """Test all scrape methods have sync parameter."""
+    def test_all_methods_dont_have_sync_parameter(self):
+        """Test all scrape methods don't have sync parameter (standard async pattern)."""
         import inspect
         
         scraper = AmazonScraper(bearer_token="test_token_123456789")
         
         for method_name in ['products', 'reviews', 'sellers']:
             sig = inspect.signature(getattr(scraper, method_name))
-            assert 'sync' in sig.parameters
-            assert sig.parameters['sync'].default is True
+            assert 'sync' not in sig.parameters
 
 
 class TestAmazonAPISpecCompliance:
@@ -146,14 +142,13 @@ class TestAmazonAPISpecCompliance:
         """Test products() matches CP API spec."""
         client = BrightDataClient(token="test_token_123456789")
         
-        # API Spec: client.scrape.amazon.products(url, sync=True, timeout=65)
+        # API Spec: client.scrape.amazon.products(url, timeout=240)
         import inspect
         sig = inspect.signature(client.scrape.amazon.products)
         
         assert 'url' in sig.parameters
-        assert 'sync' in sig.parameters
+        assert 'sync' not in sig.parameters
         assert 'timeout' in sig.parameters
-        assert sig.parameters['sync'].default is True
         assert sig.parameters['timeout'].default == 65
     
     def test_reviews_api_spec(self):
@@ -169,19 +164,19 @@ class TestAmazonAPISpecCompliance:
         assert 'pastDays' in params
         assert 'keyWord' in params
         assert 'numOfReviews' in params
-        assert 'sync' in params
+        assert 'sync' not in params
         assert 'timeout' in params
     
     def test_sellers_api_spec(self):
         """Test sellers() matches CP API spec."""
         client = BrightDataClient(token="test_token_123456789")
         
-        # API Spec: sellers(url, sync=True, timeout=65)
+        # API Spec: sellers(url, timeout=240)
         import inspect
         sig = inspect.signature(client.scrape.amazon.sellers)
         
         assert 'url' in sig.parameters
-        assert 'sync' in sig.parameters
+        assert 'sync' not in sig.parameters
         assert 'timeout' in sig.parameters
 
 
@@ -305,15 +300,17 @@ class TestAmazonPhilosophicalPrinciples:
             sig = inspect.signature(getattr(scraper, method_name))
             assert sig.parameters['timeout'].default == 65
     
-    def test_sync_mode_default_is_true(self):
-        """Test sync mode defaults to True (immediate response)."""
+    def test_uses_standard_async_workflow(self):
+        """Test methods use standard async workflow (no sync parameter)."""
         scraper = AmazonScraper(bearer_token="test_token_123456789")
         
         import inspect
         
         for method_name in ['products', 'reviews', 'sellers']:
             sig = inspect.signature(getattr(scraper, method_name))
-            assert sig.parameters['sync'].default is True
+            
+            # Should not have sync parameter
+            assert 'sync' not in sig.parameters
     
     def test_amazon_is_platform_expert(self):
         """Test Amazon scraper knows its platform."""

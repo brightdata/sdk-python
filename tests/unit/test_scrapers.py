@@ -298,8 +298,8 @@ class TestScrapeVsSearchDistinction:
         # Search methods are in search services, not scrapers
         # Scrapers are now URL-based only per API spec
         
-        from brightdata.scrapers.linkedin import LinkedInSearchService
-        linkedin_search = LinkedInSearchService(bearer_token="test_token_123456789")
+        from brightdata.scrapers.linkedin import LinkedInSearchScraper
+        linkedin_search = LinkedInSearchScraper(bearer_token="test_token_123456789")
         
         import inspect
         
@@ -452,11 +452,11 @@ class TestPhilosophicalPrinciples:
         # Amazon products() is now URL-based scraping (not search)
         products_sig = inspect.signature(amazon.products)
         assert 'url' in products_sig.parameters
-        assert 'sync' in products_sig.parameters
+        assert 'sync' not in products_sig.parameters  # sync parameter was removed
         
-        # For search methods, check LinkedInSearchService
-        from brightdata.scrapers.linkedin import LinkedInSearchService
-        linkedin_search = LinkedInSearchService(bearer_token="test_token_123456789")
+        # For search methods, check LinkedInSearchScraper
+        from brightdata.scrapers.linkedin import LinkedInSearchScraper
+        linkedin_search = LinkedInSearchScraper(bearer_token="test_token_123456789")
         
         # Search jobs() signature = parameter-based (has keyword, not url required)
         jobs_sig = inspect.signature(linkedin_search.jobs)

@@ -23,6 +23,7 @@ from .exceptions import (
     TimeoutError,
     ZoneError,
     NetworkError,
+    SSLError,
 )
 
 # Export WebUnlockerService for advanced usage
@@ -47,6 +48,7 @@ __all__ = [
     "TimeoutError",
     "ZoneError",
     "NetworkError",
+    "SSLError",
     # Services
     "WebUnlockerService",
 ]

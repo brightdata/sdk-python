@@ -21,8 +21,8 @@ now = datetime.now(timezone.utc)
 r2 = BaseResult(
     success=True,
     cost=0.002,
-    request_sent_at=now,
-    data_received_at=now,
+    trigger_sent_at=now,
+    data_fetched_at=now,
 )
 print(f"   elapsed_ms: {r2.elapsed_ms()}")
 print(f"   get_timing_breakdown: {list(r2.get_timing_breakdown().keys())}")
@@ -35,8 +35,8 @@ scrape = ScrapeResult(
     status="ready",
     platform="linkedin",
     cost=0.001,
-    request_sent_at=now,
-    data_received_at=now,
+    trigger_sent_at=now,
+    data_fetched_at=now,
 )
 print(f"   Created: {scrape}")
 print(f"   url: {scrape.url}")
@@ -85,8 +85,8 @@ print("   Common fields:")
 print(f"   result.success: {r.success} (bool)")
 print(f"   result.cost: ${r.cost} (float)")
 print(f"   result.error: {r.error} (str | None)")
-print(f"   result.request_sent_at: {r.request_sent_at} (datetime)")
-print(f"   result.data_received_at: {r.data_received_at} (datetime)")
+print(f"   result.trigger_sent_at: {r.trigger_sent_at} (datetime)")
+print(f"   result.data_fetched_at: {r.data_fetched_at} (datetime)")
 
 print("\n   Service-specific fields:")
 print(f"   scrape_result.url: {scrape.url}")

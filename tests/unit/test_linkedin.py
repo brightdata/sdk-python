@@ -3,7 +3,7 @@
 import pytest
 from unittest.mock import patch
 from brightdata import BrightDataClient
-from brightdata.scrapers.linkedin import LinkedInScraper, LinkedInSearchService
+from brightdata.scrapers.linkedin import LinkedInScraper, LinkedInSearchScraper
 from brightdata.exceptions import ValidationError
 
 
@@ -53,11 +53,10 @@ class TestLinkedInScraperURLBased:
         assert 'url' in sig.parameters
         
         # Optional: sync and timeout
-        assert 'sync' in sig.parameters
+        assert 'sync' not in sig.parameters
         assert 'timeout' in sig.parameters
         
         # Defaults
-        assert sig.parameters['sync'].default is True
         assert sig.parameters['timeout'].default == 65
     
     def test_jobs_method_signature(self):
@@ -68,9 +67,8 @@ class TestLinkedInScraperURLBased:
         sig = inspect.signature(scraper.jobs)
         
         assert 'url' in sig.parameters
-        assert 'sync' in sig.parameters
+        assert 'sync' not in sig.parameters
         assert 'timeout' in sig.parameters
-        assert sig.parameters['sync'].default is True
         assert sig.parameters['timeout'].default == 65
     
     def test_profiles_method_signature(self):
@@ -81,7 +79,7 @@ class TestLinkedInScraperURLBased:
         sig = inspect.signature(scraper.profiles)
         
         assert 'url' in sig.parameters
-        assert 'sync' in sig.parameters
+        assert 'sync' not in sig.parameters
         assert 'timeout' in sig.parameters
     
     def test_companies_method_signature(self):
@@ -92,16 +90,16 @@ class TestLinkedInScraperURLBased:
         sig = inspect.signature(scraper.companies)
         
         assert 'url' in sig.parameters
-        assert 'sync' in sig.parameters
+        assert 'sync' not in sig.parameters
         assert 'timeout' in sig.parameters
 
 
-class TestLinkedInSearchService:
+class TestLinkedInSearchScraper:
     """Test LinkedIn search service (discovery/parameter-based)."""
     
     def test_linkedin_search_has_posts_method(self):
         """Test LinkedIn search has posts discovery method."""
-        search = LinkedInSearchService(bearer_token="test_token_123456789")
+        search = LinkedInSearchScraper(bearer_token="test_token_123456789")
         
         assert hasattr(search, 'posts')
         assert hasattr(search, 'posts_async')
@@ -109,7 +107,7 @@ class TestLinkedInSearchService:
     
     def test_linkedin_search_has_profiles_method(self):
         """Test LinkedIn search has profiles discovery method."""
-        search = LinkedInSearchService(bearer_token="test_token_123456789")
+        search = LinkedInSearchScraper(bearer_token="test_token_123456789")
         
         assert hasattr(search, 'profiles')
         assert hasattr(search, 'profiles_async')
@@ -117,7 +115,7 @@ class TestLinkedInSearchService:
     
     def test_linkedin_search_has_jobs_method(self):
         """Test LinkedIn search has jobs discovery method."""
-        search = LinkedInSearchService(bearer_token="test_token_123456789")
+        search = LinkedInSearchScraper(bearer_token="test_token_123456789")
         
         assert hasattr(search, 'jobs')
         assert hasattr(search, 'jobs_async')
@@ -127,7 +125,7 @@ class TestLinkedInSearchService:
         """Test search.posts has correct signature."""
         import inspect
         
-        search = LinkedInSearchService(bearer_token="test_token_123456789")
+        search = LinkedInSearchScraper(bearer_token="test_token_123456789")
         sig = inspect.signature(search.posts)
         
         # Required: profile_url
@@ -142,7 +140,7 @@ class TestLinkedInSearchService:
         """Test search.profiles has correct signature."""
         import inspect
         
-        search = LinkedInSearchService(bearer_token="test_token_123456789")
+        search = LinkedInSearchScraper(bearer_token="test_token_123456789")
         sig = inspect.signature(search.profiles)
         
         # Required: firstName
@@ -156,7 +154,7 @@ class TestLinkedInSearchService:
         """Test search.jobs has correct signature."""
         import inspect
         
-        search = LinkedInSearchService(bearer_token="test_token_123456789")
+        search = LinkedInSearchScraper(bearer_token="test_token_123456789")
         sig = inspect.signature(search.jobs)
         
         # All parameters should be present
@@ -191,7 +189,7 @@ class TestLinkedInDualNamespaces:
         
         search = client.search.linkedin
         assert search is not None
-        assert isinstance(search, LinkedInSearchService)
+        assert isinstance(search, LinkedInSearchScraper)
     
     def test_scrape_vs_search_distinction(self):
         """Test clear distinction between scrape and search."""
@@ -204,7 +202,7 @@ class TestLinkedInDualNamespaces:
         import inspect
         scraper_sig = inspect.signature(scraper.posts)
         assert 'url' in scraper_sig.parameters
-        assert 'sync' in scraper_sig.parameters
+        assert 'sync' not in scraper_sig.parameters  # sync parameter was removed
         
         # Search uses platform-specific parameters
         search_sig = inspect.signature(search.posts)
@@ -249,7 +247,7 @@ class TestLinkedInDatasetIDs:
     
     def test_search_has_dataset_ids(self):
         """Test search service has dataset IDs."""
-        search = LinkedInSearchService(bearer_token="test_token_123456789")
+        search = LinkedInSearchScraper(bearer_token="test_token_123456789")
         
         assert search.DATASET_ID_POSTS
         assert search.DATASET_ID_PROFILES
@@ -259,25 +257,24 @@ class TestLinkedInDatasetIDs:
 class TestSyncVsAsyncMode:
     """Test sync vs async mode handling."""
     
-    def test_sync_true_uses_correct_timeout(self):
-        """Test sync=True uses 65s default timeout."""
+    def test_default_timeout_is_correct(self):
+        """Test default timeout is 180s for async workflow."""
         import inspect
         
         scraper = LinkedInScraper(bearer_token="test_token_123456789")
         sig = inspect.signature(scraper.posts)
         
-        assert sig.parameters['timeout'].default == 65
+        assert sig.parameters['timeout'].default == 180
     
-    def test_methods_have_sync_parameter(self):
-        """Test all scrape methods have sync parameter."""
+    def test_methods_dont_have_sync_parameter(self):
+        """Test all scrape methods don't have sync parameter (standard async pattern)."""
         import inspect
         
         scraper = LinkedInScraper(bearer_token="test_token_123456789")
         
         for method_name in ['posts', 'jobs', 'profiles', 'companies']:
             sig = inspect.signature(getattr(scraper, method_name))
-            assert 'sync' in sig.parameters
-            assert sig.parameters['sync'].default is True
+            assert 'sync' not in sig.parameters
 
 
 class TestAPISpecCompliance:
@@ -287,14 +284,13 @@ class TestAPISpecCompliance:
         """Test client.scrape.linkedin.posts matches API spec."""
         client = BrightDataClient(token="test_token_123456789")
         
-        # API Spec: client.scrape.linkedin.posts(url, sync=True, timeout=65)
+        # API Spec: client.scrape.linkedin.posts(url, timeout=180)
         import inspect
         sig = inspect.signature(client.scrape.linkedin.posts)
         
         assert 'url' in sig.parameters
-        assert 'sync' in sig.parameters
+        assert 'sync' not in sig.parameters
         assert 'timeout' in sig.parameters
-        assert sig.parameters['sync'].default is True
         assert sig.parameters['timeout'].default == 65
     
     def test_search_posts_api_spec(self):
@@ -360,7 +356,7 @@ class TestLinkedInClientIntegration:
         
         linkedin_search = client.search.linkedin
         assert linkedin_search is not None
-        assert isinstance(linkedin_search, LinkedInSearchService)
+        assert isinstance(linkedin_search, LinkedInSearchScraper)
     
     def test_client_passes_token_to_scraper(self):
         """Test client passes token to LinkedIn scraper."""
@@ -386,7 +382,7 @@ class TestInterfaceExamples:
         """Test scrape.linkedin.posts interface."""
         client = BrightDataClient(token="test_token_123456789")
         
-        # Interface: posts(url=str|list, sync=True, timeout=65)
+        # Interface: posts(url=str|list, timeout=180)
         linkedin = client.scrape.linkedin
         
         # Should be callable
@@ -395,7 +391,7 @@ class TestInterfaceExamples:
         # Accepts url, sync, timeout
         import inspect
         sig = inspect.signature(linkedin.posts)
-        assert set(['url', 'sync', 'timeout']).issubset(sig.parameters.keys())
+        assert set(['url', 'timeout']).issubset(sig.parameters.keys())
     
     def test_search_posts_interface(self):
         """Test search.linkedin.posts interface."""
@@ -454,7 +450,7 @@ class TestParameterArraySupport:
         """Test profile_url accepts arrays."""
         import inspect
         
-        search = LinkedInSearchService(bearer_token="test_token_123456789")
+        search = LinkedInSearchScraper(bearer_token="test_token_123456789")
         sig = inspect.signature(search.posts)
         
         # profile_url should accept str | list
@@ -479,7 +475,7 @@ class TestSyncAsyncPairs:
     
     def test_search_has_async_sync_pairs(self):
         """Test search has async/sync pairs for all methods."""
-        search = LinkedInSearchService(bearer_token="test_token_123456789")
+        search = LinkedInSearchScraper(bearer_token="test_token_123456789")
         
         methods = ['posts', 'profiles', 'jobs']
         
@@ -521,13 +517,15 @@ class TestPhilosophicalPrinciples:
             sig = inspect.signature(getattr(scraper, method_name))
             assert sig.parameters['timeout'].default == 65
     
-    def test_sync_mode_default_is_true(self):
-        """Test sync mode defaults to True (immediate response)."""
+    def test_uses_standard_async_workflow(self):
+        """Test methods use standard async workflow (no sync parameter)."""
         client = BrightDataClient(token="test_token_123456789")
         
         scraper = client.scrape.linkedin
         
         import inspect
         sig = inspect.signature(scraper.posts)
-        assert sig.parameters['sync'].default is True
+        
+        # Should not have sync parameter
+        assert 'sync' not in sig.parameters
 

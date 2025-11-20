@@ -1,6 +1,6 @@
-"""LinkedIn scraper and search services."""
+"""LinkedIn scrapers for URL-based and parameter-based extraction."""
 
 from .scraper import LinkedInScraper
-from .search import LinkedInSearchService
+from .search import LinkedInSearchScraper
 
-__all__ = ["LinkedInScraper", "LinkedInSearchService"]
+__all__ = ["LinkedInScraper", "LinkedInSearchScraper"]

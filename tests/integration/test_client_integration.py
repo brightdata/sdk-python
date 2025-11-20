@@ -20,11 +20,7 @@ from brightdata.exceptions import AuthenticationError, ValidationError
 @pytest.fixture
 def api_token():
     """Get API token from environment or skip tests."""
-    token = (
-        os.getenv("BRIGHTDATA_API_TOKEN") or
-        os.getenv("BRIGHTDATA_API_KEY") or
-        os.getenv("BRIGHTDATA_TOKEN")
-    )
+    token = os.getenv("BRIGHTDATA_API_TOKEN")
     if not token:
         pytest.skip("API token not found. Set BRIGHTDATA_API_TOKEN to run integration tests.")
     return token

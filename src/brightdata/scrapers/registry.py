@@ -9,11 +9,15 @@ Philosophy:
 """
 
 import importlib
+import logging
 import pkgutil
 from functools import lru_cache
 from typing import Dict, Type, Optional, List
 from urllib.parse import urlparse
 import tldextract
+
+# Configure logger for registry operations
+logger = logging.getLogger(__name__)
 
 
 # Global registry mapping domain → scraper class
@@ -76,10 +80,18 @@ def _import_all_scrapers():
         if module_name.endswith(".scraper") or ".scraper." in module_name:
             try:
                 importlib.import_module(module_name)
-            except Exception:
-                # Silently skip modules that fail to import
-                # (they might be incomplete implementations)
-                pass
+            except ImportError as e:
+                # Log import errors but continue (module might be optional)
+                logger.warning(
+                    f"Failed to import scraper module '{module_name}': {e}. "
+                    f"This may be expected if the module is optional or incomplete."
+                )
+            except Exception as e:
+                # Log unexpected errors but continue to avoid breaking registry
+                logger.error(
+                    f"Unexpected error importing scraper module '{module_name}': {e}",
+                    exc_info=True
+                )
 
 
 def get_scraper_for(url: str) -> Optional[Type]:

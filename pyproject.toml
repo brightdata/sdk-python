@@ -17,6 +17,7 @@ dependencies = [
     "tldextract>=5.0.0",
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
+    "aiolimiter>=1.1.0",
 ]
 
 [project.optional-dependencies]

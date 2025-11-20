@@ -19,10 +19,7 @@ from brightdata import BrightDataClient
 @pytest.fixture
 def api_token():
     """Get API token from environment or skip tests."""
-    token = (
-        os.getenv("BRIGHTDATA_API_TOKEN") or
-        os.getenv("BRIGHTDATA_API_KEY")
-    )
+    token = os.getenv("BRIGHTDATA_API_TOKEN")
     if not token:
         pytest.skip("API token not found. Set BRIGHTDATA_API_TOKEN to run E2E tests.")
     return token

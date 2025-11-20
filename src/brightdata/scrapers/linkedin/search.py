@@ -1,5 +1,5 @@
 """
-LinkedIn Search Service - Discovery/parameter-based operations.
+LinkedIn Search Scraper - Discovery/parameter-based operations.
 
 Implements:
 - client.search.linkedin.posts() - Discover posts by profile and date range
@@ -14,18 +14,24 @@ from datetime import datetime, timezone
 from ...core.engine import AsyncEngine
 from ...models import ScrapeResult
 from ...exceptions import ValidationError, APIError
+from ...utils.function_detection import get_caller_function_name
+from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT
+from ..api_client import DatasetAPIClient
+from ..workflow import WorkflowExecutor
 
 
-class LinkedInSearchService:
+class LinkedInSearchScraper:
     """
-    LinkedIn Search Service for parameter-based discovery.
+    LinkedIn Search Scraper for parameter-based discovery.
     
     Provides discovery methods that search LinkedIn by parameters
-    rather than extracting from specific URLs.
+    rather than extracting from specific URLs. This is a parallel component
+    to LinkedInScraper, both doing LinkedIn data extraction but with
+    different approaches (parameter-based vs URL-based).
     
     Example:
-        >>> search = LinkedInSearchService(bearer_token="token")
-        >>> result = search.jobs(
+        >>> scraper = LinkedInSearchScraper(bearer_token="token")
+        >>> result = scraper.jobs(
         ...     keyword="python developer",
         ...     location="New York",
         ...     remote=True
@@ -37,14 +43,23 @@ class LinkedInSearchService:
     DATASET_ID_PROFILES = "gd_l1oojb10z2jye29kh"
     DATASET_ID_JOBS = "gd_lj4v2v5oqpp3qb79j"
     
-    TRIGGER_URL = "https://api.brightdata.com/datasets/v3/trigger"
-    STATUS_URL = "https://api.brightdata.com/datasets/v3/progress"
-    RESULT_URL = "https://api.brightdata.com/datasets/v3/snapshot"
-    
-    def __init__(self, bearer_token: str):
-        """Initialize LinkedIn search service."""
+    def __init__(self, bearer_token: str, engine: Optional[AsyncEngine] = None):
+        """
+        Initialize LinkedIn search scraper.
+        
+        Args:
+            bearer_token: Bright Data API token
+            engine: Optional AsyncEngine instance. If not provided, creates a new one.
+                    Allows dependency injection for testing and flexibility.
+        """
         self.bearer_token = bearer_token
-        self.engine = AsyncEngine(bearer_token)
+        self.engine = engine if engine is not None else AsyncEngine(bearer_token)
+        self.api_client = DatasetAPIClient(self.engine)
+        self.workflow_executor = WorkflowExecutor(
+            api_client=self.api_client,
+            platform_name="linkedin",
+            cost_per_record=0.002,
+        )
     
     # ============================================================================
     # POSTS DISCOVERY (by profile + date range)
@@ -55,7 +70,7 @@ class LinkedInSearchService:
         profile_url: Union[str, List[str]],
         start_date: Optional[Union[str, List[str]]] = None,
         end_date: Optional[Union[str, List[str]]] = None,
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
         Discover posts from LinkedIn profile(s) within date range.
@@ -105,7 +120,7 @@ class LinkedInSearchService:
         profile_url: Union[str, List[str]],
         start_date: Optional[Union[str, List[str]]] = None,
         end_date: Optional[Union[str, List[str]]] = None,
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
         Discover posts from profile(s) (sync).
@@ -122,7 +137,7 @@ class LinkedInSearchService:
         self,
         firstName: Union[str, List[str]],
         lastName: Optional[Union[str, List[str]]] = None,
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
         Find LinkedIn profiles by name.
@@ -165,7 +180,7 @@ class LinkedInSearchService:
         self,
         firstName: Union[str, List[str]],
         lastName: Optional[Union[str, List[str]]] = None,
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
         Find profiles by name (sync).
@@ -190,7 +205,7 @@ class LinkedInSearchService:
         remote: Optional[bool] = None,
         company: Optional[Union[str, List[str]]] = None,
         locationRadius: Optional[Union[str, List[str]]] = None,
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
         Discover LinkedIn jobs by criteria.
@@ -292,7 +307,7 @@ class LinkedInSearchService:
         remote: Optional[bool] = None,
         company: Optional[Union[str, List[str]]] = None,
         locationRadius: Optional[Union[str, List[str]]] = None,
-        timeout: int = 180,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
         Discover jobs (sync).
@@ -365,119 +380,17 @@ class LinkedInSearchService:
         Returns:
             ScrapeResult with search results
         """
-        request_sent_at = datetime.now(timezone.utc)
+        # Use workflow executor for trigger/poll/fetch
+        sdk_function = get_caller_function_name()
         
-        async with self.engine:
-            # Trigger search
-            snapshot_id = await self._trigger_async(payload, dataset_id)
-            
-            if not snapshot_id:
-                return ScrapeResult(
-                    success=False,
-                    url="",
-                    status="error",
-                    error="Failed to trigger search - no snapshot_id returned",
-                    platform="linkedin",
-                    request_sent_at=request_sent_at,
-                    data_received_at=datetime.now(timezone.utc),
-                )
-            
-            snapshot_id_received_at = datetime.now(timezone.utc)
-            
-            # Poll and fetch
-            result = await self._poll_and_fetch_async(
-                snapshot_id=snapshot_id,
-                poll_interval=10,
-                poll_timeout=timeout,
-                request_sent_at=request_sent_at,
-                snapshot_id_received_at=snapshot_id_received_at,
-            )
-            
-            return result
-    
-    async def _trigger_async(
-        self,
-        payload: List[Dict[str, Any]],
-        dataset_id: str,
-    ) -> Optional[str]:
-        """Trigger search and get snapshot_id."""
-        params = {
-            "dataset_id": dataset_id,
-            "include_errors": "true",
-        }
-        
-        async with self.engine._session.post(
-            self.TRIGGER_URL,
-            json=payload,
-            params=params,
-            headers=self.engine._session.headers
-        ) as response:
-            if response.status == 200:
-                data = await response.json()
-                return data.get("snapshot_id")
-            else:
-                error_text = await response.text()
-                raise APIError(
-                    f"Trigger failed (HTTP {response.status}): {error_text}",
-                    status_code=response.status
-                )
-    
-    async def _poll_and_fetch_async(
-        self,
-        snapshot_id: str,
-        poll_interval: int,
-        poll_timeout: int,
-        request_sent_at: datetime,
-        snapshot_id_received_at: datetime,
-    ) -> ScrapeResult:
-        """
-        Poll until ready and fetch results.
-        
-        Uses shared polling utility for consistent behavior across services.
-        """
-        from ...utils.polling import poll_until_ready
-        
-        return await poll_until_ready(
-            get_status_func=self._get_status_async,
-            fetch_result_func=self._fetch_result_async,
-            snapshot_id=snapshot_id,
-            poll_interval=poll_interval,
-            poll_timeout=poll_timeout,
-            request_sent_at=request_sent_at,
-            snapshot_id_received_at=snapshot_id_received_at,
-            platform="linkedin",
-            cost_per_record=0.002,  # LinkedIn cost
+        result = await self.workflow_executor.execute(
+            payload=payload,
+            dataset_id=dataset_id,
+            poll_interval=DEFAULT_POLL_INTERVAL,
+            poll_timeout=timeout,
+            include_errors=True,
+            sdk_function=sdk_function,
         )
-    
-    async def _get_status_async(self, snapshot_id: str) -> str:
-        """Get snapshot status."""
-        url = f"{self.STATUS_URL}/{snapshot_id}"
         
-        async with self.engine._session.get(
-            url,
-            headers=self.engine._session.headers
-        ) as response:
-            if response.status == 200:
-                data = await response.json()
-                return data.get("status", "unknown")
-            return "error"
-    
-    async def _fetch_result_async(self, snapshot_id: str) -> Any:
-        """Fetch snapshot results."""
-        url = f"{self.RESULT_URL}/{snapshot_id}"
-        params = {"format": "json"}
-        
-        async with self.engine._session.get(
-            url,
-            params=params,
-            headers=self.engine._session.headers
-        ) as response:
-            if response.status == 200:
-                return await response.json()
-            else:
-                error_text = await response.text()
-                raise APIError(
-                    f"Failed to fetch results (HTTP {response.status}): {error_text}",
-                    status_code=response.status
-                )
+        return result
 

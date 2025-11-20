@@ -2,9 +2,10 @@
 ChatGPT Search Service - Prompt-based discovery.
 
 API Specification:
-- client.search.chatGPT(prompt, country, secondaryPrompt, webSearch, sync, timeout)
+- client.search.chatGPT(prompt, country, secondaryPrompt, webSearch, timeout)
 
 All parameters accept str | array<str> or bool | array<bool>
+Uses standard async workflow (trigger/poll/fetch).
 """
 
 import asyncio
@@ -14,6 +15,10 @@ from datetime import datetime, timezone
 from ...core.engine import AsyncEngine
 from ...models import ScrapeResult
 from ...exceptions import ValidationError, APIError
+from ...utils.function_detection import get_caller_function_name
+from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT
+from ..api_client import DatasetAPIClient
+from ..workflow import WorkflowExecutor
 
 
 class ChatGPTSearchService:
@@ -29,21 +34,29 @@ class ChatGPTSearchService:
         ...     prompt="Explain Python async programming",
         ...     country="us",
         ...     webSearch=True,
-        ...     sync=True
+        ...     timeout=180
         ... )
     """
     
     DATASET_ID = "gd_m7aof0k82r803d5bjm"  # ChatGPT dataset
     
-    SCRAPE_URL = "https://api.brightdata.com/datasets/v3/scrape"  # Sync
-    TRIGGER_URL = "https://api.brightdata.com/datasets/v3/trigger"  # Async
-    STATUS_URL = "https://api.brightdata.com/datasets/v3/progress"
-    RESULT_URL = "https://api.brightdata.com/datasets/v3/snapshot"
-    
-    def __init__(self, bearer_token: str):
-        """Initialize ChatGPT search service."""
+    def __init__(self, bearer_token: str, engine: Optional[AsyncEngine] = None):
+        """
+        Initialize ChatGPT search service.
+        
+        Args:
+            bearer_token: Bright Data API token
+            engine: Optional AsyncEngine instance. If not provided, creates a new one.
+                    Allows dependency injection for testing and flexibility.
+        """
         self.bearer_token = bearer_token
-        self.engine = AsyncEngine(bearer_token)
+        self.engine = engine if engine is not None else AsyncEngine(bearer_token)
+        self.api_client = DatasetAPIClient(self.engine)
+        self.workflow_executor = WorkflowExecutor(
+            api_client=self.api_client,
+            platform_name="chatgpt",
+            cost_per_record=0.005,
+        )
     
     # ============================================================================
     # CHATGPT PROMPT DISCOVERY
@@ -55,19 +68,19 @@ class ChatGPTSearchService:
         country: Optional[Union[str, List[str]]] = None,
         secondaryPrompt: Optional[Union[str, List[str]]] = None,
         webSearch: Optional[Union[bool, List[bool]]] = None,
-        sync: bool = True,
-        timeout: int = 65,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
         Send prompt(s) to ChatGPT (async).
+        
+        Uses standard async workflow: trigger job, poll until ready, then fetch results.
         
         Args:
             prompt: Prompt(s) to send to ChatGPT (required)
             country: Country code(s) in 2-letter format (optional)
             secondaryPrompt: Secondary prompt(s) for continued conversation (optional)
             webSearch: Enable web search capability (optional)
-            sync: Synchronous mode - True for immediate, False for polling (default: True)
-            timeout: Timeout in seconds (default: 65 for sync, 30 for async)
+            timeout: Maximum wait time in seconds for polling (default: 180)
         
         Returns:
             ScrapeResult with ChatGPT response(s)
@@ -77,7 +90,7 @@ class ChatGPTSearchService:
             ...     prompt="What is Python?",
             ...     country="us",
             ...     webSearch=True,
-            ...     sync=True
+            ...     timeout=180
             ... )
             >>> 
             >>> # Batch prompts
@@ -123,23 +136,13 @@ class ChatGPTSearchService:
             
             payload.append(item)
         
-        # Adjust timeout based on sync mode
-        actual_timeout = timeout if sync else (timeout if timeout != 65 else 30)
+        # Execute with standard async workflow
+        result = await self._execute_async_mode(
+            payload=payload,
+            timeout=timeout
+        )
         
-        # Execute with appropriate mode
-        async with self.engine:
-            if sync:
-                result = await self._execute_sync_mode(
-                    payload=payload,
-                    timeout=actual_timeout
-                )
-            else:
-                result = await self._execute_async_mode(
-                    payload=payload,
-                    timeout=actual_timeout
-                )
-            
-            return result
+        return result
     
     def chatGPT(
         self,
@@ -147,11 +150,10 @@ class ChatGPTSearchService:
         country: Optional[Union[str, List[str]]] = None,
         secondaryPrompt: Optional[Union[str, List[str]]] = None,
         webSearch: Optional[Union[bool, List[bool]]] = None,
-        sync: bool = True,
-        timeout: int = 65,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
-        Send prompt(s) to ChatGPT (sync).
+        Send prompt(s) to ChatGPT (sync wrapper).
         
         See chatGPT_async() for full documentation.
         
@@ -166,7 +168,6 @@ class ChatGPTSearchService:
             country=country,
             secondaryPrompt=secondaryPrompt,
             webSearch=webSearch,
-            sync=sync,
             timeout=timeout
         ))
     
@@ -208,187 +209,25 @@ class ChatGPTSearchService:
         
         return [default_value] * target_length
     
-    async def _execute_sync_mode(
-        self,
-        payload: List[Dict[str, Any]],
-        timeout: int,
-    ) -> ScrapeResult:
-        """Execute using sync mode (/scrape endpoint - immediate or polling if 202)."""
-        request_sent_at = datetime.now(timezone.utc)
-        
-        params = {"dataset_id": self.DATASET_ID}
-        
-        async with self.engine._session.post(
-            self.SCRAPE_URL,
-            json=payload,
-            params=params,
-            headers=self.engine._session.headers,
-            timeout=timeout
-        ) as response:
-            data_received_at = datetime.now(timezone.utc)
-            
-            if response.status == 200:
-                # Immediate response
-                data = await response.json()
-                row_count = len(data) if isinstance(data, list) else None
-                cost = (row_count * 0.005) if row_count else None
-                
-                return ScrapeResult(
-                    success=True,
-                    url="https://chatgpt.com",
-                    status="ready",
-                    data=data,
-                    cost=cost,
-                    platform="chatgpt",
-                    request_sent_at=request_sent_at,
-                    data_received_at=data_received_at,
-                    row_count=row_count,
-                )
-            
-            elif response.status == 202:
-                # Async response - need to poll (ChatGPT doesn't support true sync)
-                data = await response.json()
-                snapshot_id = data.get("snapshot_id")
-                
-                if not snapshot_id:
-                    return ScrapeResult(
-                        success=False,
-                        url="https://chatgpt.com",
-                        status="error",
-                        error="No snapshot_id in response",
-                        platform="chatgpt",
-                        request_sent_at=request_sent_at,
-                        data_received_at=data_received_at,
-                    )
-                
-                # Poll for results
-                snapshot_id_received_at = datetime.now(timezone.utc)
-                
-                from ...utils.polling import poll_until_ready
-                
-                result = await poll_until_ready(
-                    get_status_func=self._get_status_async,
-                    fetch_result_func=self._fetch_result_async,
-                    snapshot_id=snapshot_id,
-                    poll_interval=10,
-                    poll_timeout=timeout,
-                    request_sent_at=request_sent_at,
-                    snapshot_id_received_at=snapshot_id_received_at,
-                    platform="chatgpt",
-                    cost_per_record=0.005,
-                )
-                
-                result.url = "https://chatgpt.com"
-                return result
-            
-            else:
-                error_text = await response.text()
-                return ScrapeResult(
-                    success=False,
-                    url="https://chatgpt.com",
-                    status="error",
-                    error=f"ChatGPT search failed (HTTP {response.status}): {error_text}",
-                    platform="chatgpt",
-                    request_sent_at=request_sent_at,
-                    data_received_at=data_received_at,
-                )
-    
     async def _execute_async_mode(
         self,
         payload: List[Dict[str, Any]],
         timeout: int,
     ) -> ScrapeResult:
-        """Execute using async mode (/trigger endpoint - polling)."""
-        request_sent_at = datetime.now(timezone.utc)
+        """Execute using standard async workflow (/trigger endpoint with polling)."""
+        # Use workflow executor for trigger/poll/fetch
+        sdk_function = get_caller_function_name()
         
-        # Trigger
-        params = {
-            "dataset_id": self.DATASET_ID,
-            "include_errors": "true",
-        }
-        
-        async with self.engine._session.post(
-            self.TRIGGER_URL,
-            json=payload,
-            params=params,
-            headers=self.engine._session.headers
-        ) as response:
-            if response.status == 200:
-                data = await response.json()
-                snapshot_id = data.get("snapshot_id")
-            else:
-                error_text = await response.text()
-                return ScrapeResult(
-                    success=False,
-                    url="https://chatgpt.com",
-                    status="error",
-                    error=f"Trigger failed (HTTP {response.status}): {error_text}",
-                    platform="chatgpt",
-                    request_sent_at=request_sent_at,
-                    data_received_at=datetime.now(timezone.utc),
-                )
-        
-        if not snapshot_id:
-            return ScrapeResult(
-                success=False,
-                url="https://chatgpt.com",
-                status="error",
-                error="No snapshot_id returned",
-                platform="chatgpt",
-                request_sent_at=request_sent_at,
-                data_received_at=datetime.now(timezone.utc),
-            )
-        
-        snapshot_id_received_at = datetime.now(timezone.utc)
-        
-        # Use shared polling utility
-        from ...utils.polling import poll_until_ready
-        
-        result = await poll_until_ready(
-            get_status_func=self._get_status_async,
-            fetch_result_func=self._fetch_result_async,
-            snapshot_id=snapshot_id,
-            poll_interval=10,
+        result = await self.workflow_executor.execute(
+            payload=payload,
+            dataset_id=self.DATASET_ID,
+            poll_interval=DEFAULT_POLL_INTERVAL,
             poll_timeout=timeout,
-            request_sent_at=request_sent_at,
-            snapshot_id_received_at=snapshot_id_received_at,
-            platform="chatgpt",
-            cost_per_record=0.005,
+            include_errors=True,
+            sdk_function=sdk_function,
         )
         
         # Set fixed URL per spec
         result.url = "https://chatgpt.com"
         return result
-    
-    async def _get_status_async(self, snapshot_id: str) -> str:
-        """Get snapshot status."""
-        url = f"{self.STATUS_URL}/{snapshot_id}"
-        
-        async with self.engine._session.get(
-            url,
-            headers=self.engine._session.headers
-        ) as response:
-            if response.status == 200:
-                data = await response.json()
-                return data.get("status", "unknown")
-            return "error"
-    
-    async def _fetch_result_async(self, snapshot_id: str) -> Any:
-        """Fetch snapshot results."""
-        url = f"{self.RESULT_URL}/{snapshot_id}"
-        params = {"format": "json"}
-        
-        async with self.engine._session.get(
-            url,
-            params=params,
-            headers=self.engine._session.headers
-        ) as response:
-            if response.status == 200:
-                return await response.json()
-            else:
-                error_text = await response.text()
-                raise APIError(
-                    f"Failed to fetch results (HTTP {response.status}): {error_text}",
-                    status_code=response.status
-                )
 

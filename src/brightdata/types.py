@@ -9,10 +9,6 @@ from typing import TypedDict, Optional, List, Literal, Union, Any, Dict
 from typing_extensions import NotRequired
 
 
-# ============================================================================
-# API PAYLOADS
-# ============================================================================
-
 class DatasetTriggerPayload(TypedDict, total=False):
     """Payload for /datasets/v3/trigger endpoint."""
     url: str
@@ -96,9 +92,85 @@ class ChatGPTPromptPayload(TypedDict, total=False):
     additional_prompt: NotRequired[str]
 
 
-# ============================================================================
-# API RESPONSES
-# ============================================================================
+class FacebookPostsProfilePayload(TypedDict, total=False):
+    """Facebook posts by profile URL payload."""
+    url: str  # Required
+    num_of_posts: NotRequired[int]
+    posts_to_not_include: NotRequired[List[str]]
+    start_date: NotRequired[str]  # MM-DD-YYYY
+    end_date: NotRequired[str]  # MM-DD-YYYY
+
+
+class FacebookPostsGroupPayload(TypedDict, total=False):
+    """Facebook posts by group URL payload."""
+    url: str  # Required
+    num_of_posts: NotRequired[int]
+    posts_to_not_include: NotRequired[List[str]]
+    start_date: NotRequired[str]  # MM-DD-YYYY
+    end_date: NotRequired[str]  # MM-DD-YYYY
+
+
+class FacebookPostPayload(TypedDict, total=False):
+    """Facebook post by URL payload."""
+    url: str  # Required
+
+
+class FacebookCommentsPayload(TypedDict, total=False):
+    """Facebook comments by post URL payload."""
+    url: str  # Required
+    num_of_comments: NotRequired[int]
+    comments_to_not_include: NotRequired[List[str]]
+    start_date: NotRequired[str]  # MM-DD-YYYY
+    end_date: NotRequired[str]  # MM-DD-YYYY
+
+
+class FacebookReelsPayload(TypedDict, total=False):
+    """Facebook reels by profile URL payload."""
+    url: str  # Required
+    num_of_posts: NotRequired[int]
+    posts_to_not_include: NotRequired[List[str]]
+    start_date: NotRequired[str]
+    end_date: NotRequired[str]
+
+
+class InstagramProfilePayload(TypedDict, total=False):
+    """Instagram profile by URL payload."""
+    url: str  # Required
+
+
+class InstagramPostPayload(TypedDict, total=False):
+    """Instagram post by URL payload."""
+    url: str  # Required
+
+
+class InstagramCommentPayload(TypedDict, total=False):
+    """Instagram comments by post URL payload."""
+    url: str  # Required
+
+
+class InstagramReelPayload(TypedDict, total=False):
+    """Instagram reel by URL payload."""
+    url: str  # Required
+
+
+class InstagramPostsDiscoverPayload(TypedDict, total=False):
+    """Instagram posts discovery by URL payload."""
+    url: str  # Required
+    num_of_posts: NotRequired[int]
+    posts_to_not_include: NotRequired[List[str]]
+    start_date: NotRequired[str]  # MM-DD-YYYY
+    end_date: NotRequired[str]  # MM-DD-YYYY
+    post_type: NotRequired[str]  # e.g., "post", "reel"
+
+
+class InstagramReelsDiscoverPayload(TypedDict, total=False):
+    """Instagram reels discovery by URL payload."""
+    url: str  # Required
+    num_of_posts: NotRequired[int]
+    posts_to_not_include: NotRequired[List[str]]
+    start_date: NotRequired[str]  # MM-DD-YYYY
+    end_date: NotRequired[str]  # MM-DD-YYYY
+
 
 class TriggerResponse(TypedDict):
     """Response from /datasets/v3/trigger."""
@@ -125,10 +197,6 @@ class ZoneInfo(TypedDict, total=False):
     created: NotRequired[str]
 
 
-# ============================================================================
-# CONFIGURATION TYPES
-# ============================================================================
-
 DeviceType = Literal["desktop", "mobile", "tablet"]
 ResponseFormat = Literal["raw", "json"]
 HTTPMethod = Literal["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]
@@ -136,20 +204,11 @@ SearchEngine = Literal["google", "bing", "yandex"]
 Platform = Literal["amazon", "linkedin", "chatgpt", "instagram", "reddit"]
 
 
-# ============================================================================
-# FUNCTION SIGNATURES (for type checking)
-# ============================================================================
-
-# Type aliases for common parameter patterns
 URLParam = Union[str, List[str]]
 OptionalURLParam = Optional[Union[str, List[str]]]
 StringParam = Union[str, List[str]]
 OptionalStringParam = Optional[Union[str, List[str]]]
 
-
-# ============================================================================
-# ACCOUNT INFO
-# ============================================================================
 
 class AccountInfo(TypedDict):
     """Account information returned by get_account_info()."""
@@ -159,10 +218,6 @@ class AccountInfo(TypedDict):
     token_valid: bool
     retrieved_at: str
 
-
-# ============================================================================
-# SERP TYPES
-# ============================================================================
 
 class SERPOrganicResult(TypedDict, total=False):
     """Single organic search result."""
@@ -200,10 +255,6 @@ class NormalizedSERPData(TypedDict, total=False):
     raw_html: NotRequired[str]
 
 
-# ============================================================================
-# EXPORTS
-# ============================================================================
-
 __all__ = [
     # Payloads
     "DatasetTriggerPayload",
@@ -217,6 +268,18 @@ __all__ = [
     "LinkedInJobSearchPayload",
     "LinkedInPostSearchPayload",
     "ChatGPTPromptPayload",
+    "FacebookPostsProfilePayload",
+    "FacebookPostsGroupPayload",
+    "FacebookPostPayload",
+    "FacebookCommentsPayload",
+    "FacebookReelsPayload",
+    # Instagram Payloads
+    "InstagramProfilePayload",
+    "InstagramPostPayload",
+    "InstagramCommentPayload",
+    "InstagramReelPayload",
+    "InstagramPostsDiscoverPayload",
+    "InstagramReelsDiscoverPayload",
     # Responses
     "TriggerResponse",
     "ProgressResponse",

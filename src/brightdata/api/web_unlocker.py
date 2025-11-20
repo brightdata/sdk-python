@@ -16,6 +16,7 @@ from ..utils.validation import (
     validate_http_method,
 )
 from ..utils.url import extract_root_domain
+from ..utils.function_detection import get_caller_function_name
 from ..exceptions import ValidationError, APIError
 
 
@@ -105,7 +106,7 @@ class WebUnlockerService(BaseAPI):
         timeout: Optional[int],
     ) -> ScrapeResult:
         """Scrape a single URL."""
-        request_sent_at = datetime.now(timezone.utc)
+        trigger_sent_at = datetime.now(timezone.utc)
         
         payload: Dict[str, Any] = {
             "zone": zone,
@@ -117,14 +118,17 @@ class WebUnlockerService(BaseAPI):
         if country:
             payload["country"] = country.upper()
         
+        sdk_function = get_caller_function_name()
+        if sdk_function:
+            payload["sdk_function"] = sdk_function
+        
         try:
             # Make the request and read response body immediately
-            async with self.engine._session.post(
+            async with self.engine.post_to_url(
                 f"{self.engine.BASE_URL}{self.ENDPOINT}",
-                json=payload,
-                headers=self.engine._session.headers
+                json_data=payload
             ) as response:
-                data_received_at = datetime.now(timezone.utc)
+                data_fetched_at = datetime.now(timezone.utc)
                 
                 if response.status == 200:
                     if response_format == "json":
@@ -144,8 +148,9 @@ class WebUnlockerService(BaseAPI):
                         status="ready",
                         data=data,
                         cost=None,
-                        request_sent_at=request_sent_at,
-                        data_received_at=data_received_at,
+                        method="web_unlocker",
+                        trigger_sent_at=trigger_sent_at,
+                        data_fetched_at=data_fetched_at,
                         root_domain=root_domain,
                         html_char_size=html_char_size,
                     )
@@ -156,12 +161,13 @@ class WebUnlockerService(BaseAPI):
                         url=url,
                         status="error",
                         error=f"API returned status {response.status}: {error_text}",
-                        request_sent_at=request_sent_at,
-                        data_received_at=data_received_at,
+                        method="web_unlocker",
+                        trigger_sent_at=trigger_sent_at,
+                        data_fetched_at=data_fetched_at,
                     )
         
         except Exception as e:
-            data_received_at = datetime.now(timezone.utc)
+            data_fetched_at = datetime.now(timezone.utc)
             
             if isinstance(e, (ValidationError, APIError)):
                 raise
@@ -171,8 +177,9 @@ class WebUnlockerService(BaseAPI):
                 url=url,
                 status="error",
                 error=f"Unexpected error: {str(e)}",
-                request_sent_at=request_sent_at,
-                data_received_at=data_received_at,
+                method="web_unlocker",
+                trigger_sent_at=trigger_sent_at,
+                data_fetched_at=data_fetched_at,
             )
     
     async def _scrape_multiple_async(
@@ -208,8 +215,8 @@ class WebUnlockerService(BaseAPI):
                         url=urls[i],
                         status="error",
                         error=f"Exception: {str(result)}",
-                        request_sent_at=datetime.now(timezone.utc),
-                        data_received_at=datetime.now(timezone.utc),
+                        trigger_sent_at=datetime.now(timezone.utc),
+                        data_fetched_at=datetime.now(timezone.utc),
                     )
                 )
             else:

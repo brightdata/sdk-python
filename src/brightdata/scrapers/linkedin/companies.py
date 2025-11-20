@@ -1,2 +1,0 @@
-"""LinkedIn companies scraper."""
-

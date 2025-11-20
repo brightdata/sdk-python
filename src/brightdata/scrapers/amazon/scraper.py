@@ -2,14 +2,11 @@
 Amazon Scraper - URL-based extraction for products, reviews, and sellers.
 
 API Specifications:
-- client.scrape.amazon.products(url, sync=True, timeout=65)
-- client.scrape.amazon.reviews(url, pastDays, keyWord, numOfReviews, sync=True, timeout=65)
-- client.scrape.amazon.sellers(url, sync=True, timeout=65)
+- client.scrape.amazon.products(url, timeout=240)
+- client.scrape.amazon.reviews(url, pastDays, keyWord, numOfReviews, timeout=240)
+- client.scrape.amazon.sellers(url, timeout=240)
 
-All methods accept:
-- url: str | list (required)
-- sync: bool (default: True) - True=immediate, False=async polling
-- timeout: int (default: 65 for sync, 30 for async)
+All methods use standard async workflow (trigger/poll/fetch).
 """
 
 import asyncio
@@ -20,6 +17,8 @@ from ..base import BaseWebScraper
 from ..registry import register
 from ...models import ScrapeResult
 from ...utils.validation import validate_url, validate_url_list
+from ...utils.function_detection import get_caller_function_name
+from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM
 from ...exceptions import ValidationError, APIError
 
 
@@ -39,8 +38,7 @@ class AmazonScraper(BaseWebScraper):
         >>> # Scrape product
         >>> result = scraper.products(
         ...     url="https://amazon.com/dp/B0CRMZHDG8",
-        ...     sync=True,
-        ...     timeout=65
+        ...     timeout=240
         ... )
     """
     
@@ -50,14 +48,8 @@ class AmazonScraper(BaseWebScraper):
     DATASET_ID_SELLERS = "gd_lwjkkolem8c4o7j3s"  # Amazon Sellers
     
     PLATFORM_NAME = "amazon"
-    MIN_POLL_TIMEOUT = 240  # Amazon scrapes can take longer
+    MIN_POLL_TIMEOUT = DEFAULT_TIMEOUT_MEDIUM  # Amazon scrapes can take longer
     COST_PER_RECORD = 0.001
-    
-    # API endpoints
-    SCRAPE_URL = "https://api.brightdata.com/datasets/v3/scrape"  # Sync
-    TRIGGER_URL = "https://api.brightdata.com/datasets/v3/trigger"  # Async
-    STATUS_URL = "https://api.brightdata.com/datasets/v3/progress"
-    RESULT_URL = "https://api.brightdata.com/datasets/v3/snapshot"
     
     # ============================================================================
     # PRODUCTS EXTRACTION (URL-based)
@@ -66,16 +58,16 @@ class AmazonScraper(BaseWebScraper):
     async def products_async(
         self,
         url: Union[str, List[str]],
-        sync: bool = True,
-        timeout: int = 65,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Scrape Amazon products from URLs (async).
         
+        Uses standard async workflow: trigger job, poll until ready, then fetch results.
+        
         Args:
             url: Single product URL or list of product URLs (required)
-            sync: Synchronous mode - True for immediate response, False for polling
-            timeout: Request timeout in seconds (default: 65 for sync, 30 for async)
+            timeout: Maximum wait time in seconds for polling (default: 240)
         
         Returns:
             ScrapeResult or List[ScrapeResult] with product data
@@ -83,8 +75,7 @@ class AmazonScraper(BaseWebScraper):
         Example:
             >>> result = await scraper.products_async(
             ...     url="https://amazon.com/dp/B0CRMZHDG8",
-            ...     sync=True,
-            ...     timeout=65
+            ...     timeout=240
             ... )
         """
         # Validate URLs
@@ -93,34 +84,29 @@ class AmazonScraper(BaseWebScraper):
         else:
             validate_url_list(url)
         
-        # Adjust timeout based on sync mode
-        actual_timeout = timeout if sync else (timeout if timeout != 65 else 30)
-        
-        return await self._scrape_with_mode(
+        return await self._scrape_urls(
             url=url,
             dataset_id=self.DATASET_ID,
-            sync=sync,
-            timeout=actual_timeout
+            timeout=timeout
         )
     
     def products(
         self,
         url: Union[str, List[str]],
-        sync: bool = True,
-        timeout: int = 65,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
-        Scrape Amazon products (sync).
+        Scrape Amazon products (sync wrapper).
         
         See products_async() for documentation.
         
         Example:
             >>> result = scraper.products(
             ...     url="https://amazon.com/dp/B123",
-            ...     sync=True
+            ...     timeout=240
             ... )
         """
-        return asyncio.run(self.products_async(url, sync, timeout))
+        return asyncio.run(self.products_async(url, timeout=timeout))
     
     # ============================================================================
     # REVIEWS EXTRACTION (URL-based with filters)
@@ -132,19 +118,19 @@ class AmazonScraper(BaseWebScraper):
         pastDays: Optional[int] = None,
         keyWord: Optional[str] = None,
         numOfReviews: Optional[int] = None,
-        sync: bool = True,
-        timeout: int = 65,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Scrape Amazon product reviews from URLs (async).
+        
+        Uses standard async workflow: trigger job, poll until ready, then fetch results.
         
         Args:
             url: Single product URL or list of product URLs (required)
             pastDays: Number of past days to consider reviews from (optional)
             keyWord: Filter reviews by keyword (optional)
             numOfReviews: Number of reviews to scrape (optional)
-            sync: Synchronous mode (default: True)
-            timeout: Request timeout in seconds (default: 65 for sync, 30 for async)
+            timeout: Maximum wait time in seconds for polling (default: 240)
         
         Returns:
             ScrapeResult or List[ScrapeResult] with reviews data
@@ -155,7 +141,7 @@ class AmazonScraper(BaseWebScraper):
             ...     pastDays=30,
             ...     keyWord="quality",
             ...     numOfReviews=100,
-            ...     sync=True
+            ...     timeout=240
             ... )
         """
         # Validate URLs
@@ -180,17 +166,27 @@ class AmazonScraper(BaseWebScraper):
             
             payload.append(item)
         
-        # Adjust timeout
-        actual_timeout = timeout if sync else (timeout if timeout != 65 else 30)
+        # Use reviews dataset with standard async workflow
+        is_single = isinstance(url, str)
         
-        # Use reviews dataset
-        return await self._scrape_with_mode_custom_payload(
-            url=url,
+        sdk_function = get_caller_function_name()
+        
+        result = await self.workflow_executor.execute(
             payload=payload,
             dataset_id=self.DATASET_ID_REVIEWS,
-            sync=sync,
-            timeout=actual_timeout
+            poll_interval=DEFAULT_POLL_INTERVAL,
+            poll_timeout=timeout,
+            include_errors=True,
+            sdk_function=sdk_function,
+            normalize_func=self.normalize_result,
         )
+        
+        # Return single or list based on input
+        if is_single and isinstance(result.data, list) and len(result.data) == 1:
+            result.url = url if isinstance(url, str) else url[0]
+            result.data = result.data[0]
+        
+        return result
     
     def reviews(
         self,
@@ -198,11 +194,10 @@ class AmazonScraper(BaseWebScraper):
         pastDays: Optional[int] = None,
         keyWord: Optional[str] = None,
         numOfReviews: Optional[int] = None,
-        sync: bool = True,
-        timeout: int = 65,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
-        Scrape Amazon reviews (sync).
+        Scrape Amazon reviews (sync wrapper).
         
         See reviews_async() for documentation.
         
@@ -210,10 +205,11 @@ class AmazonScraper(BaseWebScraper):
             >>> result = scraper.reviews(
             ...     url="https://amazon.com/dp/B123",
             ...     pastDays=7,
-            ...     numOfReviews=50
+            ...     numOfReviews=50,
+            ...     timeout=240
             ... )
         """
-        return asyncio.run(self.reviews_async(url, pastDays, keyWord, numOfReviews, sync, timeout))
+        return asyncio.run(self.reviews_async(url, pastDays, keyWord, numOfReviews, timeout))
     
     # ============================================================================
     # SELLERS EXTRACTION (URL-based)
@@ -222,16 +218,16 @@ class AmazonScraper(BaseWebScraper):
     async def sellers_async(
         self,
         url: Union[str, List[str]],
-        sync: bool = True,
-        timeout: int = 65,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Scrape Amazon seller information from URLs (async).
         
+        Uses standard async workflow: trigger job, poll until ready, then fetch results.
+        
         Args:
             url: Single seller URL or list of seller URLs (required)
-            sync: Synchronous mode (default: True)
-            timeout: Request timeout in seconds (default: 65 for sync, 30 for async)
+            timeout: Maximum wait time in seconds for polling (default: 240)
         
         Returns:
             ScrapeResult or List[ScrapeResult] with seller data
@@ -239,7 +235,7 @@ class AmazonScraper(BaseWebScraper):
         Example:
             >>> result = await scraper.sellers_async(
             ...     url="https://amazon.com/sp?seller=AXXXXXXXXXXX",
-            ...     sync=True
+            ...     timeout=240
             ... )
         """
         # Validate URLs
@@ -248,48 +244,41 @@ class AmazonScraper(BaseWebScraper):
         else:
             validate_url_list(url)
         
-        # Adjust timeout
-        actual_timeout = timeout if sync else (timeout if timeout != 65 else 30)
-        
-        return await self._scrape_with_mode(
+        return await self._scrape_urls(
             url=url,
             dataset_id=self.DATASET_ID_SELLERS,
-            sync=sync,
-            timeout=actual_timeout
+            timeout=timeout
         )
     
     def sellers(
         self,
         url: Union[str, List[str]],
-        sync: bool = True,
-        timeout: int = 65,
+        timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
-        Scrape Amazon sellers (sync).
+        Scrape Amazon sellers (sync wrapper).
         
         See sellers_async() for documentation.
         """
-        return asyncio.run(self.sellers_async(url, sync, timeout))
+        return asyncio.run(self.sellers_async(url, timeout))
     
     # ============================================================================
-    # CORE SCRAPING LOGIC (sync vs async modes)
+    # CORE SCRAPING LOGIC (Standard async workflow)
     # ============================================================================
     
-    async def _scrape_with_mode(
+    async def _scrape_urls(
         self,
         url: Union[str, List[str]],
         dataset_id: str,
-        sync: bool,
         timeout: int,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
-        Scrape with sync or async mode.
+        Scrape URLs using standard async workflow (trigger/poll/fetch).
         
         Args:
             url: URL(s) to scrape
             dataset_id: Amazon dataset ID
-            sync: True = /scrape endpoint (immediate), False = /trigger (polling)
-            timeout: Request timeout
+            timeout: Maximum wait time in seconds (for polling)
         
         Returns:
             ScrapeResult(s)
@@ -301,48 +290,22 @@ class AmazonScraper(BaseWebScraper):
         # Build payload
         payload = [{"url": u} for u in url_list]
         
-        return await self._scrape_with_mode_custom_payload(
-            url=url,
+        # Use standard async workflow (trigger/poll/fetch)
+        sdk_function = get_caller_function_name()
+        
+        result = await self.workflow_executor.execute(
             payload=payload,
             dataset_id=dataset_id,
-            sync=sync,
-            timeout=timeout
+            poll_interval=DEFAULT_POLL_INTERVAL,
+            poll_timeout=timeout,
+            include_errors=True,
+            normalize_func=self.normalize_result,
+            sdk_function=sdk_function,
         )
-    
-    async def _scrape_with_mode_custom_payload(
-        self,
-        url: Union[str, List[str]],
-        payload: List[Dict[str, Any]],
-        dataset_id: str,
-        sync: bool,
-        timeout: int,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
-        """Scrape with custom payload and sync/async mode."""
-        is_single = isinstance(url, str)
         
-        async with self.engine:
-            if sync:
-                # Synchronous mode - immediate response (shared method)
-                result = await self._execute_with_sync_mode(
-                    payload=payload,
-                    dataset_id=dataset_id,
-                    timeout=timeout
-                )
-            else:
-                # Asynchronous mode - trigger/poll/fetch (shared method)
-                result = await self._execute_with_async_mode(
-                    payload=payload,
-                    dataset_id=dataset_id,
-                    timeout=timeout
-                )
-            
-            # Return single or list based on input
-            if is_single and isinstance(result.data, list) and len(result.data) == 1:
-                result.url = url if isinstance(url, str) else url[0]
-                result.data = result.data[0]
-            
-            return result
-    
-    # Removed - now using shared methods from BaseWebScraper:
-    # - _execute_with_sync_mode()
-    # - _execute_with_async_mode()
+        # Return single or list based on input
+        if is_single and isinstance(result.data, list) and len(result.data) == 1:
+            result.url = url if isinstance(url, str) else url[0]
+            result.data = result.data[0]
+        
+        return result

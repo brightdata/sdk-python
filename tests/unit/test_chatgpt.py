@@ -33,12 +33,11 @@ class TestChatGPTSearchService:
         assert 'country' in sig.parameters
         assert 'secondaryPrompt' in sig.parameters
         assert 'webSearch' in sig.parameters
-        assert 'sync' in sig.parameters
+        assert 'sync' not in sig.parameters
         assert 'timeout' in sig.parameters
         
         # Defaults
-        assert sig.parameters['sync'].default is True
-        assert sig.parameters['timeout'].default == 65
+        assert sig.parameters['timeout'].default == 180
     
     def test_chatGPT_validates_required_prompt(self):
         """Test chatGPT raises error if prompt is missing."""
@@ -56,7 +55,7 @@ class TestChatGPTAPISpecCompliance:
         """Test method matches CP link specification."""
         client = BrightDataClient(token="test_token_123456789")
         
-        # API Spec: client.search.chatGPT(prompt, country, secondaryPrompt, webSearch, sync, timeout)
+        # API Spec: client.search.chatGPT(prompt, country, secondaryPrompt, webSearch, timeout)
         import inspect
         sig = inspect.signature(client.search.chatGPT.chatGPT)
         
@@ -67,8 +66,8 @@ class TestChatGPTAPISpecCompliance:
         assert 'country' in params          # str | array<str>, 2-letter format
         assert 'secondaryPrompt' in params  # str | array<str>
         assert 'webSearch' in params        # bool | array<bool>
-        assert 'sync' in params             # bool, default: true
-        assert 'timeout' in params          # int, default: 65 for sync, 30 for async
+        assert 'sync' not in params         # Removed - uses standard async workflow
+        assert 'timeout' in params          # int, default: 180
     
     def test_parameter_defaults_match_spec(self):
         """Test parameter defaults match specification."""
@@ -78,8 +77,7 @@ class TestChatGPTAPISpecCompliance:
         sig = inspect.signature(search.chatGPT)
         
         # Defaults per spec
-        assert sig.parameters['sync'].default is True
-        assert sig.parameters['timeout'].default == 65
+        assert sig.parameters['timeout'].default == 180
         
         # Optional params should default to None
         assert sig.parameters['country'].default is None
@@ -135,25 +133,25 @@ class TestChatGPTParameterArraySupport:
 
 
 class TestChatGPTSyncAsyncMode:
-    """Test sync vs async mode handling."""
+    """Test standard async workflow (no sync parameter)."""
     
-    def test_sync_true_default(self):
-        """Test sync defaults to True."""
+    def test_no_sync_parameter(self):
+        """Test methods don't have sync parameter (standard async pattern)."""
         import inspect
         
         search = ChatGPTSearchService(bearer_token="test_token_123456789")
         sig = inspect.signature(search.chatGPT)
         
-        assert sig.parameters['sync'].default is True
+        assert 'sync' not in sig.parameters
     
-    def test_timeout_defaults_to_65(self):
-        """Test timeout defaults to 65."""
+    def test_timeout_defaults_to_180(self):
+        """Test timeout defaults to 180."""
         import inspect
         
         search = ChatGPTSearchService(bearer_token="test_token_123456789")
         sig = inspect.signature(search.chatGPT)
         
-        assert sig.parameters['timeout'].default == 65
+        assert sig.parameters['timeout'].default == 180
     
     def test_has_async_sync_pair(self):
         """Test has both chatGPT and chatGPT_async."""
@@ -265,6 +263,6 @@ class TestChatGPTPhilosophicalPrinciples:
         sig = inspect.signature(search.chatGPT)
         assert 'timeout' in sig.parameters
         
-        # Should have sync parameter
-        assert 'sync' in sig.parameters
+        # Should not have sync parameter (standard async pattern)
+        assert 'sync' not in sig.parameters
 

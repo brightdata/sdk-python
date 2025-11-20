@@ -41,23 +41,6 @@ class TestClientInitialization:
             client = BrightDataClient()
             assert client.token == "env_token_123456789"
     
-    def test_client_loads_from_brightdata_api_key(self):
-        """Test client loads token from BRIGHTDATA_API_KEY."""
-        with patch.dict(os.environ, {"BRIGHTDATA_API_KEY": "env_key_123456789"}, clear=True):
-            client = BrightDataClient()
-            assert client.token == "env_key_123456789"
-    
-    def test_client_loads_from_brightdata_token(self):
-        """Test client loads token from BRIGHTDATA_TOKEN."""
-        with patch.dict(os.environ, {"BRIGHTDATA_TOKEN": "env_token_123456789"}, clear=True):
-            client = BrightDataClient()
-            assert client.token == "env_token_123456789"
-    
-    def test_client_loads_from_bd_api_token(self):
-        """Test client loads token from BD_API_TOKEN."""
-        with patch.dict(os.environ, {"BD_API_TOKEN": "bd_token_123456789"}, clear=True):
-            client = BrightDataClient()
-            assert client.token == "bd_token_123456789"
     
     def test_client_prioritizes_explicit_token_over_env(self):
         """Test explicit token takes precedence over environment."""

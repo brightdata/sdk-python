@@ -26,15 +26,15 @@ class BaseResult:
         success: Whether the operation completed successfully.
         cost: Cost in USD for this operation. Must be non-negative if provided.
         error: Error message if operation failed, None otherwise.
-        request_sent_at: Timestamp when the request was sent (UTC-aware).
-        data_received_at: Timestamp when data was received (UTC-aware).
+        trigger_sent_at: Timestamp when the trigger request was sent to Bright Data (UTC-aware).
+        data_fetched_at: Timestamp when data was fetched after polling completed (UTC-aware).
     """
     
     success: bool
     cost: Optional[float] = None
     error: Optional[str] = None
-    request_sent_at: Optional[datetime] = None
-    data_received_at: Optional[datetime] = None
+    trigger_sent_at: Optional[datetime] = None
+    data_fetched_at: Optional[datetime] = None
     
     def __post_init__(self) -> None:
         """Validate data after initialization."""
@@ -48,8 +48,8 @@ class BaseResult:
         Returns:
             Elapsed time in milliseconds, or None if timing data unavailable.
         """
-        if self.request_sent_at and self.data_received_at:
-            delta = self.data_received_at - self.request_sent_at
+        if self.trigger_sent_at and self.data_fetched_at:
+            delta = self.data_fetched_at - self.trigger_sent_at
             return delta.total_seconds() * 1000
         return None
     
@@ -60,13 +60,13 @@ class BaseResult:
         Returns:
             Dictionary with timing information including:
             - total_elapsed_ms: Total elapsed time in milliseconds
-            - request_sent_at: ISO format timestamp
-            - data_received_at: ISO format timestamp
+            - trigger_sent_at: ISO format timestamp when trigger was sent
+            - data_fetched_at: ISO format timestamp when data was fetched
         """
         return {
             "total_elapsed_ms": self.elapsed_ms(),
-            "request_sent_at": self.request_sent_at.isoformat() if self.request_sent_at else None,
-            "data_received_at": self.data_received_at.isoformat() if self.data_received_at else None,
+            "trigger_sent_at": self.trigger_sent_at.isoformat() if self.trigger_sent_at else None,
+            "data_fetched_at": self.data_fetched_at.isoformat() if self.data_fetched_at else None,
         }
     
     def to_dict(self) -> Dict[str, Any]:
@@ -129,7 +129,7 @@ class BaseResult:
     
     def __repr__(self) -> str:
         """String representation for debugging."""
-        status = "✓" if self.success else "✗"
+        status = "success" if self.success else "error"
         cost_str = f"${self.cost:.4f}" if self.cost else "N/A"
         elapsed = f"{self.elapsed_ms():.2f}ms" if self.elapsed_ms() else "N/A"
         return f"<{self.__class__.__name__} {status} cost={cost_str} elapsed={elapsed}>"
@@ -149,7 +149,7 @@ class ScrapeResult(BaseResult):
         data: Scraped data (dict, list, or raw content).
         snapshot_id: Bright Data snapshot ID for this scrape.
         platform: Platform detected: "linkedin", "amazon", "chatgpt", or None.
-        fallback_used: Whether a fallback method (e.g., Browser API) was used.
+        method: Method used to obtain data: "web_scraper", "web_unlocker", "browser_api", or None.
         root_domain: Root domain extracted from URL.
         snapshot_id_received_at: Timestamp when snapshot ID was received.
         snapshot_polled_at: List of timestamps when snapshot status was polled.
@@ -163,7 +163,7 @@ class ScrapeResult(BaseResult):
     data: Optional[Any] = None
     snapshot_id: Optional[str] = None
     platform: PlatformType = None
-    fallback_used: bool = False
+    method: Optional[str] = None
     root_domain: Optional[str] = None
     snapshot_id_received_at: Optional[datetime] = None
     snapshot_polled_at: List[datetime] = field(default_factory=list)
@@ -197,12 +197,12 @@ class ScrapeResult(BaseResult):
         """
         base_breakdown = super().get_timing_breakdown()
         
-        if self.snapshot_id_received_at and self.request_sent_at:
-            trigger_time = (self.snapshot_id_received_at - self.request_sent_at).total_seconds() * 1000
+        if self.snapshot_id_received_at and self.trigger_sent_at:
+            trigger_time = (self.snapshot_id_received_at - self.trigger_sent_at).total_seconds() * 1000
             base_breakdown["trigger_time_ms"] = trigger_time
         
-        if self.data_received_at and self.snapshot_id_received_at:
-            polling_time = (self.data_received_at - self.snapshot_id_received_at).total_seconds() * 1000
+        if self.data_fetched_at and self.snapshot_id_received_at:
+            polling_time = (self.data_fetched_at - self.snapshot_id_received_at).total_seconds() * 1000
             base_breakdown["polling_time_ms"] = polling_time
         
         base_breakdown["poll_count"] = len(self.snapshot_polled_at)

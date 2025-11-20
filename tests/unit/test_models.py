@@ -25,8 +25,8 @@ class TestBaseResult:
         now = datetime.now(timezone.utc)
         result = BaseResult(
             success=True,
-            request_sent_at=now,
-            data_received_at=now,
+            trigger_sent_at=now,
+            data_fetched_at=now,
         )
         elapsed = result.elapsed_ms()
         assert elapsed is not None
@@ -38,8 +38,8 @@ class TestBaseResult:
         end = datetime(2024, 1, 1, 12, 0, 1)
         result = BaseResult(
             success=True,
-            request_sent_at=start,
-            data_received_at=end,
+            trigger_sent_at=start,
+            data_fetched_at=end,
         )
         assert result.elapsed_ms() == 1000.0
     
@@ -48,13 +48,13 @@ class TestBaseResult:
         now = datetime.now(timezone.utc)
         result = BaseResult(
             success=True,
-            request_sent_at=now,
-            data_received_at=now,
+            trigger_sent_at=now,
+            data_fetched_at=now,
         )
         breakdown = result.get_timing_breakdown()
         assert "total_elapsed_ms" in breakdown
-        assert "request_sent_at" in breakdown
-        assert "data_received_at" in breakdown
+        assert "trigger_sent_at" in breakdown
+        assert "data_fetched_at" in breakdown
     
     def test_to_dict(self):
         """Test conversion to dictionary."""
@@ -117,9 +117,9 @@ class TestScrapeResult:
             success=True,
             url="https://example.com",
             status="ready",
-            request_sent_at=start,
+            trigger_sent_at=start,
             snapshot_id_received_at=snapshot_received,
-            data_received_at=end,
+            data_fetched_at=end,
             snapshot_polled_at=[snapshot_received, end],
         )
         
@@ -209,8 +209,8 @@ class TestInterfaceRequirements:
         assert hasattr(result, 'success')
         assert hasattr(result, 'cost')
         assert hasattr(result, 'error')
-        assert hasattr(result, 'request_sent_at')
-        assert hasattr(result, 'data_received_at')
+        assert hasattr(result, 'trigger_sent_at')
+        assert hasattr(result, 'data_fetched_at')
     
     def test_common_methods(self):
         """Test common methods across all results."""

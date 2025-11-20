@@ -1,16 +1,21 @@
 """
 LinkedIn Scraper - URL-based extraction for profiles, companies, jobs, and posts.
 
+This module contains the LinkedInScraper class which provides URL-based extraction
+for LinkedIn profiles, companies, jobs, and posts. All methods use the standard
+async workflow (trigger/poll/fetch).
+
 API Specifications:
-- client.scrape.linkedin.posts(url, sync=True, timeout=65)
-- client.scrape.linkedin.jobs(url, sync=True, timeout=65)
-- client.scrape.linkedin.profiles(url, sync=True, timeout=65)
-- client.scrape.linkedin.companies(url, sync=True, timeout=65)
+- client.scrape.linkedin.posts(url, timeout=180)
+- client.scrape.linkedin.jobs(url, timeout=180)
+- client.scrape.linkedin.profiles(url, timeout=180)
+- client.scrape.linkedin.companies(url, timeout=180)
 
 All methods accept:
-- url: str | list (required)
-- sync: bool (default: True) - True=immediate, False=async polling
-- timeout: int (default: 65 for sync, 30 for async)
+- url: str | list (required) - Single URL or list of URLs
+- timeout: int (default: 180) - Maximum wait time in seconds for polling
+
+For search/discovery operations, see search.py which contains LinkedInSearchScraper.
 """
 
 import asyncio
@@ -21,6 +26,8 @@ from ..base import BaseWebScraper
 from ..registry import register
 from ...models import ScrapeResult
 from ...utils.validation import validate_url, validate_url_list
+from ...utils.function_detection import get_caller_function_name
+from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT
 from ...exceptions import ValidationError, APIError
 
 
@@ -41,8 +48,7 @@ class LinkedInScraper(BaseWebScraper):
         >>> # Scrape profile
         >>> result = scraper.profiles(
         ...     url="https://linkedin.com/in/johndoe",
-        ...     sync=True,
-        ...     timeout=65
+        ...     timeout=180
         ... )
     """
     
@@ -53,12 +59,8 @@ class LinkedInScraper(BaseWebScraper):
     DATASET_ID_POSTS = "gd_lwae11111pwxp6c4ea"  # Posts
     
     PLATFORM_NAME = "linkedin"
-    MIN_POLL_TIMEOUT = 180
+    MIN_POLL_TIMEOUT = DEFAULT_TIMEOUT_SHORT
     COST_PER_RECORD = 0.002
-    
-    # API endpoints
-    SCRAPE_URL = "https://api.brightdata.com/datasets/v3/scrape"  # Sync
-    TRIGGER_URL = "https://api.brightdata.com/datasets/v3/trigger"  # Async
     
     # ============================================================================
     # POSTS EXTRACTION (URL-based)
@@ -67,16 +69,16 @@ class LinkedInScraper(BaseWebScraper):
     async def posts_async(
         self,
         url: Union[str, List[str]],
-        sync: bool = True,
-        timeout: int = 65,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Scrape LinkedIn posts from URLs (async).
         
+        Uses standard async workflow: trigger job, poll until ready, then fetch results.
+        
         Args:
             url: Single post URL or list of post URLs (required)
-            sync: Synchronous mode - True for immediate response, False for polling
-            timeout: Request timeout in seconds (default: 65 for sync, 30 for async)
+            timeout: Maximum wait time in seconds for polling (default: 180)
         
         Returns:
             ScrapeResult or List[ScrapeResult]
@@ -84,8 +86,7 @@ class LinkedInScraper(BaseWebScraper):
         Example:
             >>> result = await scraper.posts_async(
             ...     url="https://linkedin.com/feed/update/urn:li:activity:123",
-            ...     sync=True,
-            ...     timeout=65
+            ...     timeout=180
             ... )
         """
         # Validate URLs
@@ -94,28 +95,23 @@ class LinkedInScraper(BaseWebScraper):
         else:
             validate_url_list(url)
         
-        # Adjust timeout based on sync mode
-        actual_timeout = timeout if sync else (timeout if timeout != 65 else 30)
-        
-        return await self._scrape_with_mode(
+        return await self._scrape_urls(
             url=url,
             dataset_id=self.DATASET_ID_POSTS,
-            sync=sync,
-            timeout=actual_timeout
+            timeout=timeout
         )
     
     def posts(
         self,
         url: Union[str, List[str]],
-        sync: bool = True,
-        timeout: int = 65,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
-        Scrape LinkedIn posts (sync).
+        Scrape LinkedIn posts (sync wrapper).
         
         See posts_async() for documentation.
         """
-        return asyncio.run(self.posts_async(url, sync, timeout))
+        return asyncio.run(self.posts_async(url, timeout))
     
     # ============================================================================
     # JOBS EXTRACTION (URL-based)
@@ -124,16 +120,16 @@ class LinkedInScraper(BaseWebScraper):
     async def jobs_async(
         self,
         url: Union[str, List[str]],
-        sync: bool = True,
-        timeout: int = 65,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Scrape LinkedIn jobs from URLs (async).
         
+        Uses standard async workflow: trigger job, poll until ready, then fetch results.
+        
         Args:
             url: Single job URL or list of job URLs (required)
-            sync: Synchronous mode (default: True)
-            timeout: Request timeout in seconds (default: 65 for sync, 30 for async)
+            timeout: Maximum wait time in seconds for polling (default: 180)
         
         Returns:
             ScrapeResult or List[ScrapeResult]
@@ -141,7 +137,7 @@ class LinkedInScraper(BaseWebScraper):
         Example:
             >>> result = await scraper.jobs_async(
             ...     url="https://linkedin.com/jobs/view/123456",
-            ...     sync=True
+            ...     timeout=180
             ... )
         """
         if isinstance(url, str):
@@ -149,23 +145,19 @@ class LinkedInScraper(BaseWebScraper):
         else:
             validate_url_list(url)
         
-        actual_timeout = timeout if sync else (timeout if timeout != 65 else 30)
-        
-        return await self._scrape_with_mode(
+        return await self._scrape_urls(
             url=url,
             dataset_id=self.DATASET_ID_JOBS,
-            sync=sync,
-            timeout=actual_timeout
+            timeout=timeout
         )
     
     def jobs(
         self,
         url: Union[str, List[str]],
-        sync: bool = True,
-        timeout: int = 65,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
-        """Scrape LinkedIn jobs (sync)."""
-        return asyncio.run(self.jobs_async(url, sync, timeout))
+        """Scrape LinkedIn jobs (sync wrapper)."""
+        return asyncio.run(self.jobs_async(url, timeout))
     
     # ============================================================================
     # PROFILES EXTRACTION (URL-based)
@@ -174,16 +166,16 @@ class LinkedInScraper(BaseWebScraper):
     async def profiles_async(
         self,
         url: Union[str, List[str]],
-        sync: bool = True,
-        timeout: int = 65,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Scrape LinkedIn profiles from URLs (async).
         
+        Uses standard async workflow: trigger job, poll until ready, then fetch results.
+        
         Args:
             url: Single profile URL or list of profile URLs (required)
-            sync: Synchronous mode (default: True)
-            timeout: Request timeout in seconds (default: 65 for sync, 30 for async)
+            timeout: Maximum wait time in seconds for polling (default: 180)
         
         Returns:
             ScrapeResult or List[ScrapeResult]
@@ -191,7 +183,7 @@ class LinkedInScraper(BaseWebScraper):
         Example:
             >>> result = await scraper.profiles_async(
             ...     url="https://linkedin.com/in/johndoe",
-            ...     sync=True
+            ...     timeout=180
             ... )
         """
         if isinstance(url, str):
@@ -199,23 +191,19 @@ class LinkedInScraper(BaseWebScraper):
         else:
             validate_url_list(url)
         
-        actual_timeout = timeout if sync else (timeout if timeout != 65 else 30)
-        
-        return await self._scrape_with_mode(
+        return await self._scrape_urls(
             url=url,
             dataset_id=self.DATASET_ID,
-            sync=sync,
-            timeout=actual_timeout
+            timeout=timeout
         )
     
     def profiles(
         self,
         url: Union[str, List[str]],
-        sync: bool = True,
-        timeout: int = 65,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
-        """Scrape LinkedIn profiles (sync)."""
-        return asyncio.run(self.profiles_async(url, sync, timeout))
+        """Scrape LinkedIn profiles (sync wrapper)."""
+        return asyncio.run(self.profiles_async(url, timeout))
     
     # ============================================================================
     # COMPANIES EXTRACTION (URL-based)
@@ -224,16 +212,16 @@ class LinkedInScraper(BaseWebScraper):
     async def companies_async(
         self,
         url: Union[str, List[str]],
-        sync: bool = True,
-        timeout: int = 65,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Scrape LinkedIn companies from URLs (async).
         
+        Uses standard async workflow: trigger job, poll until ready, then fetch results.
+        
         Args:
             url: Single company URL or list of company URLs (required)
-            sync: Synchronous mode (default: True)
-            timeout: Request timeout in seconds (default: 65 for sync, 30 for async)
+            timeout: Maximum wait time in seconds for polling (default: 180)
         
         Returns:
             ScrapeResult or List[ScrapeResult]
@@ -241,7 +229,7 @@ class LinkedInScraper(BaseWebScraper):
         Example:
             >>> result = await scraper.companies_async(
             ...     url="https://linkedin.com/company/microsoft",
-            ...     sync=True
+            ...     timeout=180
             ... )
         """
         if isinstance(url, str):
@@ -249,43 +237,37 @@ class LinkedInScraper(BaseWebScraper):
         else:
             validate_url_list(url)
         
-        actual_timeout = timeout if sync else (timeout if timeout != 65 else 30)
-        
-        return await self._scrape_with_mode(
+        return await self._scrape_urls(
             url=url,
             dataset_id=self.DATASET_ID_COMPANIES,
-            sync=sync,
-            timeout=actual_timeout
+            timeout=timeout
         )
     
     def companies(
         self,
         url: Union[str, List[str]],
-        sync: bool = True,
-        timeout: int = 65,
+        timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
-        """Scrape LinkedIn companies (sync)."""
-        return asyncio.run(self.companies_async(url, sync, timeout))
+        """Scrape LinkedIn companies (sync wrapper)."""
+        return asyncio.run(self.companies_async(url, timeout))
     
     # ============================================================================
-    # CORE SCRAPING LOGIC (sync vs async modes)
+    # CORE SCRAPING LOGIC (Standard async workflow)
     # ============================================================================
     
-    async def _scrape_with_mode(
+    async def _scrape_urls(
         self,
         url: Union[str, List[str]],
         dataset_id: str,
-        sync: bool,
         timeout: int,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
-        Scrape with sync or async mode.
+        Scrape URLs using standard async workflow (trigger/poll/fetch).
         
         Args:
             url: URL(s) to scrape
             dataset_id: LinkedIn dataset ID
-            sync: True = /scrape endpoint (immediate), False = /trigger (polling)
-            timeout: Request timeout
+            timeout: Maximum wait time in seconds (for polling)
         
         Returns:
             ScrapeResult(s)
@@ -297,29 +279,22 @@ class LinkedInScraper(BaseWebScraper):
         # Build payload
         payload = [{"url": u} for u in url_list]
         
-        async with self.engine:
-            if sync:
-                # Synchronous mode - immediate response (shared method)
-                result = await self._execute_with_sync_mode(
-                    payload=payload,
-                    dataset_id=dataset_id,
-                    timeout=timeout
-                )
-            else:
-                # Asynchronous mode - trigger/poll/fetch (shared method)
-                result = await self._execute_with_async_mode(
-                    payload=payload,
-                    dataset_id=dataset_id,
-                    timeout=timeout
-                )
-            
-            # Return single or list based on input
-            if is_single and isinstance(result.data, list) and len(result.data) == 1:
-                result.url = url if isinstance(url, str) else url[0]
-                result.data = result.data[0]
-            
-            return result
-    
-    # Removed - now using shared methods from BaseWebScraper:
-    # - _execute_with_sync_mode()
-    # - _execute_with_async_mode()
+        # Use standard async workflow (trigger/poll/fetch)
+        sdk_function = get_caller_function_name()
+        
+        result = await self.workflow_executor.execute(
+            payload=payload,
+            dataset_id=dataset_id,
+            poll_interval=DEFAULT_POLL_INTERVAL,
+            poll_timeout=timeout,
+            include_errors=True,
+            sdk_function=sdk_function,
+            normalize_func=self.normalize_result,
+        )
+        
+        # Return single or list based on input
+        if is_single and isinstance(result.data, list) and len(result.data) == 1:
+            result.url = url if isinstance(url, str) else url[0]
+            result.data = result.data[0]
+        
+        return result

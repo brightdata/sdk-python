@@ -8,6 +8,7 @@ from .errors import (
     TimeoutError,
     ZoneError,
     NetworkError,
+    SSLError,
 )
 
 __all__ = [
@@ -18,4 +19,5 @@ __all__ = [
     "TimeoutError",
     "ZoneError",
     "NetworkError",
+    "SSLError",
 ]

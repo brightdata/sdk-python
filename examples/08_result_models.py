@@ -16,8 +16,8 @@ def example_scrape_result():
         cost=0.001,
         snapshot_id="snapshot_12345",
         data={"product": "Example Product", "price": "$29.99"},
-        request_sent_at=datetime.utcnow(),
-        data_received_at=datetime.utcnow(),
+trigger_sent_at=datetime.utcnow(),
+            data_fetched_at=datetime.utcnow(),
         root_domain="amazon.com",
         row_count=1,
     )
@@ -58,8 +58,8 @@ def example_search_result():
             {"title": "Async Python Guide", "url": "https://example.com/2"},
         ],
         cost=0.002,
-        request_sent_at=datetime.utcnow(),
-        data_received_at=datetime.utcnow(),
+trigger_sent_at=datetime.utcnow(),
+            data_fetched_at=datetime.utcnow(),
     )
     
     print(f"Result: {result}")
@@ -117,8 +117,8 @@ def example_error_handling():
         status="error",
         error="Connection timeout after 30 seconds",
         cost=0.0,  # No charge for failed requests
-        request_sent_at=datetime.utcnow(),
-        data_received_at=datetime.utcnow(),
+trigger_sent_at=datetime.utcnow(),
+            data_fetched_at=datetime.utcnow(),
     )
     
     print(f"Error Result: {error_result}")

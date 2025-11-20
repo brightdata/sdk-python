@@ -41,3 +41,12 @@ class ZoneError(BrightDataError):
 class NetworkError(BrightDataError):
     """Network connectivity issue."""
     pass
+
+
+class SSLError(BrightDataError):
+    """
+    SSL certificate verification error.
+    
+    Common on macOS where Python doesn't have access to system certificates.
+    """
+    pass

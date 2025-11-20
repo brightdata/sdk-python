@@ -14,17 +14,19 @@ from datetime import datetime, timezone
 
 from ..models import ScrapeResult
 from ..exceptions import APIError
+from ..constants import DEFAULT_POLL_INTERVAL, DEFAULT_POLL_TIMEOUT
 
 
 async def poll_until_ready(
     get_status_func: Callable[[str], Awaitable[str]],
     fetch_result_func: Callable[[str], Awaitable[Any]],
     snapshot_id: str,
-    poll_interval: int = 10,
-    poll_timeout: int = 600,
-    request_sent_at: datetime | None = None,
+    poll_interval: int = DEFAULT_POLL_INTERVAL,
+    poll_timeout: int = DEFAULT_POLL_TIMEOUT,
+    trigger_sent_at: datetime | None = None,
     snapshot_id_received_at: datetime | None = None,
     platform: str | None = None,
+    method: str | None = None,
     cost_per_record: float = 0.001,
 ) -> ScrapeResult:
     """
@@ -39,9 +41,10 @@ async def poll_until_ready(
         snapshot_id: Snapshot identifier to poll
         poll_interval: Seconds between status checks (default: 10)
         poll_timeout: Maximum seconds to wait (default: 600)
-        request_sent_at: Original request timestamp (optional)
+        trigger_sent_at: Timestamp when trigger request was sent (optional)
         snapshot_id_received_at: When snapshot_id was received (optional)
         platform: Platform name for result metadata (optional)
+        method: Method used: "web_scraper", "web_unlocker", "browser_api" (optional)
         cost_per_record: Cost per record for cost calculation (default: 0.001)
     
     Returns:
@@ -69,7 +72,7 @@ async def poll_until_ready(
     snapshot_polled_at: List[datetime] = []
     
     # Use provided timestamps or create new ones
-    req_sent = request_sent_at or start_time
+    trigger_sent = trigger_sent_at or start_time
     snapshot_received = snapshot_id_received_at or start_time
     
     while True:
@@ -84,10 +87,11 @@ async def poll_until_ready(
                 error=f"Polling timeout after {poll_timeout}s",
                 snapshot_id=snapshot_id,
                 platform=platform,
-                request_sent_at=req_sent,
+                method=method or "web_scraper",
+                trigger_sent_at=trigger_sent,
                 snapshot_id_received_at=snapshot_received,
                 snapshot_polled_at=snapshot_polled_at,
-                data_received_at=datetime.now(timezone.utc),
+                data_fetched_at=datetime.now(timezone.utc),
             )
         
         # Poll status
@@ -104,16 +108,17 @@ async def poll_until_ready(
                 error=f"Failed to get status: {str(e)}",
                 snapshot_id=snapshot_id,
                 platform=platform,
-                request_sent_at=req_sent,
+                method=method or "web_scraper",
+                trigger_sent_at=trigger_sent,
                 snapshot_id_received_at=snapshot_received,
                 snapshot_polled_at=snapshot_polled_at,
-                data_received_at=datetime.now(timezone.utc),
+                data_fetched_at=datetime.now(timezone.utc),
             )
         
         # Check if ready
         if status == "ready":
             # Fetch results
-            data_received_at = datetime.now(timezone.utc)
+            data_fetched_at = datetime.now(timezone.utc)
             
             try:
                 data = await fetch_result_func(snapshot_id)
@@ -125,10 +130,11 @@ async def poll_until_ready(
                     error=f"Failed to fetch results: {str(e)}",
                     snapshot_id=snapshot_id,
                     platform=platform,
-                    request_sent_at=req_sent,
+                method=method or "web_scraper",
+                    trigger_sent_at=trigger_sent,
                     snapshot_id_received_at=snapshot_received,
                     snapshot_polled_at=snapshot_polled_at,
-                    data_received_at=data_received_at,
+                    data_fetched_at=data_fetched_at,
                 )
             
             # Calculate metrics
@@ -143,10 +149,11 @@ async def poll_until_ready(
                 snapshot_id=snapshot_id,
                 cost=cost,
                 platform=platform,
-                request_sent_at=req_sent,
+                method=method or "web_scraper",
+                trigger_sent_at=trigger_sent,
                 snapshot_id_received_at=snapshot_received,
                 snapshot_polled_at=snapshot_polled_at,
-                data_received_at=data_received_at,
+                data_fetched_at=data_fetched_at,
                 row_count=row_count,
             )
         
@@ -158,10 +165,11 @@ async def poll_until_ready(
                 error=f"Job failed with status: {status}",
                 snapshot_id=snapshot_id,
                 platform=platform,
-                request_sent_at=req_sent,
+                method=method or "web_scraper",
+                trigger_sent_at=trigger_sent,
                 snapshot_id_received_at=snapshot_received,
                 snapshot_polled_at=snapshot_polled_at,
-                data_received_at=datetime.now(timezone.utc),
+                data_fetched_at=datetime.now(timezone.utc),
             )
         
         # Still in progress - wait and poll again
