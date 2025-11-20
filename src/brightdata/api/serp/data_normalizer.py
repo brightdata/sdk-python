@@ -16,51 +16,59 @@ class BaseDataNormalizer(ABC):
 
 class GoogleDataNormalizer(BaseDataNormalizer):
     """Data normalizer for Google SERP responses."""
-    
+
     def normalize(self, data: Any) -> NormalizedSERPData:
         """Normalize Google SERP data."""
         if not isinstance(data, (dict, str)):
             return {"results": []}
-        
+
         if isinstance(data, str):
             return {
                 "results": [],
                 "raw_html": data,
             }
-        
+
+        # Handle raw HTML response (body field)
+        if "body" in data and isinstance(data.get("body"), str):
+            return {
+                "results": [],
+                "raw_html": data["body"],
+                "status_code": data.get("status_code"),
+            }
+
         results = []
         organic = data.get("organic", [])
-        
+
         for i, item in enumerate(organic, 1):
             results.append({
-                "position": i,
+                "position": item.get("rank", i),
                 "title": item.get("title", ""),
-                "url": item.get("url", ""),
+                "url": item.get("link", item.get("url", "")),
                 "description": item.get("description", ""),
-                "displayed_url": item.get("displayed_url", ""),
+                "displayed_url": item.get("display_link", item.get("displayed_url", "")),
             })
-        
+
         normalized: NormalizedSERPData = {
             "results": results,
             "total_results": data.get("total_results"),
             "search_info": data.get("search_information", {}),
         }
-        
+
         if "featured_snippet" in data:
             normalized["featured_snippet"] = data["featured_snippet"]
-        
+
         if "knowledge_panel" in data:
             normalized["knowledge_panel"] = data["knowledge_panel"]
-        
+
         if "people_also_ask" in data:
             normalized["people_also_ask"] = data["people_also_ask"]
-        
+
         if "related_searches" in data:
             normalized["related_searches"] = data["related_searches"]
-        
+
         if "ads" in data:
             normalized["ads"] = data["ads"]
-        
+
         return normalized
 
 

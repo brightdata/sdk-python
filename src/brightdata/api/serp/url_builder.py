@@ -35,30 +35,33 @@ class GoogleURLBuilder(BaseURLBuilder):
         num_results: int = 10,
         **kwargs
     ) -> str:
-        """Build Google search URL."""
+        """Build Google search URL with Bright Data parsing enabled."""
         encoded_query = quote_plus(query)
         url = f"https://www.google.com/search?q={encoded_query}"
         url += f"&num={num_results}"
-        
+
+        # Enable Bright Data SERP parsing
+        url += "&brd_json=1"
+
         if language:
             url += f"&hl={language}"
-        
+
         if location:
             location_code = LocationService.parse_location(
                 location, LocationFormat.GOOGLE
             )
             if location_code:
                 url += f"&gl={location_code}"
-        
+
         if device == "mobile":
             url += "&mobileaction=1"
-        
+
         if "safe_search" in kwargs:
             url += f"&safe={'active' if kwargs['safe_search'] else 'off'}"
-        
+
         if "time_range" in kwargs:
             url += f"&tbs=qdr:{kwargs['time_range']}"
-        
+
         return url
 
 

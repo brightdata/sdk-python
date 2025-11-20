@@ -2,6 +2,7 @@
 
 import asyncio
 import aiohttp
+import json
 from typing import Union, List, Optional, Dict, Any
 from datetime import datetime, timezone
 
@@ -134,7 +135,7 @@ class BaseSERPService:
         payload = {
             "zone": zone,
             "url": search_url,
-            "format": "json",
+            "format": "raw",
             "method": "GET",
         }
         
@@ -149,9 +150,15 @@ class BaseSERPService:
                 timeout=aiohttp.ClientTimeout(total=self.timeout)
             ) as response:
                 data_fetched_at = datetime.now(timezone.utc)
-                
+
                 if response.status == 200:
-                    data = await response.json()
+                    # With brd_json=1, response is JSON text (not wrapped in status_code/body)
+                    text = await response.text()
+                    try:
+                        data = json.loads(text)
+                    except json.JSONDecodeError:
+                        # Fallback to regular JSON response
+                        data = await response.json()
                     normalized_data = self.data_normalizer.normalize(data)
                     
                     return SearchResult(
