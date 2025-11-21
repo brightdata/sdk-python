@@ -42,7 +42,8 @@ class ZoneManager:
         self,
         web_unlocker_zone: str,
         serp_zone: Optional[str] = None,
-        browser_zone: Optional[str] = None
+        browser_zone: Optional[str] = None,
+        skip_verification: bool = False
     ) -> None:
         """
         Check if required zones exist and create them if they don't.
@@ -90,13 +91,42 @@ class ZoneManager:
             # Create zones
             for zone_name, zone_type in zones_to_create:
                 logger.info(f"Creating zone: {zone_name} (type: {zone_type})")
-                await self._create_zone(zone_name, zone_type)
-                logger.info(f"Successfully created zone: {zone_name}")
+                try:
+                    await self._create_zone(zone_name, zone_type)
+                    logger.info(f"Successfully created zone: {zone_name}")
+                except AuthenticationError as e:
+                    # Re-raise with clear message - this is a permission issue
+                    logger.error(f"Failed to create zone '{zone_name}' due to insufficient permissions")
+                    raise
+                except ZoneError as e:
+                    # Log and re-raise zone errors
+                    logger.error(f"Failed to create zone '{zone_name}': {e}")
+                    raise
 
-            # Verify zones were created
-            await self._verify_zones_created([zone[0] for zone in zones_to_create])
+            # Verify zones were created (unless skipped)
+            if not skip_verification:
+                try:
+                    await self._verify_zones_created([zone[0] for zone in zones_to_create])
+                except ZoneError as e:
+                    # Log verification failure but don't fail the entire operation
+                    logger.warning(
+                        f"Zone verification failed: {e}. "
+                        f"Zones may have been created but aren't yet visible in the API. "
+                        f"Check your dashboard at https://brightdata.com/cp/zones"
+                    )
+                    # Don't re-raise - zones were likely created successfully
+            else:
+                logger.info("Skipping zone verification (skip_verification=True)")
 
-        except (ZoneError, AuthenticationError, APIError):
+        except AuthenticationError as e:
+            # Permission errors are critical - show clear message
+            logger.error(
+                "\n❌ ZONE CREATION BLOCKED: API token lacks required permissions\n"
+                f"   Error: {e}\n"
+                "   Fix: Update your token permissions at https://brightdata.com/cp/setting/users"
+            )
+            raise
+        except (ZoneError, APIError):
             raise
         except Exception as e:
             logger.error(f"Unexpected error while ensuring zones exist: {e}")
@@ -204,11 +234,36 @@ class ZoneManager:
                             logger.info(f"Zone {zone_name} already exists - this is expected")
                             return
 
-                        # Handle authentication errors
+                        # Handle authentication/permission errors
                         if response.status in (HTTP_UNAUTHORIZED, HTTP_FORBIDDEN):
-                            raise AuthenticationError(
-                                f"Authentication failed ({response.status}) creating zone '{zone_name}': {error_text}"
-                            )
+                            # Check for specific permission error
+                            if "permission" in error_text.lower() or "lacks the required" in error_text.lower():
+                                error_msg = (
+                                    f"\n{'='*70}\n"
+                                    f"❌ PERMISSION ERROR: Cannot create zone '{zone_name}'\n"
+                                    f"{'='*70}\n"
+                                    f"Your API key lacks the required permissions for zone creation.\n\n"
+                                    f"To fix this:\n"
+                                    f"  1. Go to: https://brightdata.com/cp/setting/users\n"
+                                    f"  2. Find your API token\n"
+                                    f"  3. Enable 'Zone Management' or 'Create Zones' permission\n"
+                                    f"  4. Save changes and try again\n\n"
+                                    f"API Response: {error_text}\n"
+                                    f"{'='*70}\n"
+                                )
+                                logger.error(error_msg)
+                                raise AuthenticationError(
+                                    f"API key lacks permission to create zones. "
+                                    f"Update permissions at https://brightdata.com/cp/setting/users"
+                                )
+                            else:
+                                # Generic auth error
+                                logger.error(
+                                    f"Authentication failed ({response.status}) creating zone '{zone_name}': {error_text}"
+                                )
+                                raise AuthenticationError(
+                                    f"Authentication failed ({response.status}) creating zone '{zone_name}': {error_text}"
+                                )
 
                         # Handle bad request
                         if response.status == HTTP_BAD_REQUEST:
@@ -245,19 +300,24 @@ class ZoneManager:
         """
         Verify that zones were successfully created by checking the zones list.
 
+        Note: Zones may take several seconds to appear in the API after creation.
+        This method retries multiple times with exponential backoff.
+
         Args:
             zone_names: List of zone names to verify
 
         Raises:
-            ZoneError: If zone verification fails
+            ZoneError: If zone verification fails after all retries
         """
-        max_attempts = 3
-        retry_delay = 1.0
+        max_attempts = 5  # Increased from 3 to handle slower propagation
+        base_delay = 2.0  # Increased from 1.0 for better reliability
 
         for attempt in range(max_attempts):
             try:
-                logger.info(f"Verifying zone creation (attempt {attempt + 1}/{max_attempts})")
-                await asyncio.sleep(retry_delay)
+                # Calculate delay with exponential backoff
+                wait_time = base_delay * (1.5 ** attempt) if attempt > 0 else base_delay
+                logger.info(f"Verifying zone creation (attempt {attempt + 1}/{max_attempts}) after {wait_time:.1f}s...")
+                await asyncio.sleep(wait_time)
 
                 zones = await self._get_zones()
                 existing_zone_names = {zone.get('name') for zone in zones}
@@ -265,21 +325,30 @@ class ZoneManager:
                 missing_zones = [name for name in zone_names if name not in existing_zone_names]
 
                 if not missing_zones:
-                    logger.info("All zones verified successfully")
+                    logger.info(f"All {len(zone_names)} zone(s) verified successfully")
                     return
 
                 if attempt == max_attempts - 1:
-                    raise ZoneError(
-                        f"Zone verification failed: zones {missing_zones} not found after creation"
+                    # Final attempt failed - provide helpful error message
+                    error_msg = (
+                        f"Zone verification failed after {max_attempts} attempts: "
+                        f"zones {missing_zones} not found after creation. "
+                        f"The zones may have been created but are not yet visible in the API. "
+                        f"Please check your dashboard at https://brightdata.com/cp/zones"
                     )
+                    logger.error(error_msg)
+                    raise ZoneError(error_msg)
 
-                logger.warning(f"Zones not yet visible: {missing_zones}. Retrying verification...")
+                logger.warning(
+                    f"Zones not yet visible: {missing_zones}. "
+                    f"Retrying in {base_delay * (1.5 ** attempt):.1f}s..."
+                )
 
             except ZoneError:
                 if attempt == max_attempts - 1:
                     raise
                 logger.warning(f"Zone verification attempt {attempt + 1} failed, retrying...")
-                await asyncio.sleep(retry_delay * (2 ** attempt))
+                await asyncio.sleep(base_delay * (1.5 ** attempt))
 
     async def list_zones(self) -> List[Dict[str, Any]]:
         """
