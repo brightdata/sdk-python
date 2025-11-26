@@ -14,6 +14,40 @@ from .models import (
     Result,
 )
 
+# Export payload models (dataclasses)
+from .payloads import (
+    # Base
+    BasePayload,
+    URLPayload,
+    # Amazon
+    AmazonProductPayload,
+    AmazonReviewPayload,
+    AmazonSellerPayload,
+    # LinkedIn
+    LinkedInProfilePayload,
+    LinkedInJobPayload,
+    LinkedInCompanyPayload,
+    LinkedInPostPayload,
+    LinkedInProfileSearchPayload,
+    LinkedInJobSearchPayload,
+    LinkedInPostSearchPayload,
+    # ChatGPT
+    ChatGPTPromptPayload,
+    # Facebook
+    FacebookPostsProfilePayload,
+    FacebookPostsGroupPayload,
+    FacebookPostPayload,
+    FacebookCommentsPayload,
+    FacebookReelsPayload,
+    # Instagram
+    InstagramProfilePayload,
+    InstagramPostPayload,
+    InstagramCommentPayload,
+    InstagramReelPayload,
+    InstagramPostsDiscoverPayload,
+    InstagramReelsDiscoverPayload,
+)
+
 # Export exceptions
 from .exceptions import (
     BrightDataError,
@@ -41,6 +75,31 @@ __all__ = [
     "SearchResult",
     "CrawlResult",
     "Result",
+    # Payload models (dataclasses)
+    "BasePayload",
+    "URLPayload",
+    "AmazonProductPayload",
+    "AmazonReviewPayload",
+    "AmazonSellerPayload",
+    "LinkedInProfilePayload",
+    "LinkedInJobPayload",
+    "LinkedInCompanyPayload",
+    "LinkedInPostPayload",
+    "LinkedInProfileSearchPayload",
+    "LinkedInJobSearchPayload",
+    "LinkedInPostSearchPayload",
+    "ChatGPTPromptPayload",
+    "FacebookPostsProfilePayload",
+    "FacebookPostsGroupPayload",
+    "FacebookPostPayload",
+    "FacebookCommentsPayload",
+    "FacebookReelsPayload",
+    "InstagramProfilePayload",
+    "InstagramPostPayload",
+    "InstagramCommentPayload",
+    "InstagramReelPayload",
+    "InstagramPostsDiscoverPayload",
+    "InstagramReelsDiscoverPayload",
     # Exceptions
     "BrightDataError",
     "ValidationError",

@@ -1,16 +1,54 @@
 """
 Type definitions for Bright Data SDK.
 
-Provides TypedDict definitions for payloads, responses, and configuration
-for 100% type safety and excellent developer experience.
+This module provides type definitions for API responses and configuration.
+
+NOTE: Payload types have been migrated to dataclasses in payloads.py for:
+- Runtime validation
+- Default values
+- Better IDE support  
+- Consistent developer experience with result models
+
+For backward compatibility, TypedDict versions are kept here but deprecated.
+New code should use dataclasses from payloads.py instead.
 """
 
 from typing import TypedDict, Optional, List, Literal, Union, Any, Dict
 from typing_extensions import NotRequired
+import warnings
 
+# Import dataclass payloads for backward compatibility
+from .payloads import (
+    DatasetTriggerPayload as DatasetTriggerPayloadDataclass,
+    AmazonProductPayload as AmazonProductPayloadDataclass,
+    AmazonReviewPayload as AmazonReviewPayloadDataclass,
+    LinkedInProfilePayload as LinkedInProfilePayloadDataclass,
+    LinkedInJobPayload as LinkedInJobPayloadDataclass,
+    LinkedInCompanyPayload as LinkedInCompanyPayloadDataclass,
+    LinkedInPostPayload as LinkedInPostPayloadDataclass,
+    LinkedInProfileSearchPayload as LinkedInProfileSearchPayloadDataclass,
+    LinkedInJobSearchPayload as LinkedInJobSearchPayloadDataclass,
+    LinkedInPostSearchPayload as LinkedInPostSearchPayloadDataclass,
+    ChatGPTPromptPayload as ChatGPTPromptPayloadDataclass,
+    FacebookPostsProfilePayload as FacebookPostsProfilePayloadDataclass,
+    FacebookPostsGroupPayload as FacebookPostsGroupPayloadDataclass,
+    FacebookPostPayload as FacebookPostPayloadDataclass,
+    FacebookCommentsPayload as FacebookCommentsPayloadDataclass,
+    FacebookReelsPayload as FacebookReelsPayloadDataclass,
+    InstagramProfilePayload as InstagramProfilePayloadDataclass,
+    InstagramPostPayload as InstagramPostPayloadDataclass,
+    InstagramCommentPayload as InstagramCommentPayloadDataclass,
+    InstagramReelPayload as InstagramReelPayloadDataclass,
+    InstagramPostsDiscoverPayload as InstagramPostsDiscoverPayloadDataclass,
+    InstagramReelsDiscoverPayload as InstagramReelsDiscoverPayloadDataclass,
+)
+
+
+# DEPRECATED: TypedDict payloads kept for backward compatibility only
+# Use dataclass versions from payloads.py for new code
 
 class DatasetTriggerPayload(TypedDict, total=False):
-    """Payload for /datasets/v3/trigger endpoint."""
+    """DEPRECATED: Use payloads.DatasetTriggerPayload (dataclass) instead."""
     url: str
     keyword: str
     location: str
@@ -19,43 +57,43 @@ class DatasetTriggerPayload(TypedDict, total=False):
 
 
 class AmazonProductPayload(TypedDict, total=False):
-    """Amazon product scrape payload."""
-    url: str  # Required
+    """DEPRECATED: Use payloads.AmazonProductPayload (dataclass) instead."""
+    url: str
     reviews_count: NotRequired[int]
     images_count: NotRequired[int]
 
 
 class AmazonReviewPayload(TypedDict, total=False):
-    """Amazon review scrape payload."""
-    url: str  # Required
+    """DEPRECATED: Use payloads.AmazonReviewPayload (dataclass) instead."""
+    url: str
     pastDays: NotRequired[int]
     keyWord: NotRequired[str]
     numOfReviews: NotRequired[int]
 
 
 class LinkedInProfilePayload(TypedDict, total=False):
-    """LinkedIn profile scrape payload."""
-    url: str  # Required
+    """DEPRECATED: Use payloads.LinkedInProfilePayload (dataclass) instead."""
+    url: str
 
 
 class LinkedInJobPayload(TypedDict, total=False):
-    """LinkedIn job scrape payload."""
-    url: str  # Required
+    """DEPRECATED: Use payloads.LinkedInJobPayload (dataclass) instead."""
+    url: str
 
 
 class LinkedInCompanyPayload(TypedDict, total=False):
-    """LinkedIn company scrape payload."""
-    url: str  # Required
+    """DEPRECATED: Use payloads.LinkedInCompanyPayload (dataclass) instead."""
+    url: str
 
 
 class LinkedInPostPayload(TypedDict, total=False):
-    """LinkedIn post scrape payload."""
-    url: str  # Required
+    """DEPRECATED: Use payloads.LinkedInPostPayload (dataclass) instead."""
+    url: str
 
 
 class LinkedInProfileSearchPayload(TypedDict, total=False):
-    """LinkedIn profile search payload."""
-    firstName: str  # Required
+    """DEPRECATED: Use payloads.LinkedInProfileSearchPayload (dataclass) instead."""
+    firstName: str
     lastName: NotRequired[str]
     title: NotRequired[str]
     company: NotRequired[str]
@@ -64,7 +102,7 @@ class LinkedInProfileSearchPayload(TypedDict, total=False):
 
 
 class LinkedInJobSearchPayload(TypedDict, total=False):
-    """LinkedIn job search payload."""
+    """DEPRECATED: Use payloads.LinkedInJobSearchPayload (dataclass) instead."""
     url: NotRequired[str]
     keyword: NotRequired[str]
     location: NotRequired[str]
@@ -78,55 +116,55 @@ class LinkedInJobSearchPayload(TypedDict, total=False):
 
 
 class LinkedInPostSearchPayload(TypedDict, total=False):
-    """LinkedIn post search payload."""
-    profile_url: str  # Required
+    """DEPRECATED: Use payloads.LinkedInPostSearchPayload (dataclass) instead."""
+    profile_url: str
     start_date: NotRequired[str]
     end_date: NotRequired[str]
 
 
 class ChatGPTPromptPayload(TypedDict, total=False):
-    """ChatGPT prompt payload."""
-    prompt: str  # Required
+    """DEPRECATED: Use payloads.ChatGPTPromptPayload (dataclass) instead."""
+    prompt: str
     country: NotRequired[str]
     web_search: NotRequired[bool]
     additional_prompt: NotRequired[str]
 
 
 class FacebookPostsProfilePayload(TypedDict, total=False):
-    """Facebook posts by profile URL payload."""
-    url: str  # Required
+    """DEPRECATED: Use payloads.FacebookPostsProfilePayload (dataclass) instead."""
+    url: str
     num_of_posts: NotRequired[int]
     posts_to_not_include: NotRequired[List[str]]
-    start_date: NotRequired[str]  # MM-DD-YYYY
-    end_date: NotRequired[str]  # MM-DD-YYYY
+    start_date: NotRequired[str]
+    end_date: NotRequired[str]
 
 
 class FacebookPostsGroupPayload(TypedDict, total=False):
-    """Facebook posts by group URL payload."""
-    url: str  # Required
+    """DEPRECATED: Use payloads.FacebookPostsGroupPayload (dataclass) instead."""
+    url: str
     num_of_posts: NotRequired[int]
     posts_to_not_include: NotRequired[List[str]]
-    start_date: NotRequired[str]  # MM-DD-YYYY
-    end_date: NotRequired[str]  # MM-DD-YYYY
+    start_date: NotRequired[str]
+    end_date: NotRequired[str]
 
 
 class FacebookPostPayload(TypedDict, total=False):
-    """Facebook post by URL payload."""
-    url: str  # Required
+    """DEPRECATED: Use payloads.FacebookPostPayload (dataclass) instead."""
+    url: str
 
 
 class FacebookCommentsPayload(TypedDict, total=False):
-    """Facebook comments by post URL payload."""
-    url: str  # Required
+    """DEPRECATED: Use payloads.FacebookCommentsPayload (dataclass) instead."""
+    url: str
     num_of_comments: NotRequired[int]
     comments_to_not_include: NotRequired[List[str]]
-    start_date: NotRequired[str]  # MM-DD-YYYY
-    end_date: NotRequired[str]  # MM-DD-YYYY
+    start_date: NotRequired[str]
+    end_date: NotRequired[str]
 
 
 class FacebookReelsPayload(TypedDict, total=False):
-    """Facebook reels by profile URL payload."""
-    url: str  # Required
+    """DEPRECATED: Use payloads.FacebookReelsPayload (dataclass) instead."""
+    url: str
     num_of_posts: NotRequired[int]
     posts_to_not_include: NotRequired[List[str]]
     start_date: NotRequired[str]
@@ -134,42 +172,42 @@ class FacebookReelsPayload(TypedDict, total=False):
 
 
 class InstagramProfilePayload(TypedDict, total=False):
-    """Instagram profile by URL payload."""
-    url: str  # Required
+    """DEPRECATED: Use payloads.InstagramProfilePayload (dataclass) instead."""
+    url: str
 
 
 class InstagramPostPayload(TypedDict, total=False):
-    """Instagram post by URL payload."""
-    url: str  # Required
+    """DEPRECATED: Use payloads.InstagramPostPayload (dataclass) instead."""
+    url: str
 
 
 class InstagramCommentPayload(TypedDict, total=False):
-    """Instagram comments by post URL payload."""
-    url: str  # Required
+    """DEPRECATED: Use payloads.InstagramCommentPayload (dataclass) instead."""
+    url: str
 
 
 class InstagramReelPayload(TypedDict, total=False):
-    """Instagram reel by URL payload."""
-    url: str  # Required
+    """DEPRECATED: Use payloads.InstagramReelPayload (dataclass) instead."""
+    url: str
 
 
 class InstagramPostsDiscoverPayload(TypedDict, total=False):
-    """Instagram posts discovery by URL payload."""
-    url: str  # Required
+    """DEPRECATED: Use payloads.InstagramPostsDiscoverPayload (dataclass) instead."""
+    url: str
     num_of_posts: NotRequired[int]
     posts_to_not_include: NotRequired[List[str]]
-    start_date: NotRequired[str]  # MM-DD-YYYY
-    end_date: NotRequired[str]  # MM-DD-YYYY
-    post_type: NotRequired[str]  # e.g., "post", "reel"
+    start_date: NotRequired[str]
+    end_date: NotRequired[str]
+    post_type: NotRequired[str]
 
 
 class InstagramReelsDiscoverPayload(TypedDict, total=False):
-    """Instagram reels discovery by URL payload."""
-    url: str  # Required
+    """DEPRECATED: Use payloads.InstagramReelsDiscoverPayload (dataclass) instead."""
+    url: str
     num_of_posts: NotRequired[int]
     posts_to_not_include: NotRequired[List[str]]
-    start_date: NotRequired[str]  # MM-DD-YYYY
-    end_date: NotRequired[str]  # MM-DD-YYYY
+    start_date: NotRequired[str]
+    end_date: NotRequired[str]
 
 
 class TriggerResponse(TypedDict):
