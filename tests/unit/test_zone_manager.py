@@ -344,9 +344,9 @@ class TestZoneManagerEnsureZones:
 
         zone_manager = ZoneManager(mock_engine)
         # Verification failure should log warning but NOT raise exception
-        await zone_manager.ensure_required_zones(
-            web_unlocker_zone="sdk_unlocker"
-        )
+            await zone_manager.ensure_required_zones(
+                web_unlocker_zone="sdk_unlocker"
+            )
 
         # Should have logged warning about verification failure
         assert any("Zone verification failed" in record.message for record in caplog.records)

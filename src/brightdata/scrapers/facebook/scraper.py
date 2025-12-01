@@ -132,7 +132,7 @@ class FacebookScraper(BaseWebScraper):
         async def _run():
             async with self.engine:
                 return await self.posts_by_profile_async(
-                    url, num_of_posts, posts_to_not_include, start_date, end_date, timeout
+            url, num_of_posts, posts_to_not_include, start_date, end_date, timeout
                 )
         return asyncio.run(_run())
     
@@ -259,7 +259,7 @@ class FacebookScraper(BaseWebScraper):
         async def _run():
             async with self.engine:
                 return await self.posts_by_group_async(
-                    url, num_of_posts, posts_to_not_include, start_date, end_date, timeout
+            url, num_of_posts, posts_to_not_include, start_date, end_date, timeout
                 )
         return asyncio.run(_run())
     
@@ -446,7 +446,7 @@ class FacebookScraper(BaseWebScraper):
         async def _run():
             async with self.engine:
                 return await self.comments_async(
-                    url, num_of_comments, comments_to_not_include, start_date, end_date, timeout
+            url, num_of_comments, comments_to_not_include, start_date, end_date, timeout
                 )
         return asyncio.run(_run())
     
@@ -552,7 +552,7 @@ class FacebookScraper(BaseWebScraper):
         async def _run():
             async with self.engine:
                 return await self.reels_async(
-                    url, num_of_posts, posts_to_not_include, start_date, end_date, timeout
+            url, num_of_posts, posts_to_not_include, start_date, end_date, timeout
                 )
         return asyncio.run(_run())
     

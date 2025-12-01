@@ -131,7 +131,7 @@ class InstagramSearchScraper:
         async def _run():
             async with self.engine:
                 return await self.posts_async(
-                    url, num_of_posts, posts_to_not_include, start_date, end_date, post_type, timeout
+            url, num_of_posts, posts_to_not_include, start_date, end_date, post_type, timeout
                 )
         return asyncio.run(_run())
     
@@ -203,7 +203,7 @@ class InstagramSearchScraper:
         async def _run():
             async with self.engine:
                 return await self.reels_async(
-                    url, num_of_posts, posts_to_not_include, start_date, end_date, timeout
+            url, num_of_posts, posts_to_not_include, start_date, end_date, timeout
                 )
         return asyncio.run(_run())
     

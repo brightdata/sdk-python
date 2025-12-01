@@ -39,6 +39,7 @@ class SearchService:
         self._google_service: Optional['GoogleSERPService'] = None
         self._bing_service: Optional['BingSERPService'] = None
         self._yandex_service: Optional['YandexSERPService'] = None
+        self._amazon_search: Optional['AmazonSearchScraper'] = None
         self._linkedin_search: Optional['LinkedInSearchScraper'] = None
         self._chatgpt_search: Optional['ChatGPTSearchService'] = None
         self._instagram_search: Optional['InstagramSearchScraper'] = None
@@ -175,6 +176,38 @@ class SearchService:
     def yandex(self, query: Union[str, List[str]], **kwargs):
         """Search Yandex synchronously."""
         return asyncio.run(self.yandex_async(query, **kwargs))
+    
+    @property
+    def amazon(self):
+        """
+        Access Amazon search service for parameter-based discovery.
+        
+        Returns:
+            AmazonSearchScraper for discovering products by keyword and filters
+        
+        Example:
+            >>> # Search by keyword
+            >>> result = client.search.amazon.products(
+            ...     keyword="laptop",
+            ...     min_price=50000,  # $500 in cents
+            ...     max_price=200000,  # $2000 in cents
+            ...     prime_eligible=True
+            ... )
+            >>> 
+            >>> # Search by category
+            >>> result = client.search.amazon.products(
+            ...     keyword="wireless headphones",
+            ...     category="electronics",
+            ...     condition="new"
+            ... )
+        """
+        if self._amazon_search is None:
+            from ..scrapers.amazon.search import AmazonSearchScraper
+            self._amazon_search = AmazonSearchScraper(
+                bearer_token=self._client.token,
+                engine=self._client.engine
+            )
+        return self._amazon_search
     
     @property
     def linkedin(self):

@@ -330,17 +330,17 @@ class LinkedInSearchScraper:
         async def _run():
             async with self.engine:
                 return await self.jobs_async(
-                    url=url,
-                    location=location,
-                    keyword=keyword,
-                    country=country,
-                    timeRange=timeRange,
-                    jobType=jobType,
-                    experienceLevel=experienceLevel,
-                    remote=remote,
-                    company=company,
-                    locationRadius=locationRadius,
-                    timeout=timeout
+            url=url,
+            location=location,
+            keyword=keyword,
+            country=country,
+            timeRange=timeRange,
+            jobType=jobType,
+            experienceLevel=experienceLevel,
+            remote=remote,
+            company=company,
+            locationRadius=locationRadius,
+            timeout=timeout
                 )
         return asyncio.run(_run())
     
