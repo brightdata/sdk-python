@@ -1,0 +1,13 @@
+{
+  "status_code": 200,
+  "headers": {
+    "access-control-allow-credentials": "true",
+    "access-control-allow-origin": "*",
+    "content-type": "application/json",
+    "date": "Thu, 20 Nov 2025 17:38:43 GMT",
+    "server": "gunicorn/19.9.0",
+    "connection": "close",
+    "transfer-encoding": "chunked"
+  },
+  "body": "{\n  \"slideshow\": {\n    \"author\": \"Yours Truly\", \n    \"date\": \"date of publication\", \n    \"slides\": [\n      {\n        \"title\": \"Wake up to WonderWidgets!\", \n        \"type\": \"all\"\n      }, \n      {\n        \"items\": [\n          \"Why <em>WonderWidgets</em> are great\", \n          \"Who <em>buys</em> WonderWidgets\"\n        ], \n        \"title\": \"Overview\", \n        \"type\": \"all\"\n      }\n    ], \n    \"title\": \"Sample Slide Show\"\n  }\n}\n"
+}

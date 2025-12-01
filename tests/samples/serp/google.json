@@ -1,0 +1,23 @@
+[
+  {
+    "position": 1,
+    "title": "Pizza Hut | Delivery & Carryout - No One OutPizzas The Hut!",
+    "url": "https://www.pizzahut.com/",
+    "description": "Discover classic & new menu items, find deals and enjoy seamless ordering for delivery and carryout. No One OutPizzas the Hut\u00ae.",
+    "displayed_url": "https://www.pizzahut.com"
+  },
+  {
+    "position": 2,
+    "title": "Pizza",
+    "url": "https://en.wikipedia.org/wiki/Pizza",
+    "description": "Pizza is an Italian dish typically consisting of a flat base of leavened wheat-based dough topped with tomato, cheese, and other ingredients, baked at a ...",
+    "displayed_url": "https://en.wikipedia.org \u203a wiki \u203a Pizza"
+  },
+  {
+    "position": 3,
+    "title": "Domino's: Pizza Delivery & Carryout, Pasta, Wings & More",
+    "url": "https://www.dominos.com/",
+    "description": "PRICES HIGHER FOR SOME LOCATIONS. Treat yo self to our best, most premium medium Specialty Pizzas for just $9.99 each when you Mix & Match.",
+    "displayed_url": "https://www.dominos.com"
+  }
+]

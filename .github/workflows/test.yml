@@ -1,129 +1,50 @@
-name: Tests
+name: Test
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
-  schedule:
-    - cron: '0 2 * * *'
+    branches: [main, develop]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest pytest-cov
-    
-    - name: Test package import
-      run: |
-        python -c "import brightdata; print('Import successful')"
-    
-    - name: Run tests
-      run: |
-        python -m pytest tests/ -v --cov=brightdata --cov-report=xml
-    
-    - name: Upload coverage to Codecov
-      if: matrix.python-version == '3.8'
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
 
-  test-pypi-package:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule'
-    strategy:
-      matrix:
-        python-version: ['3.8', '3.11']
-    
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-    
-    - name: Install PyPI package
-      run: |
-        python -m pip install --upgrade pip
-        pip install brightdata-sdk
-        pip install pytest
-    
-    - name: Test PyPI package import
-      run: |
-        python -c "import brightdata; print('PyPI package import successful')"
-        python -c "from brightdata import bdclient; print('bdclient import successful')"
-    
-    - name: Test PyPI package basic functionality
-      run: |
-        python -c "
-        import sys
-        from brightdata import bdclient, __version__
-        print(f'PyPI package version: {__version__}')
-        
-        # Test that validation works (accept any validation error as success)
-        try:
-            client = bdclient(api_token='test_token_too_short')
-            print('WARNING: No validation error - this might indicate an issue')
-        except Exception as e:
-            print(f'Validation error caught: {str(e)[:100]}...')
-            print('PyPI package validation working correctly')
-        
-        # Test basic client creation with disabled auto-zone creation
-        try:
-            client = bdclient(api_token='test_token_123456789', auto_create_zones=False)
-            print('Client creation successful')
-            
-            # Test that basic methods exist
-            methods = ['scrape', 'search', 'download_content']
-            for method in methods:
-                if hasattr(client, method):
-                    print(f'Method {method} exists')
-                else:
-                    print(f'Method {method} missing (might be version difference)')
-                    
-        except Exception as e:
-            print(f'ERROR: Client creation failed: {e}')
-            sys.exit(1)
-        
-        print('PyPI package basic functionality test completed')
-        "
-    
-    - name: Test PyPI package compatibility
-      run: |
-        python -c "
-        print('Running PyPI package compatibility tests...')
-        
-        # Test import compatibility
-        try:
-            from brightdata import bdclient, __version__
-            from brightdata.exceptions import ValidationError
-            print('Core imports working')
-        except ImportError as e:
-            print(f'ERROR: Import failed: {e}')
-            exit(1)
-        
-        # Test that client requires token
-        try:
-            client = bdclient()  # Should fail without token
-            print('WARNING: Client created without token - unexpected')
-        except Exception:
-            print('Token requirement validated')
-        
-        print('PyPI package compatibility tests completed')
-        "
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Lint with Ruff
+        run: |
+          ruff check src/ tests/
+
+      - name: Format check with Black
+        run: |
+          black --check src/ tests/
+
+      - name: Type check with mypy (non-blocking)
+        run: |
+          mypy src/ --ignore-missing-imports || echo "⚠️ mypy found type issues (non-blocking)"
+        continue-on-error: true
+
+      - name: Test with pytest
+        run: |
+          pytest tests/ -v --cov=src --cov-report=xml --cov-report=term
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false

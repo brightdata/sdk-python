@@ -1,0 +1,407 @@
+{
+  "id": "williamhgates",
+  "name": "Bill Gates",
+  "city": "Seattle, Washington, United States",
+  "country_code": "US",
+  "position": "Chair, Gates Foundation and Founder, Breakthrough Energy",
+  "about": "Chair of the Gates Foundation. Founder of Breakthrough Energy. Co-founder of Microsoft. Voracious reader. Avid traveler. Active blogger.",
+  "posts": [
+    {
+      "title": "Saving lives, cutting emissions, and staying resilient in a warming world",
+      "attribution": "I recently published a long essay about climate change on the Gates Notes. This is the first of four newsletters I\u2019ll\u2026",
+      "img": "https://media.licdn.com/dms/image/v2/D5612AQHn1kRpjWsY7A/article-cover_image-shrink_720_1280/B56Zot1D3DG0AM-/0/1761705477503?e=2147483647&v=beta&t=wnrHrl7BgWHpsXAXFEOUbcmFE0tnxibZ-Ze5ESzbKMs",
+      "link": "https://www.linkedin.com/pulse/saving-lives-cutting-emissions-staying-resilient-warming-bill-gates-jstyc",
+      "created_at": "2025-10-29T00:00:00.000Z",
+      "interaction": "5,43 - 989 Comments",
+      "id": "7389128335357947904"
+    },
+    {
+      "title": "We\u2019re closer than ever to eradicating polio",
+      "attribution": "..",
+      "img": "https://media.licdn.com/dms/image/v2/D5612AQHn1kRpjWsY7A/article-cover_image-shrink_720_1280/B56Zot1D3DG0AM-/0/1761705477503?e=2147483647&v=beta&t=wnrHrl7BgWHpsXAXFEOUbcmFE0tnxibZ-Ze5ESzbKMs",
+      "link": "https://www.linkedin.com/pulse/were-closer-than-ever-eradicating-polio-bill-gates-wyhac",
+      "created_at": "2025-10-18T00:00:00.000Z",
+      "interaction": "5,81 - 719 Comments",
+      "id": "7385166929856172032"
+    },
+    {
+      "title": "Demystifying the science behind fission and fusion",
+      "attribution": "I\u2019m lucky to learn firsthand about some of the world\u2019s most cutting-edge technologies. I\u2019ve seen artificial\u2026",
+      "img": "https://media.licdn.com/dms/image/v2/D5612AQHn1kRpjWsY7A/article-cover_image-shrink_720_1280/B56Zot1D3DG0AM-/0/1761705477503?e=2147483647&v=beta&t=wnrHrl7BgWHpsXAXFEOUbcmFE0tnxibZ-Ze5ESzbKMs",
+      "link": "https://www.linkedin.com/pulse/demystifying-science-behind-fission-fusion-bill-gates-ylhic",
+      "created_at": "2025-10-11T00:00:00.000Z",
+      "interaction": "5,39 - 727 Comments",
+      "id": "7382558042824855552"
+    },
+    {
+      "title": "Utah\u2019s hottest new power source is 15,000 feet below the ground",
+      "attribution": "When my son, Rory, was younger, we used to love visiting power plants together. It was the perfect father-son activity\u2026",
+      "img": "https://media.licdn.com/dms/image/v2/D5612AQHn1kRpjWsY7A/article-cover_image-shrink_720_1280/B56Zot1D3DG0AM-/0/1761705477503?e=2147483647&v=beta&t=wnrHrl7BgWHpsXAXFEOUbcmFE0tnxibZ-Ze5ESzbKMs",
+      "link": "https://www.linkedin.com/pulse/utahs-hottest-new-power-source-15000-feet-below-ground-bill-gates-otlwc",
+      "created_at": "2025-09-30T00:00:00.000Z",
+      "interaction": "5,99 - 661 Comments",
+      "id": "7378858122087616513"
+    },
+    {
+      "title": "Why I\u2019m Still Optimistic About Global Health",
+      "attribution": "I recently wrote this essay for TIME Magazine about why I'm still optimistic about global health: One of humanity\u2019s\u2026",
+      "img": "https://media.licdn.com/dms/image/v2/D5612AQHn1kRpjWsY7A/article-cover_image-shrink_720_1280/B56Zot1D3DG0AM-/0/1761705477503?e=2147483647&v=beta&t=wnrHrl7BgWHpsXAXFEOUbcmFE0tnxibZ-Ze5ESzbKMs",
+      "link": "https://www.linkedin.com/pulse/why-im-still-optimistic-global-health-bill-gates-ji9xc",
+      "created_at": "2025-09-23T00:00:00.000Z",
+      "interaction": "4,33 - 765 Comments",
+      "id": "7376347643272343554"
+    },
+    {
+      "title": "This is how a parasite helped build the CDC and changed public health forever",
+      "attribution": "I spend a lot of time thinking and worrying about malaria. After all, it\u2019s one of the big focuses of my work at the\u2026",
+      "img": "https://media.licdn.com/dms/image/v2/D5612AQHn1kRpjWsY7A/article-cover_image-shrink_720_1280/B56Zot1D3DG0AM-/0/1761705477503?e=2147483647&v=beta&t=wnrHrl7BgWHpsXAXFEOUbcmFE0tnxibZ-Ze5ESzbKMs",
+      "link": "https://www.linkedin.com/pulse/how-parasite-helped-build-cdc-changed-public-health-forever-gates-xvhlc",
+      "created_at": "2025-08-26T00:00:00.000Z",
+      "interaction": "4,10 - 613 Comments",
+      "id": "7366207310018375680"
+    },
+    {
+      "title": "One of the most unique and supportive learning environments I have ever heard of",
+      "attribution": "When I was a kid, I couldn\u2019t sit still. My teachers used to get mad at me for squirming in my chair and chewing on my\u2026",
+      "img": "https://media.licdn.com/dms/image/v2/D5612AQHn1kRpjWsY7A/article-cover_image-shrink_720_1280/B56Zot1D3DG0AM-/0/1761705477503?e=2147483647&v=beta&t=wnrHrl7BgWHpsXAXFEOUbcmFE0tnxibZ-Ze5ESzbKMs",
+      "link": "https://www.linkedin.com/pulse/one-most-unique-supportive-learning-environments-i-have-bill-gates-e3fcc",
+      "created_at": "2025-08-13T00:00:00.000Z",
+      "interaction": "5,59 - 901 Comments",
+      "id": "7361457006081134592"
+    },
+    {
+      "title": "This heroic nurse climbs 1000-foot ladders to save lives",
+      "attribution": "How do you get to work? Some people roll out of bed and move 10 feet to their desk. Others walk to the office or take\u2026",
+      "img": "https://media.licdn.com/dms/image/v2/D5612AQHn1kRpjWsY7A/article-cover_image-shrink_720_1280/B56Zot1D3DG0AM-/0/1761705477503?e=2147483647&v=beta&t=wnrHrl7BgWHpsXAXFEOUbcmFE0tnxibZ-Ze5ESzbKMs",
+      "link": "https://www.linkedin.com/pulse/heroic-nurse-climbs-1000-foot-ladders-save-lives-bill-gates-gh0ic",
+      "created_at": "2025-07-31T00:00:00.000Z",
+      "interaction": "5,85 - 823 Comments",
+      "id": "7356808124818735104"
+    },
+    {
+      "title": "A gut-wrenching problem we can solve",
+      "attribution": "In 1997, I came across a New York Times column by Nick Kristof that stopped me in my tracks. The headline was \u201cFor\u2026",
+      "img": "https://media.licdn.com/dms/image/v2/D5612AQHn1kRpjWsY7A/article-cover_image-shrink_720_1280/B56Zot1D3DG0AM-/0/1761705477503?e=2147483647&v=beta&t=wnrHrl7BgWHpsXAXFEOUbcmFE0tnxibZ-Ze5ESzbKMs",
+      "link": "https://www.linkedin.com/pulse/gut-wrenching-problem-we-can-solve-bill-gates-ahczc",
+      "created_at": "2025-07-27T00:00:00.000Z",
+      "interaction": "6,27 - 1,154 Comments",
+      "id": "7354909425704292352"
+    },
+    {
+      "title": "A book about tuberculosis, and everything else",
+      "attribution": "What do Adirondack chairs, Stetson hats, the city of Pasadena, and World War I have in common? According to John Green,\u2026",
+      "img": "https://media.licdn.com/dms/image/v2/D5612AQHn1kRpjWsY7A/article-cover_image-shrink_720_1280/B56Zot1D3DG0AM-/0/1761705477503?e=2147483647&v=beta&t=wnrHrl7BgWHpsXAXFEOUbcmFE0tnxibZ-Ze5ESzbKMs",
+      "link": "https://www.linkedin.com/pulse/book-tuberculosis-everything-else-bill-gates-5ibhc",
+      "created_at": "2025-07-24T00:00:00.000Z",
+      "interaction": "4,40 - 668 Comments",
+      "id": "7354250885624946688"
+    }
+  ],
+  "current_company": {
+    "name": "Gates Foundation",
+    "company_id": "gates-foundation",
+    "title": "Co-chair",
+    "location": null
+  },
+  "experience": [
+    {
+      "title": "Co-chair",
+      "description_html": null,
+      "start_date": "2000",
+      "end_date": "Present",
+      "company": "Gates Foundation",
+      "company_id": "gates-foundation",
+      "url": "https://www.linkedin.com/company/gates-foundation",
+      "company_logo_url": "https://media.licdn.com/dms/image/v2/D560BAQEgMqqFTd40Tg/company-logo_100_100/company-logo_100_100/0/1736784969376/bill__melinda_gates_foundation_logo?e=2147483647&v=beta&t=2JH2cMcZms60vPAMbvVZyMeYXosQ1Jjy5axDlyeQ1Ww"
+    },
+    {
+      "title": "Founder",
+      "description_html": null,
+      "start_date": "2015",
+      "end_date": "Present",
+      "company": "Breakthrough Energy",
+      "company_id": "breakthrough-energy",
+      "url": "https://www.linkedin.com/company/breakthrough-energy",
+      "company_logo_url": "https://media.licdn.com/dms/image/v2/D560BAQFRMYiQN7-2kA/company-logo_100_100/B56ZoI4SGPI0AQ-/0/1761085563539/breakthrough_energy_logo?e=2147483647&v=beta&t=J6RbEvs17fl1uiEaXQm0hmXy4imx36mV_Hu80JcR1DE"
+    },
+    {
+      "title": "Co-founder",
+      "description_html": null,
+      "start_date": "1975",
+      "end_date": "Present",
+      "company": "Microsoft",
+      "company_id": "microsoft",
+      "url": "https://www.linkedin.com/company/microsoft",
+      "company_logo_url": "https://media.licdn.com/dms/image/v2/D560BAQH32RJQCl3dDQ/company-logo_100_100/B56ZYQ0mrGGoAU-/0/1744038948046/microsoft_logo?e=2147483647&v=beta&t=rr_7_bFRKp6umQxIHErPOZHtR8dMPIYeTjlKFdotJBY"
+    }
+  ],
+  "url": "https://tr.linkedin.com/in/williamhgates",
+  "people_also_viewed": [
+    {
+      "profile_link": "https://www.linkedin.com/in/melindagates",
+      "name": "Melinda French Gates",
+      "about": null,
+      "location": "United States"
+    },
+    {
+      "profile_link": "https://www.linkedin.com/in/tyleralterman",
+      "name": "Tyler Alterman",
+      "about": null,
+      "location": "Brooklyn, NY"
+    },
+    {
+      "profile_link": "https://www.linkedin.com/in/toddjduckett",
+      "name": "Todd J. Duckett",
+      "about": null,
+      "location": "Lansing, MI"
+    },
+    {
+      "profile_link": "https://is.linkedin.com/in/hallatomasdottir",
+      "name": "Halla Tomasdottir",
+      "about": null,
+      "location": "Iceland"
+    },
+    {
+      "profile_link": "https://www.linkedin.com/in/matthew-swift-8ba7529",
+      "name": "Matthew Swift",
+      "about": null,
+      "location": "Palm Beach, FL"
+    },
+    {
+      "profile_link": "https://www.linkedin.com/in/petefishman",
+      "name": "Peter Fishman",
+      "about": null,
+      "location": "San Francisco, CA"
+    },
+    {
+      "profile_link": "https://www.linkedin.com/in/sherryb",
+      "name": "\u2726 Sherry Whitaker Budziak",
+      "about": null,
+      "location": "Deerfield, IL"
+    },
+    {
+      "profile_link": "https://www.linkedin.com/in/tonyteravainen",
+      "name": "Tony Teravainen PMP CSSBB",
+      "about": null,
+      "location": "San Diego, CA"
+    },
+    {
+      "profile_link": "https://www.linkedin.com/in/charlesmarohn",
+      "name": "Charles Marohn",
+      "about": null,
+      "location": "Brainerd, MN"
+    },
+    {
+      "profile_link": "https://www.linkedin.com/in/schm1tt",
+      "name": "Patrick Schmitt",
+      "about": null,
+      "location": "New York, NY"
+    },
+    {
+      "profile_link": "https://www.linkedin.com/in/melindalackey",
+      "name": "Melinda Lackey",
+      "about": null,
+      "location": "New York, NY"
+    },
+    {
+      "profile_link": "https://www.linkedin.com/in/bill-cronin-5490492",
+      "name": "Bill Cronin",
+      "about": null,
+      "location": "Odessa, FL"
+    },
+    {
+      "profile_link": "https://www.linkedin.com/in/ezohn",
+      "name": "Ethan Zohn",
+      "about": null,
+      "location": "Hillsborough County, NH"
+    },
+    {
+      "profile_link": "https://www.linkedin.com/in/gary-taubes-942a6459",
+      "name": "Gary Taubes",
+      "about": null,
+      "location": "Oakland, CA"
+    },
+    {
+      "profile_link": "https://www.linkedin.com/in/sharonhenifin",
+      "name": "Sharon Henifin, CLC, CN-BA",
+      "about": null,
+      "location": "Portland, Oregon Metropolitan Area"
+    },
+    {
+      "profile_link": "https://www.linkedin.com/in/josephrrusso",
+      "name": "Joseph Russo",
+      "about": null,
+      "location": "West Palm Beach, FL"
+    },
+    {
+      "profile_link": "https://www.linkedin.com/in/jasongrad",
+      "name": "Jason Grad",
+      "about": null,
+      "location": "New York, NY"
+    },
+    {
+      "profile_link": "https://www.linkedin.com/in/mrdaikensjr",
+      "name": "Dwayne Aikens Jr.",
+      "about": null,
+      "location": "Oakland, CA"
+    },
+    {
+      "profile_link": "https://www.linkedin.com/in/erikrees",
+      "name": "Erik Rees",
+      "about": null,
+      "location": "Rancho Santa Margarita, CA"
+    }
+  ],
+  "educations_details": "Harvard University",
+  "education": [
+    {
+      "title": "Harvard University",
+      "url": "https://www.linkedin.com/school/harvard-university/?trk=public_profile_school_profile-section-card_image-click",
+      "start_year": "1973",
+      "end_year": "1975",
+      "description": null,
+      "description_html": null,
+      "institute_logo_url": "https://media.licdn.com/dms/image/v2/C4E0BAQF5t62bcL0e9g/company-logo_100_100/company-logo_100_100/0/1631318058235?e=2147483647&v=beta&t=Ye1klXowyo8TIcnkhTlmORgiA5ZywvooNihDMnx5urQ"
+    },
+    {
+      "title": "Lakeside School",
+      "url": "https://www.linkedin.com/school/lakeside-school/?trk=public_profile_school_profile-section-card_image-click",
+      "description": null,
+      "description_html": null,
+      "institute_logo_url": "https://media.licdn.com/dms/image/v2/D560BAQGFmOQmzpxg9A/company-logo_100_100/company-logo_100_100/0/1683732883164/lakeside_school_logo?e=2147483647&v=beta&t=EmadOLH7MckKZvCCrgmAOikCRtzVRtqqN4PJi35CNyo"
+    }
+  ],
+  "avatar": "https://media.licdn.com/dms/image/v2/D5603AQF-RYZP55jmXA/profile-displayphoto-shrink_200_200/B56ZRi8g.aGsAY-/0/1736826818802?e=2147483647&v=beta&t=bKWfN6UwwtiCqFWsG7rBELbd48qJOAMLdxhBzzkJV0k",
+  "followers": 39312887,
+  "connections": 8,
+  "current_company_company_id": "gates-foundation",
+  "current_company_name": "Gates Foundation",
+  "location": "Seattle",
+  "input_url": "https://www.linkedin.com/in/williamhgates",
+  "linkedin_id": "williamhgates",
+  "activity": [
+    {
+      "interaction": "Shared by Bill Gates",
+      "link": "https://www.linkedin.com/posts/williamhgates_luxwall-a-breakthrough-energybacked-company-activity-7397039090300289024-i8M3",
+      "title": "LuxWall, a Breakthrough Energy\u2013backed company, is growing in Detroit\u2014and bringing new jobs along with it.",
+      "img": "https://static.licdn.com/aero-v1/sc/h/53n89ecoxpr1qrki1do3alazb",
+      "id": "7397039090300289024"
+    },
+    {
+      "interaction": "Shared by Bill Gates",
+      "link": "https://www.linkedin.com/posts/williamhgates_five-years-ago-just-two-months-after-my-activity-7396302164459102208-Kbj8",
+      "title": "Five years ago, just two months after my dad died from Alzheimer's disease, I worked with a coalition of partners to create the Alzheimer's Disease\u2026",
+      "img": "https://media.licdn.com/dms/image/v2/D5622AQHgEdBt8av3CQ/feedshare-shrink_800/B56ZqTxoD2JYAg-/0/1763415851860?e=2147483647&v=beta&t=zCTCb6zxupuvG6lfR8wLNsSR3EqB6U_q8wRVDtTI0uY",
+      "id": "7396302164459102208"
+    },
+    {
+      "interaction": "Shared by Bill Gates",
+      "link": "https://www.linkedin.com/posts/williamhgates_fighting-climate-change-requires-actions-activity-7393808373814685696-r4Ed",
+      "title": "Fighting climate change requires actions on two fronts: cutting emissions and protecting vulnerable people. I will continue to invest billions in\u2026",
+      "img": "https://media.licdn.com/dms/image/v2/D5622AQHHcm91usLudw/feedshare-shrink_2048_1536/B56ZpwViXrJQAw-/0/1762821285730?e=2147483647&v=beta&t=xBCPzIccwCP53aFG20U2hyamr2xJphdmDENxCqeTQoc",
+      "id": "7393808373814685696"
+    },
+    {
+      "interaction": "Shared by Bill Gates",
+      "link": "https://www.linkedin.com/posts/williamhgates_my-commitment-to-fightingand-solvingclimate-activity-7393404126505689088-fiqd",
+      "title": "My commitment to fighting\u2014and solving\u2014climate change has not wavered. In addition to the billions I am investing in innovation that will help the\u2026",
+      "img": "https://static.licdn.com/aero-v1/sc/h/53n89ecoxpr1qrki1do3alazb",
+      "id": "7393404126505689088"
+    },
+    {
+      "interaction": "Shared by Bill Gates",
+      "link": "https://www.linkedin.com/posts/williamhgates_sa-becomes-the-first-african-country-to-register-activity-7393120672111185920-SKf2",
+      "title": "South Africa\u2019s Lenacapavir rollout is a signal that progress is possible when innovation meets urgency.",
+      "img": "https://media.licdn.com/dms/image/sync/v2/D4D27AQFNkSDu_tpZ7g/articleshare-shrink_1280_800/B4DZokVReGJIAQ-/0/1761596917780?e=2147483647&v=beta&t=2XH0BTMGQJgud_VJq-Oyfz5VVFcOjzPQmlKWvkiI0GQ",
+      "id": "7393120672111185920"
+    },
+    {
+      "interaction": "Shared by Bill Gates",
+      "link": "https://www.linkedin.com/posts/williamhgates_to-strengthen-human-welfare-globally-we-activity-7392748129042907137-9s6_",
+      "title": "To strengthen human welfare globally, we must help the most vulnerable communities adapt to a warming planet while continuing to invest in critical\u2026",
+      "img": "https://static.licdn.com/aero-v1/sc/h/53n89ecoxpr1qrki1do3alazb",
+      "id": "7392748129042907137"
+    },
+    {
+      "interaction": "Shared by Bill Gates",
+      "link": "https://www.linkedin.com/posts/williamhgates_when-i-started-breakthrough-energy-the-world-activity-7392049630605099008-WCuo",
+      "title": "When I started Breakthrough Energy, the world needed affordable clean energy solutions that didn\u2019t exist yet. \u200b \u200b Affordable, reliable, clean energy\u2026",
+      "img": "https://media.licdn.com/dms/image/v2/D4D05AQGF8BR-A7TzTw/videocover-high/B4DZpXV5dsG8BU-/0/1762401954068?e=2147483647&v=beta&t=p-h5YEqqlB4cWDe0JicwMiFaNOi_iHMZSdG3L6PGjzo",
+      "id": "7392049630605099008"
+    },
+    {
+      "interaction": "Shared by Bill Gates",
+      "link": "https://www.linkedin.com/posts/williamhgates_today-i-visited-the-alzheimers-therapeutic-activity-7391650830199775233-cR81",
+      "title": "Today I visited the Alzheimer's Therapeutic Research Institute (ATRI) at USC, led by Dr. Paul Aisen, to learn more about the current landscape of\u2026",
+      "img": "https://media.licdn.com/dms/image/v2/D5622AQEFYSq5diGoKg/feedshare-shrink_800/B56ZpRrQg3HQAk-/0/1762306886686?e=2147483647&v=beta&t=5dpkTj8DyD87d5jbw-ylidifhkJdkVtMwdfKVu0l3cQ",
+      "id": "7391650830199775233"
+    },
+    {
+      "interaction": "Shared by Bill Gates",
+      "link": "https://www.linkedin.com/posts/williamhgates_were-on-the-brink-of-eradicating-polio-for-activity-7391179821646716928-EGiI",
+      "title": "We\u2019re on the brink of eradicating polio for good. It would be a deadly mistake to back down from the fight now.",
+      "img": "https://media.licdn.com/dms/image/v2/D5605AQFMop8kHgEtkQ/videocover-high/B56ZpK.wx4HYBU-/0/1762194575348?e=2147483647&v=beta&t=LQJGu7ZZLYlFrnGcfHpwAhnl0K_bIn94RQT4_hZh5Z0",
+      "id": "7391179821646716928"
+    },
+    {
+      "interaction": "Shared by Bill Gates",
+      "link": "https://www.linkedin.com/posts/williamhgates_this-is-an-exciting-partnership-with-alzheimers-activity-7390903402932813824-mTWv",
+      "title": "This is an exciting partnership with Alzheimer's Research UK. Answering these questions could change the course of our fight against Alzheimer\u2019s.",
+      "img": "https://static.licdn.com/aero-v1/sc/h/53n89ecoxpr1qrki1do3alazb",
+      "id": "7390903402932813824"
+    },
+    {
+      "interaction": "Liked by Bill Gates",
+      "link": "https://www.linkedin.com/posts/alzheimer%27s-research-uk_today-marks-a-pivotal-moment-in-the-global-activity-7387141173267816448-bf5I",
+      "title": "Today marks a pivotal moment in the global fight against dementia. Alzheimer\u2019s Research UK, alongside Gates Ventures are proud to launch a\u2026",
+      "img": "https://media.licdn.com/dms/image/v2/D4E10AQELRUrvrLBxFQ/ads-video-thumbnail_720_1280/B4EZoRlo13KsAc-/0/1761231670956?e=2147483647&v=beta&t=skARaYStlXOrE0cNE5CgdPYQx4cELDW8kdRu6XuacsI",
+      "id": "7387141173267816448"
+    },
+    {
+      "interaction": "Shared by Bill Gates",
+      "link": "https://www.linkedin.com/posts/williamhgates_im-grateful-for-people-like-john-and-nancy-activity-7390459116651155457-2aYl",
+      "title": "I\u2019m grateful for people like John and Nancy from Rotary International\u2014leaders whose courage and commitment bring us closer to a polio-free world\u2026",
+      "img": "https://static.licdn.com/aero-v1/sc/h/53n89ecoxpr1qrki1do3alazb",
+      "id": "7390459116651155457"
+    },
+    {
+      "interaction": "Liked by Bill Gates",
+      "link": "https://www.linkedin.com/posts/nancy-barbee-18a6308_i-sat-next-to-bill-gates-at-the-gates-foundation-activity-7388529939463180288-lJiu",
+      "title": "I sat next to Bill Gates at the Gates Foundation media event for World Polio Day 2025 Bill is the person who inspired me to start leading Rotarians\u2026",
+      "img": "https://media.licdn.com/dms/image/v2/D4E22AQFXY_wl5a3-Hg/feedshare-shrink_800/B4EZokJLI7GYAg-/0/1761542977553?e=2147483647&v=beta&t=T9wB3225_8CIbeVs6KZae4GRuM3jJHNAdZCXsHm76Hk",
+      "id": "7388529939463180288"
+    },
+    {
+      "interaction": "Shared by Bill Gates",
+      "link": "https://www.linkedin.com/posts/williamhgates_a-new-approach-for-the-worlds-climate-strategy-activity-7390110248264466432-tub6",
+      "title": "Climate change is one of the most pressing challenges the world faces today. The good news is that we've made incredible progress in recent years\u2026",
+      "img": "https://media.licdn.com/dms/image/sync/v2/D4E27AQEwAcMGPj_kKA/articleshare-shrink_1280_800/B4EZopJuU0KoAQ-/0/1761627006826?e=2147483647&v=beta&t=dx6lfbhpJMJ2nd-K-gmIFrS_odoBhduCEfYVgUhGolY",
+      "id": "7390110248264466432"
+    },
+    {
+      "interaction": "Shared by Bill Gates",
+      "link": "https://www.linkedin.com/posts/williamhgates_congratulations-on-this-well-deserved-award-activity-7388262728068452352-N6SR",
+      "title": "Congratulations on this well-deserved award. I\u2019m grateful for your leadership and commitment to ensuring everyone can live a healthy, prosperous life.",
+      "img": "https://static.licdn.com/aero-v1/sc/h/53n89ecoxpr1qrki1do3alazb",
+      "id": "7388262728068452352"
+    }
+  ],
+  "linkedin_num_id": "251749025",
+  "banner_image": "https://media.licdn.com/dms/image/v2/D5616AQEjhPbTCeblYg/profile-displaybackgroundimage-shrink_200_800/B56ZcytR5SGsAc-/0/1748902420393?e=2147483647&v=beta&t=a-tBeZkxzWTHWYY6MAjxt0oTEuxlW33EUkK3gm5_te4",
+  "honors_and_awards": null,
+  "similar_profiles": [],
+  "default_avatar": false,
+  "memorialized_account": false,
+  "bio_links": [
+    {
+      "title": "Blog",
+      "link": "https://gatesnot.es/sourcecode-li"
+    }
+  ],
+  "first_name": "Bill",
+  "last_name": "Gates",
+  "timestamp": "2025-11-20T17:04:28.062Z",
+  "input": {
+    "url": "https://www.linkedin.com/in/williamhgates"
+  }
+}

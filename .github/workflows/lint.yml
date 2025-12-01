@@ -1,0 +1,33 @@
+name: Lint
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.9"
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install black ruff mypy
+        pip install types-requests aiohttp python-dotenv tldextract aiolimiter pydantic
+    
+    - name: Run black
+      run: black --check src tests
+    
+    - name: Run ruff
+      run: ruff check src tests
+    
+    - name: Run mypy (non-blocking)
+      run: mypy src --ignore-missing-imports || echo "⚠️ mypy found type issues (non-blocking)"
+      continue-on-error: true

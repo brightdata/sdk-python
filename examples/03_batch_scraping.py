@@ -1,0 +1,2 @@
+"""Example: Batch scraping."""
+
