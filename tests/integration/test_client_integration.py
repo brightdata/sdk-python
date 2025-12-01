@@ -54,7 +54,7 @@ class TestConnectionTesting:
     @pytest.mark.asyncio
     async def test_connection_with_invalid_token(self):
         """Test connection returns False with invalid token."""
-        client = BrightDataClient(token="invalid_token_123456789")
+        client = BrightDataClient(token="invalid_token_123456789", auto_create_zones=False)
 
         async with client:
             # test_connection() never raises - returns False for invalid tokens
@@ -104,7 +104,7 @@ class TestAccountInfo:
     @pytest.mark.asyncio
     async def test_get_account_info_with_invalid_token(self):
         """Test getting account info fails with invalid token."""
-        client = BrightDataClient(token="invalid_token_123456789")
+        client = BrightDataClient(token="invalid_token_123456789", auto_create_zones=False)
 
         async with client:
             with pytest.raises(AuthenticationError) as exc_info:
@@ -192,7 +192,7 @@ class TestClientErrorHandling:
     @pytest.mark.asyncio
     async def test_connection_test_returns_false_on_network_error(self):
         """Test connection test returns False (not exception) on network errors."""
-        client = BrightDataClient(token="test_token_123456789")
+        client = BrightDataClient(token="test_token_123456789", auto_create_zones=False)
 
         async with client:
             # Should return False, not raise exception
