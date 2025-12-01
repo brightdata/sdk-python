@@ -198,6 +198,21 @@ result = client.scrape.amazon.reviews(
 result = client.scrape.amazon.sellers(
     url="https://amazon.com/sp?seller=AXXXXXXXXX"
 )
+
+# NEW: Search Amazon by keyword and filters
+result = client.search.amazon.products(
+    keyword="laptop",
+    min_price=50000,    # $500 in cents
+    max_price=200000,   # $2000 in cents
+    prime_eligible=True,
+    condition="new"
+)
+
+# Search by category
+result = client.search.amazon.products(
+    keyword="wireless headphones",
+    category="electronics"
+)
 ```
 
 #### LinkedIn Data
@@ -235,8 +250,8 @@ result = client.search.linkedin.profiles(
 
 result = client.search.linkedin.posts(
     profile_url="https://linkedin.com/in/johndoe",
-    start_date="2024-01-01",
-    end_date="2024-12-31"
+    start_date="2025-01-01",
+    end_date="2025-12-31"
 )
 ```
 
@@ -264,8 +279,8 @@ result = client.scrape.chatgpt.prompts(
 result = client.scrape.facebook.posts_by_profile(
     url="https://facebook.com/profile",
     num_of_posts=10,
-    start_date="01-01-2024",
-    end_date="12-31-2024",
+    start_date="01-01-2025",
+    end_date="12-31-2025",
     timeout=240
 )
 
@@ -286,8 +301,8 @@ result = client.scrape.facebook.posts_by_url(
 result = client.scrape.facebook.comments(
     url="https://facebook.com/post/123456",
     num_of_comments=100,
-    start_date="01-01-2024",
-    end_date="12-31-2024",
+    start_date="01-01-2025",
+    end_date="12-31-2025",
     timeout=240
 )
 
@@ -330,8 +345,8 @@ result = client.scrape.instagram.reels(
 result = client.search.instagram.posts(
     url="https://instagram.com/username",
     num_of_posts=10,
-    start_date="01-01-2024",
-    end_date="12-31-2024",
+    start_date="01-01-2025",
+    end_date="12-31-2025",
     post_type="reel",
     timeout=240
 )
@@ -340,8 +355,8 @@ result = client.search.instagram.posts(
 result = client.search.instagram.reels(
     url="https://instagram.com/username",
     num_of_posts=50,
-    start_date="01-01-2024",
-    end_date="12-31-2024",
+    start_date="01-01-2025",
+    end_date="12-31-2025",
     timeout=240
 )
 ```
@@ -403,7 +418,16 @@ asyncio.run(scrape_multiple())
 
 ---
 
-## 🆕 What's New in v26.11.24
+## 🆕 What's New in v01.12.24
+
+### 🆕 **Latest Updates (December 2025)**
+- ✅ **Amazon Search API** - NEW parameter-based product discovery
+- ✅ **LinkedIn Job Search Fixed** - Now builds URLs from keywords internally
+- ✅ **Trigger Interface** - Manual trigger/poll/fetch control for all platforms
+- ✅ **Auto-Create Zones** - Now enabled by default (was opt-in)
+- ✅ **Improved Zone Names** - `sdk_unlocker`, `sdk_serp`, `sdk_browser`
+- ✅ **26 Sync Wrapper Fixes** - All platform scrapers now work without context managers
+- ✅ **Zone Manager Tests Fixed** - All 22 tests passing
 
 ### 🎓 **For Data Scientists**
 - ✅ **5 Jupyter Notebooks** - Complete interactive tutorials
@@ -422,17 +446,18 @@ asyncio.run(scrape_multiple())
 
 ### 🖥️ **CLI Tool**
 - ✅ **`brightdata` command** - Use SDK from terminal
-- ✅ **Scrape operations** - `brightdata scrape amazon products --url ...`
-- ✅ **Search operations** - `brightdata search linkedin jobs --keyword ...`
+- ✅ **Scrape operations** - `brightdata scrape amazon products ...`
+- ✅ **Search operations** - `brightdata search amazon products --keyword ...`
 - ✅ **Output formats** - JSON, pretty-print, minimal
 
 ### 🏗️ **Architecture Improvements**
 - ✅ **Single AsyncEngine** - Shared across all scrapers (8x efficiency)
 - ✅ **Resource Optimization** - Reduced memory footprint
 - ✅ **Enhanced Error Messages** - Clear, actionable error messages
-- ✅ **502+ Tests** - Comprehensive test coverage
+- ✅ **500+ Tests Passing** - Comprehensive test coverage (99.4%)
 
-### 🆕 **New Platforms**
+### 🆕 **Platforms & Features**
+- ✅ **Amazon Search** - Keyword-based product discovery
 - ✅ **Facebook Scraper** - Posts (profile/group/URL), Comments, Reels
 - ✅ **Instagram Scraper** - Profiles, Posts, Comments, Reels
 - ✅ **Instagram Search** - Posts and Reels discovery with filters
@@ -456,6 +481,7 @@ client.scrape.instagram.profiles(url="...")
 client.scrape.generic.url(url="...")
 
 # Parameter-based discovery (search namespace)
+client.search.amazon.products(keyword="...", min_price=..., max_price=...)
 client.search.linkedin.jobs(keyword="...", location="...")
 client.search.instagram.posts(url="...", num_of_posts=10)
 client.search.google(query="...")
@@ -490,11 +516,11 @@ client = BrightDataClient(
     token="your_token",               # Auto-loads from BRIGHTDATA_API_TOKEN if not provided
     customer_id="your_customer_id",   # Auto-loads from BRIGHTDATA_CUSTOMER_ID (optional)
     timeout=30,                        # Default timeout in seconds
-    web_unlocker_zone="sdk_unlocker",  # Web Unlocker zone name
-    serp_zone="sdk_serp",              # SERP API zone name
-    browser_zone="sdk_browser",        # Browser API zone name
-    auto_create_zones=False,           # Auto-create missing zones
-    validate_token=False               # Validate token on init
+    web_unlocker_zone="sdk_unlocker",  # Web Unlocker zone name (default)
+    serp_zone="sdk_serp",              # SERP API zone name (default)
+    browser_zone="sdk_browser",        # Browser API zone name (default)
+    auto_create_zones=True,            # Auto-create missing zones (default: True)
+    validate_token=False               # Validate token on init (default: False)
 )
 ```
 
@@ -639,6 +665,7 @@ brightdata scrape generic \
 - `brightdata scrape generic url`
 
 **Search Operations:**
+- `brightdata search amazon products`
 - `brightdata search linkedin jobs/profiles/posts`
 - `brightdata search instagram posts/reels`
 - `brightdata search google/bing/yandex`

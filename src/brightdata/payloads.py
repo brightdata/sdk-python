@@ -402,8 +402,8 @@ class LinkedInPostSearchPayload(URLPayload):
     Example:
         >>> payload = LinkedInPostSearchPayload(
         ...     profile_url="https://linkedin.com/in/johndoe",
-        ...     start_date="2024-01-01",
-        ...     end_date="2024-12-31"
+        ...     start_date="2025-01-01",
+        ...     end_date="2025-12-31"
         ... )
     """
 
@@ -499,7 +499,7 @@ class FacebookPostsProfilePayload(URLPayload):
         >>> payload = FacebookPostsProfilePayload(
         ...     url="https://facebook.com/profile",
         ...     num_of_posts=10,
-        ...     start_date="01-01-2024"
+        ...     start_date="01-01-2025"
         ... )
     """
 

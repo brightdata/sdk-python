@@ -491,16 +491,16 @@ class TestPlatformSpecificFacebook:
         # result = client.scrape.facebook.posts_by_profile(
         #     url="https://facebook.com/profile",
         #     num_of_posts=10,
-        #     start_date="01-01-2024",
-        #     end_date="12-31-2024",
+        #     start_date="01-01-2025",
+        #     end_date="12-31-2025",
         #     timeout=240
         # )
 
         result = client.scrape.facebook.posts_by_profile(
             url="https://facebook.com/zuck",
             num_of_posts=5,
-            start_date="01-01-2024",
-            end_date="12-31-2024",
+            start_date="01-01-2025",
+            end_date="12-31-2025",
             timeout=240,
         )
 
@@ -579,8 +579,8 @@ class TestPlatformSpecificInstagram:
         # result = client.search.instagram.posts(
         #     url="https://instagram.com/username",
         #     num_of_posts=10,
-        #     start_date="01-01-2024",
-        #     end_date="12-31-2024",
+        #     start_date="01-01-2025",
+        #     end_date="12-31-2025",
         #     post_type="reel",
         #     timeout=240
         # )
@@ -588,8 +588,8 @@ class TestPlatformSpecificInstagram:
         result = client.search.instagram.posts(
             url="https://instagram.com/instagram",
             num_of_posts=5,
-            start_date="01-01-2024",
-            end_date="12-31-2024",
+            start_date="01-01-2025",
+            end_date="12-31-2025",
             post_type="reel",
             timeout=240,
         )

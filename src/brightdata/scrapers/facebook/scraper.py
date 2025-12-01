@@ -97,8 +97,8 @@ class FacebookScraper(BaseWebScraper):
             >>> result = await scraper.posts_by_profile_async(
             ...     url="https://facebook.com/profile",
             ...     num_of_posts=10,
-            ...     start_date="01-01-2024",
-            ...     end_date="12-31-2024",
+            ...     start_date="01-01-2025",
+            ...     end_date="12-31-2025",
             ...     timeout=240
             ... )
         """
@@ -431,8 +431,8 @@ class FacebookScraper(BaseWebScraper):
             >>> result = await scraper.comments_async(
             ...     url="https://facebook.com/post/123456",
             ...     num_of_comments=100,
-            ...     start_date="01-01-2024",
-            ...     end_date="12-31-2024",
+            ...     start_date="01-01-2025",
+            ...     end_date="12-31-2025",
             ...     timeout=240
             ... )
         """

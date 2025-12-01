@@ -33,8 +33,8 @@ class TestBaseResult:
 
     def test_elapsed_ms_with_delta(self):
         """Test elapsed time with actual time difference."""
-        start = datetime(2024, 1, 1, 12, 0, 0)
-        end = datetime(2024, 1, 1, 12, 0, 1)
+        start = datetime(2025, 1, 1, 12, 0, 0)
+        end = datetime(2025, 1, 1, 12, 0, 1)
         result = BaseResult(
             success=True,
             trigger_sent_at=start,
@@ -108,9 +108,9 @@ class TestScrapeResult:
 
     def test_timing_breakdown_with_polling(self):
         """Test timing breakdown includes polling information."""
-        start = datetime(2024, 1, 1, 12, 0, 0)
-        snapshot_received = datetime(2024, 1, 1, 12, 0, 1)
-        end = datetime(2024, 1, 1, 12, 0, 5)
+        start = datetime(2025, 1, 1, 12, 0, 0)
+        snapshot_received = datetime(2025, 1, 1, 12, 0, 1)
+        end = datetime(2025, 1, 1, 12, 0, 5)
 
         result = ScrapeResult(
             success=True,
@@ -184,8 +184,8 @@ class TestCrawlResult:
 
     def test_timing_breakdown_with_crawl_duration(self):
         """Test timing breakdown includes crawl duration."""
-        crawl_start = datetime(2024, 1, 1, 12, 0, 0)
-        crawl_end = datetime(2024, 1, 1, 12, 5, 0)
+        crawl_start = datetime(2025, 1, 1, 12, 0, 0)
+        crawl_end = datetime(2025, 1, 1, 12, 5, 0)
 
         result = CrawlResult(
             success=True,

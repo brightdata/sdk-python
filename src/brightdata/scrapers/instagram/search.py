@@ -94,8 +94,8 @@ class InstagramSearchScraper:
             >>> result = await scraper.posts_async(
             ...     url="https://instagram.com/username",
             ...     num_of_posts=10,
-            ...     start_date="01-01-2024",
-            ...     end_date="12-31-2024",
+            ...     start_date="01-01-2025",
+            ...     end_date="12-31-2025",
             ...     post_type="reel"
             ... )
         """
@@ -175,8 +175,8 @@ class InstagramSearchScraper:
             >>> result = await scraper.reels_async(
             ...     url="https://instagram.com/username",
             ...     num_of_posts=50,
-            ...     start_date="01-01-2024",
-            ...     end_date="12-31-2024",
+            ...     start_date="01-01-2025",
+            ...     end_date="12-31-2025",
             ...     timeout=240
             ... )
         """

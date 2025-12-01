@@ -64,9 +64,9 @@ class BrightDataClient:
 
     # Default configuration
     DEFAULT_TIMEOUT = 30
-    DEFAULT_WEB_UNLOCKER_ZONE = "web_unlocker1"
-    DEFAULT_SERP_ZONE = "serp_api1"
-    DEFAULT_BROWSER_ZONE = "browser_api1"
+    DEFAULT_WEB_UNLOCKER_ZONE = "sdk_unlocker"
+    DEFAULT_SERP_ZONE = "sdk_serp"
+    DEFAULT_BROWSER_ZONE = "sdk_browser"
 
     # Environment variable name for API token
     TOKEN_ENV_VAR = "BRIGHTDATA_API_TOKEN"
@@ -79,7 +79,7 @@ class BrightDataClient:
         web_unlocker_zone: Optional[str] = None,
         serp_zone: Optional[str] = None,
         browser_zone: Optional[str] = None,
-        auto_create_zones: bool = False,
+        auto_create_zones: bool = True,
         validate_token: bool = False,
         rate_limit: Optional[float] = None,
         rate_period: float = 1.0,
@@ -95,10 +95,10 @@ class BrightDataClient:
                   (supports .env files via python-dotenv)
             customer_id: Customer ID (optional, can also be set via BRIGHTDATA_CUSTOMER_ID)
             timeout: Default timeout in seconds for all requests (default: 30)
-            web_unlocker_zone: Zone name for web unlocker (default: "web_unlocker1")
-            serp_zone: Zone name for SERP API (default: "serp_api1")
-            browser_zone: Zone name for browser API (default: "browser_api1")
-            auto_create_zones: Automatically create zones if they don't exist (default: False)
+            web_unlocker_zone: Zone name for web unlocker (default: "sdk_unlocker")
+            serp_zone: Zone name for SERP API (default: "sdk_serp")
+            browser_zone: Zone name for browser API (default: "sdk_browser")
+            auto_create_zones: Automatically create zones if they don't exist (default: True)
             validate_token: Validate token by testing connection on init (default: False)
             rate_limit: Maximum requests per rate_period (default: 10). Set to None to disable.
             rate_period: Time period in seconds for rate limit (default: 1.0)

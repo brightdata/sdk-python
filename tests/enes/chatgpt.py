@@ -79,12 +79,12 @@ async def test_chatgpt_web_search():
     async with client.engine:
         scraper = client.scrape.chatgpt
         print("\n🔍 Testing ChatGPT with web search...")
-        print("📋 Prompt: 'What are the latest developments in AI in 2024?'")
+        print("📋 Prompt: 'What are the latest developments in AI in 2025?'")
         print("🌐 Web search: Enabled")
 
         try:
             result = await scraper.prompt_async(
-                prompt="What are the latest developments in AI in 2024?",
+                prompt="What are the latest developments in AI in 2025?",
                 web_search=True,
                 poll_timeout=180,
             )

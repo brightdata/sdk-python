@@ -67,7 +67,7 @@ async def test_chatgpt():
         # Test 2: Prompt with web search
         print("\n2. Testing prompt with web search...")
         try:
-            prompt = "What are the latest AI developments in 2024?"
+            prompt = "What are the latest AI developments in 2025?"
             print(f"   Prompt: '{prompt}'")
             print("   Web search: True")
             print("   Country: US")

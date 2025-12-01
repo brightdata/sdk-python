@@ -138,17 +138,17 @@ class TestLinkedInPayloads:
     def test_linkedin_post_search_payload_valid(self):
         """Test valid LinkedIn post search payload."""
         payload = LinkedInPostSearchPayload(
-            url="https://linkedin.com/in/johndoe", start_date="2024-01-01", end_date="2024-12-31"
+            url="https://linkedin.com/in/johndoe", start_date="2025-01-01", end_date="2025-12-31"
         )
 
-        assert payload.start_date == "2024-01-01"
-        assert payload.end_date == "2024-12-31"
+        assert payload.start_date == "2025-01-01"
+        assert payload.end_date == "2025-12-31"
 
     def test_linkedin_post_search_payload_invalid_date(self):
         """Test LinkedIn post search with invalid date format."""
         with pytest.raises(ValueError, match="start_date must be in yyyy-mm-dd format"):
             LinkedInPostSearchPayload(
-                url="https://linkedin.com/in/johndoe", start_date="01-01-2024"  # Wrong format
+                url="https://linkedin.com/in/johndoe", start_date="01-01-2025"  # Wrong format
             )
 
 
@@ -198,13 +198,13 @@ class TestFacebookPayloads:
         payload = FacebookPostsProfilePayload(
             url="https://facebook.com/profile",
             num_of_posts=10,
-            start_date="01-01-2024",
-            end_date="12-31-2024",
+            start_date="01-01-2025",
+            end_date="12-31-2025",
         )
 
         assert payload.url == "https://facebook.com/profile"
         assert payload.num_of_posts == 10
-        assert payload.start_date == "01-01-2024"
+        assert payload.start_date == "01-01-2025"
 
     def test_facebook_posts_profile_payload_invalid_url(self):
         """Test Facebook payload with invalid URL."""

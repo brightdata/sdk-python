@@ -226,8 +226,8 @@ class SearchService:
             >>> # Discover posts from profile
             >>> result = client.search.linkedin.posts(
             ...     profile_url="https://linkedin.com/in/johndoe",
-            ...     start_date="2024-01-01",
-            ...     end_date="2024-12-31"
+            ...     start_date="2025-01-01",
+            ...     end_date="2025-12-31"
             ... )
             >>>
             >>> # Find profiles by name
@@ -302,8 +302,8 @@ class SearchService:
             >>> result = client.search.instagram.reels(
             ...     url="https://instagram.com/username",
             ...     num_of_posts=50,
-            ...     start_date="01-01-2024",
-            ...     end_date="12-31-2024"
+            ...     start_date="01-01-2025",
+            ...     end_date="12-31-2025"
             ... )
         """
         if self._instagram_search is None:

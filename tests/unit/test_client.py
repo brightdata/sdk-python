@@ -192,10 +192,10 @@ class TestClientRepr:
 class TestClientConfiguration:
     """Test client configuration options."""
 
-    def test_auto_create_zones_default_false(self):
-        """Test auto_create_zones defaults to False."""
+    def test_auto_create_zones_default_true(self):
+        """Test auto_create_zones defaults to True."""
         client = BrightDataClient(token="test_token_123456789")
-        assert client.auto_create_zones is False
+        assert client.auto_create_zones is True
 
     def test_auto_create_zones_can_be_enabled(self):
         """Test auto_create_zones can be enabled."""
