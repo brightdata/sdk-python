@@ -13,7 +13,7 @@ class TestClientInitialization:
     def test_client_with_explicit_token(self):
         """Test client initialization with explicit token."""
         client = BrightDataClient(token="test_token_123456789")
-        
+
         assert client.token == "test_token_123456789"
         assert client.timeout == 30  # Default timeout
         assert client.web_unlocker_zone == "sdk_unlocker"
