@@ -38,6 +38,7 @@ class BaseAPI(ABC):
         Execute API operation synchronously.
 
         Wraps async method using asyncio.run() for sync compatibility.
+        Properly manages engine context.
         """
         try:
             asyncio.get_running_loop()
@@ -45,4 +46,9 @@ class BaseAPI(ABC):
                 "Cannot call sync method from async context. Use async method instead."
             )
         except RuntimeError:
-            return asyncio.run(self._execute_async(*args, **kwargs))
+
+            async def _run():
+                async with self.engine:
+                    return await self._execute_async(*args, **kwargs)
+
+            return asyncio.run(_run())

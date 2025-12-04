@@ -214,4 +214,9 @@ class GenericScraper:
 
     def url(self, *args, **kwargs) -> Union[ScrapeResult, List[ScrapeResult]]:
         """Scrape URL(s) synchronously."""
-        return asyncio.run(self.url_async(*args, **kwargs))
+
+        async def _run():
+            async with self._client.engine:
+                return await self.url_async(*args, **kwargs)
+
+        return asyncio.run(_run())
