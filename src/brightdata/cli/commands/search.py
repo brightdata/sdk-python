@@ -16,9 +16,9 @@ from ..utils import create_client, output_result, handle_error
 )
 @click.option(
     "--output-format",
-    type=click.Choice(["json", "pretty", "minimal"], case_sensitive=False),
+    type=click.Choice(["json", "pretty", "minimal", "markdown"], case_sensitive=False),
     default="json",
-    help="Output format",
+    help="Output format (json, pretty, minimal, markdown)",
 )
 @click.option("--output-file", type=click.Path(), help="Save output to file")
 @click.pass_context

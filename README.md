@@ -62,6 +62,7 @@ Modern async-first Python SDK for [Bright Data](https://brightdata.com) APIs wit
 ### 🏗️ **Core Features**
 - 🚀 **Async-first architecture** with sync wrappers for compatibility
 - 🎨 **Dataclass Payloads** - Runtime validation, IDE autocomplete, helper methods
+- 📝 **Markdown Output** - Export results as GitHub-flavored markdown tables
 - 🌐 **Web scraping** via Web Unlocker proxy service
 - 🔍 **SERP API** - Google, Bing, Yandex search results
 - 📦 **Platform scrapers** - LinkedIn, Amazon, ChatGPT, Facebook, Instagram
@@ -460,10 +461,11 @@ asyncio.run(scrape_multiple())
 ## 🆕 What's New in v2 2.0.0
 
 ### 🆕 **Latest Updates (December 2025)**
+- ✅ **Markdown Output Format** - NEW! Export results as GitHub-flavored markdown
 - ✅ **Amazon Search API** - NEW parameter-based product discovery with correct dataset
 - ✅ **LinkedIn Job Search Fixed** - Now builds URLs from keywords internally
 - ✅ **Trigger Interface** - Manual trigger/poll/fetch control for all platforms
-- ✅ **29 Sync Wrapper Fixes** - All sync methods work (scrapers + SERP API)
+- ✅ **30 Sync Wrapper Fixes** - ALL sync methods work (scrapers + SERP + generic)
 - ✅ **Batch Operations Fixed** - Returns List[ScrapeResult] correctly
 - ✅ **Auto-Create Zones** - Now enabled by default (was opt-in)
 - ✅ **Improved Zone Names** - `sdk_unlocker`, `sdk_serp`, `sdk_browser`
@@ -656,9 +658,11 @@ result.elapsed_ms()              # Total time in milliseconds
 result.get_timing_breakdown()    # Detailed timing dict
 
 # Serialization
-result.to_dict()                 # Convert to dictionary
-result.to_json(indent=2)         # JSON string
-result.save_to_file("result.json")  # Save to file
+result.to_dict()                      # Convert to dictionary
+result.to_json(indent=2)              # JSON string
+result.to_markdown()                  # GitHub-flavored markdown (NEW!)
+result.save_to_file("result.json")    # Save as JSON
+result.save_to_file("result.md", format="markdown")  # Save as markdown (NEW!)
 ```
 
 ---
@@ -728,6 +732,9 @@ brightdata scrape amazon products "https://amazon.com/dp/B123" --output-format p
 
 # Minimal format - Just the data, no metadata
 brightdata scrape amazon products "https://amazon.com/dp/B123" --output-format minimal
+
+# Markdown format - GitHub-flavored tables (NEW!)
+brightdata scrape amazon products "https://amazon.com/dp/B123" --output-format markdown
 ```
 
 #### Generic Scraper Response Format (`--response-format`)
@@ -747,6 +754,57 @@ brightdata scrape generic "https://api.example.com/data" --response-format json
 brightdata scrape generic "https://example.com" \
   --response-format raw \
   --output-format pretty
+```
+
+#### Markdown Output Format (NEW!)
+
+Export results as GitHub-flavored markdown tables - perfect for reports and documentation:
+
+```bash
+# CLI: Markdown output
+brightdata search google "python tutorial" --output-format markdown
+
+# Save to file
+brightdata search google "python tutorial" \
+  --output-format markdown \
+  --output-file report.md
+```
+
+**SDK: Markdown methods**
+
+```python
+from brightdata import BrightDataClient
+
+client = BrightDataClient()
+result = client.search.google(query="python tutorial", num_results=5)
+
+# Generate markdown
+md = result.to_markdown()
+print(md)
+
+# Save as markdown
+result.save_to_file("report.md", format="markdown")
+```
+
+**Example Output:**
+
+```markdown
+# Result: ✅ Success
+
+## Metadata
+
+| Field | Value |
+|-------|-------|
+| Cost | $0.0010 USD |
+| Time | 1234.56ms |
+
+## Data
+
+| position | title | url |
+|----------|-------|-----|
+| 1 | The Python Tutorial | https://docs.python.org/3/tutorial/ |
+| 2 | Python Tutorial - W3Schools | https://www.w3schools.com/python/ |
+| 3 | Learn Python | https://www.learnpython.org/ |
 ```
 
 ---

@@ -67,34 +67,41 @@ def create_client(api_key: Optional[str] = None, **kwargs) -> BrightDataClient:
 
 def format_result(result: Any, output_format: str = "json") -> str:
     """
-    Format result for output.
+    Format result for output using formatter registry.
 
     Args:
         result: Result object (ScrapeResult, SearchResult, etc.)
-        output_format: Output format ("json", "pretty", "minimal")
+        output_format: Output format ("json", "pretty", "minimal", "markdown")
 
     Returns:
         Formatted string
     """
-    if output_format == "json":
-        if hasattr(result, "to_dict"):
-            data = result.to_dict()
-        elif hasattr(result, "__dict__"):
-            from dataclasses import asdict, is_dataclass
+    try:
+        from ..formatters import FormatterRegistry
 
-            if is_dataclass(result):
-                data = asdict(result)
+        formatter = FormatterRegistry.get_formatter(output_format)
+        return formatter.format(result)
+    except (ValueError, ImportError):
+        # Fallback to legacy formatting for backward compatibility
+        if output_format == "json":
+            if hasattr(result, "to_dict"):
+                data = result.to_dict()
+            elif hasattr(result, "__dict__"):
+                from dataclasses import asdict, is_dataclass
+
+                if is_dataclass(result):
+                    data = asdict(result)
+                else:
+                    data = result.__dict__
             else:
-                data = result.__dict__
+                data = result
+            return json.dumps(data, indent=2, default=str)
+        elif output_format == "pretty":
+            return format_result_pretty(result)
+        elif output_format == "minimal":
+            return format_result_minimal(result)
         else:
-            data = result
-        return json.dumps(data, indent=2, default=str)
-    elif output_format == "pretty":
-        return format_result_pretty(result)
-    elif output_format == "minimal":
-        return format_result_minimal(result)
-    else:
-        return str(result)
+            return str(result)
 
 
 def format_result_pretty(result: Any) -> str:

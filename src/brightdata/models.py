@@ -101,31 +101,72 @@ class BaseResult:
         """
         return json.dumps(self.to_dict(), indent=indent, default=str)
 
+    def to_markdown(self) -> str:
+        """
+        Convert result to GitHub-flavored Markdown.
+
+        Returns:
+            Markdown-formatted string with tables, badges, and metadata.
+
+        Example:
+            >>> result = client.search.google(query="python")
+            >>> md = result.to_markdown()
+            >>> print(md)
+            # Result: ✅ Success
+
+            ## Metadata
+            | Field | Value |
+            |-------|-------|
+            | Cost | $0.0010 USD |
+            | Time | 1234.56ms |
+
+            ## Data
+            | position | title | url |
+            |----------|-------|-----|
+            | 1 | Python Tutorial | https://... |
+        """
+        from .formatters import FormatterRegistry
+
+        formatter = FormatterRegistry.get_formatter("markdown")
+        return formatter.format(self)
+
     def save_to_file(self, filepath: Union[str, Path], format: str = "json") -> None:
         """
         Save result data to file.
 
         Args:
             filepath: Path where to save the file. Must be a valid file path.
-            format: File format. Currently only "json" is supported.
+            format: File format - "json", "markdown", "md", "pretty", "minimal".
 
         Raises:
             ValueError: If format is not supported.
             OSError: If file cannot be written (permissions, disk full, etc.).
             IOError: If file I/O operation fails.
+
+        Example:
+            >>> result.save_to_file("output.md", format="markdown")
+            >>> result.save_to_file("data.json", format="json")
         """
+        from .formatters import FormatterRegistry
+
         path = Path(filepath).resolve()
 
         if not path.parent.exists():
             raise OSError(f"Parent directory does not exist: {path.parent}")
 
-        if format.lower() == "json":
-            try:
-                path.write_text(self.to_json(indent=2), encoding="utf-8")
-            except OSError as e:
-                raise OSError(f"Failed to write file {path}: {e}") from e
-        else:
-            raise ValueError(f"Unsupported format: {format}. Use 'json'.")
+        try:
+            # Use formatter registry for all formats
+            formatter = FormatterRegistry.get_formatter(format)
+            content = formatter.format(self)
+            path.write_text(content, encoding="utf-8")
+        except ValueError as e:
+            # Unknown format
+            raise ValueError(
+                f"Unsupported format: {format}. "
+                f"Supported formats: {', '.join(FormatterRegistry.list_formats())}"
+            ) from e
+        except OSError as e:
+            raise OSError(f"Failed to write file {path}: {e}") from e
 
     def __repr__(self) -> str:
         """String representation for debugging."""
