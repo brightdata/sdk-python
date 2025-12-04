@@ -116,7 +116,10 @@ class SearchService:
             ...     location="United States"
             ... )
         """
-        return asyncio.run(self.google_async(query, **kwargs))
+        async def _run():
+            async with self._client.engine:
+                return await self.google_async(query, **kwargs)
+        return asyncio.run(_run())
 
     async def bing_async(
         self,
@@ -148,7 +151,10 @@ class SearchService:
 
     def bing(self, query: Union[str, List[str]], **kwargs):
         """Search Bing synchronously."""
-        return asyncio.run(self.bing_async(query, **kwargs))
+        async def _run():
+            async with self._client.engine:
+                return await self.bing_async(query, **kwargs)
+        return asyncio.run(_run())
 
     async def yandex_async(
         self,
@@ -180,7 +186,10 @@ class SearchService:
 
     def yandex(self, query: Union[str, List[str]], **kwargs):
         """Search Yandex synchronously."""
-        return asyncio.run(self.yandex_async(query, **kwargs))
+        async def _run():
+            async with self._client.engine:
+                return await self.yandex_async(query, **kwargs)
+        return asyncio.run(_run())
 
     @property
     def amazon(self):
