@@ -35,7 +35,7 @@ class AmazonSearchScraper:
     """
 
     # Amazon dataset IDs
-    DATASET_ID_PRODUCTS_SEARCH = "gd_l7q7dkf244hwjntr0"  # Amazon Products with search
+    DATASET_ID_PRODUCTS_SEARCH = "gd_lwdb4vjm1ehb499uxs"  # Amazon Products Search (15.84M records)
 
     def __init__(self, bearer_token: str, engine: Optional[AsyncEngine] = None):
         """
@@ -125,26 +125,39 @@ class AmazonSearchScraper:
         conditions = self._normalize_param(condition, batch_size)
         countries = self._normalize_param(country, batch_size)
 
-        # Build payload - Amazon API requires URLs
-        # If keyword provided, build Amazon search URL internally
+        # Build payload - Amazon Products Search dataset expects keyword field
         payload = []
         for i in range(batch_size):
+            item = {}
+            
             # If URL provided directly, use it
             if urls and i < len(urls):
-                item = {"url": urls[i]}
+                item["url"] = urls[i]
+                # Extract keyword from URL if possible for the keyword field
+                if "k=" in urls[i]:
+                    import urllib.parse
+                    parsed = urllib.parse.urlparse(urls[i])
+                    params = urllib.parse.parse_qs(parsed.query)
+                    item["keyword"] = params.get("k", [""])[0]
+                else:
+                    item["keyword"] = ""
             else:
-                # Build Amazon search URL from parameters
-                search_url = self._build_amazon_search_url(
-                    keyword=keywords[i] if keywords and i < len(keywords) else None,
-                    category=categories[i] if categories and i < len(categories) else None,
-                    min_price=min_prices[i] if min_prices and i < len(min_prices) else None,
-                    max_price=max_prices[i] if max_prices and i < len(max_prices) else None,
-                    condition=conditions[i] if conditions and i < len(conditions) else None,
-                    prime_eligible=prime_eligible,
-                    country=countries[i] if countries and i < len(countries) else None,
-                )
-                item = {"url": search_url}
-
+                # Send keyword directly (dataset expects this field)
+                item["keyword"] = keywords[i] if keywords and i < len(keywords) else ""
+                
+                # Optionally build URL for additional context
+                if item["keyword"]:
+                    search_url = self._build_amazon_search_url(
+                        keyword=item["keyword"],
+                        category=categories[i] if categories and i < len(categories) else None,
+                        min_price=min_prices[i] if min_prices and i < len(min_prices) else None,
+                        max_price=max_prices[i] if max_prices and i < len(max_prices) else None,
+                        condition=conditions[i] if conditions and i < len(conditions) else None,
+                        prime_eligible=prime_eligible,
+                        country=countries[i] if countries and i < len(countries) else None,
+                    )
+                    item["url"] = search_url
+            
             payload.append(item)
 
         return await self._execute_search(

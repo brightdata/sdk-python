@@ -83,11 +83,11 @@ Modern async-first Python SDK for [Bright Data](https://brightdata.com) APIs wit
 
 Perfect for data scientists! Interactive tutorials with examples:
 
-1. **[01_quickstart.ipynb](notebooks/01_quickstart.ipynb)** - Get started in 5 minutes [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/brightdata/sdk-python/blob/master/notebooks/01_quickstart.ipynb)
-2. **[02_pandas_integration.ipynb](notebooks/02_pandas_integration.ipynb)** - Work with DataFrames [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/brightdata/sdk-python/blob/master/notebooks/02_pandas_integration.ipynb)
-3. **[03_amazon_scraping.ipynb](notebooks/03_amazon_scraping.ipynb)** - Amazon deep dive [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/brightdata/sdk-python/blob/master/notebooks/03_amazon_scraping.ipynb)
-4. **[04_linkedin_jobs.ipynb](notebooks/04_linkedin_jobs.ipynb)** - Job market analysis [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/brightdata/sdk-python/blob/master/notebooks/04_linkedin_jobs.ipynb)
-5. **[05_batch_processing.ipynb](notebooks/05_batch_processing.ipynb)** - Scale to 1000s of URLs [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/brightdata/sdk-python/blob/master/notebooks/05_batch_processing.ipynb)
+1. **[01_quickstart.ipynb](notebooks/01_quickstart.ipynb)** - Get started in 5 minutes [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/brightdata/sdk-python/blob/main/notebooks/01_quickstart.ipynb)
+2. **[02_pandas_integration.ipynb](notebooks/02_pandas_integration.ipynb)** - Work with DataFrames [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/brightdata/sdk-python/blob/main/notebooks/02_pandas_integration.ipynb)
+3. **[03_amazon_scraping.ipynb](notebooks/03_amazon_scraping.ipynb)** - Amazon deep dive [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/brightdata/sdk-python/blob/main/notebooks/03_amazon_scraping.ipynb)
+4. **[04_linkedin_jobs.ipynb](notebooks/04_linkedin_jobs.ipynb)** - Job market analysis [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/brightdata/sdk-python/blob/main/notebooks/04_linkedin_jobs.ipynb)
+5. **[05_batch_processing.ipynb](notebooks/05_batch_processing.ipynb)** - Scale to 1000s of URLs [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/brightdata/sdk-python/blob/main/notebooks/05_batch_processing.ipynb)
 
 ---
 
@@ -1078,10 +1078,8 @@ pytest tests/ --cov=brightdata --cov-report=html
 - [All examples →](examples/)
 
 ### Documentation
-- [Quick Start Guide](docs/quickstart.md)
-- [Architecture Overview](docs/architecture.md)
 - [API Reference](docs/api-reference/)
-- [Contributing Guide](docs/contributing.md)
+- [Contributing Guidelines](https://github.com/brightdata/sdk-python/blob/main/CONTRIBUTING.md) (See upstream repo)
 
 ---
 
@@ -1140,7 +1138,7 @@ pip install -e .
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](docs/contributing.md) for guidelines.
+Contributions are welcome! Check the [GitHub repository](https://github.com/brightdata/sdk-python) for contribution guidelines.
 
 ### Development Setup
 
@@ -1269,37 +1267,6 @@ Run the included demo to explore the SDK interactively:
 ```bash
 python demo_sdk.py
 ```
-
----
-
-## 🎯 Roadmap
-
-### ✅ Completed
-- [x] Core client with authentication
-- [x] Web Unlocker service
-- [x] Platform scrapers (Amazon, LinkedIn, ChatGPT, Facebook, Instagram)
-- [x] SERP API (Google, Bing, Yandex)
-- [x] Comprehensive test suite (502+ tests)
-- [x] .env file support via python-dotenv
-- [x] SSL error handling with helpful guidance
-- [x] Centralized constants module
-- [x] Function-level monitoring
-- [x] **Dataclass payloads with validation**
-- [x] **Jupyter notebooks for data scientists**
-- [x] **CLI tool (brightdata command)**
-- [x] **Pandas integration examples**
-- [x] **Single shared AsyncEngine (8x efficiency)**
-
-### 🚧 In Progress
-- [ ] Browser automation API
-- [ ] Web crawler API
-
-### 🔮 Future
-- [ ] Additional platforms (Reddit, Twitter/X, TikTok, YouTube)
-- [ ] Real-time data streaming
-- [ ] Advanced caching strategies
-- [ ] Prometheus metrics export
-
 ---
 
 ## 🙏 Acknowledgments
