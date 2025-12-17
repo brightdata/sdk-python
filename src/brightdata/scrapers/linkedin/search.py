@@ -2,9 +2,12 @@
 LinkedIn Search Scraper - Discovery/parameter-based operations.
 
 Implements:
-- client.search.linkedin.posts() - Discover posts by profile and date range
-- client.search.linkedin.profiles() - Find profiles by name
-- client.search.linkedin.jobs() - Find jobs by keyword/location/filters
+- client.search.linkedin.posts()          - Discover posts by profile and date range (async)
+- client.search.linkedin.posts_sync()     - Discover posts by profile and date range (sync)
+- client.search.linkedin.profiles()       - Find profiles by name (async)
+- client.search.linkedin.profiles_sync()  - Find profiles by name (sync)
+- client.search.linkedin.jobs()           - Find jobs by keyword/location/filters (async)
+- client.search.linkedin.jobs_sync()      - Find jobs by keyword/location/filters (sync)
 """
 
 import asyncio
@@ -30,10 +33,18 @@ class LinkedInSearchScraper:
 
     Example:
         >>> scraper = LinkedInSearchScraper(bearer_token="token")
-        >>> result = scraper.jobs(
+        >>>
+        >>> # Async
+        >>> result = await scraper.jobs(
         ...     keyword="python developer",
         ...     location="New York",
         ...     remote=True
+        ... )
+        >>>
+        >>> # Sync
+        >>> result = scraper.jobs_sync(
+        ...     keyword="python developer",
+        ...     location="New York"
         ... )
     """
 
@@ -65,7 +76,7 @@ class LinkedInSearchScraper:
     # POSTS DISCOVERY (by profile + date range)
     # ============================================================================
 
-    async def posts_async(
+    async def posts(
         self,
         profile_url: Union[str, List[str]],
         start_date: Optional[Union[str, List[str]]] = None,
@@ -85,7 +96,7 @@ class LinkedInSearchScraper:
             ScrapeResult with discovered posts
 
         Example:
-            >>> result = await search.posts_async(
+            >>> result = await search.posts(
             ...     profile_url="https://linkedin.com/in/johndoe",
             ...     start_date="2025-01-01",
             ...     end_date="2025-12-31"
@@ -113,7 +124,8 @@ class LinkedInSearchScraper:
             payload=payload, dataset_id=self.DATASET_ID_POSTS, timeout=timeout
         )
 
-    def posts(
+
+    def posts_sync(
         self,
         profile_url: Union[str, List[str]],
         start_date: Optional[Union[str, List[str]]] = None,
@@ -121,22 +133,20 @@ class LinkedInSearchScraper:
         timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
-        Discover posts from profile(s) (sync).
+        Discover posts from profile(s) (sync version).
 
-        See posts_async() for documentation.
+        See posts() for documentation.
         """
-
         async def _run():
             async with self.engine:
-                return await self.posts_async(profile_url, start_date, end_date, timeout)
-
+                return await self.posts(profile_url, start_date, end_date, timeout)
         return asyncio.run(_run())
 
     # ============================================================================
     # PROFILES DISCOVERY (by name)
     # ============================================================================
 
-    async def profiles_async(
+    async def profiles(
         self,
         firstName: Union[str, List[str]],
         lastName: Optional[Union[str, List[str]]] = None,
@@ -154,7 +164,7 @@ class LinkedInSearchScraper:
             ScrapeResult with matching profiles
 
         Example:
-            >>> result = await search.profiles_async(
+            >>> result = await search.profiles(
             ...     firstName="John",
             ...     lastName="Doe"
             ... )
@@ -177,29 +187,28 @@ class LinkedInSearchScraper:
             payload=payload, dataset_id=self.DATASET_ID_PROFILES, timeout=timeout
         )
 
-    def profiles(
+
+    def profiles_sync(
         self,
         firstName: Union[str, List[str]],
         lastName: Optional[Union[str, List[str]]] = None,
         timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
-        Find profiles by name (sync).
+        Find profiles by name (sync version).
 
-        See profiles_async() for documentation.
+        See profiles() for documentation.
         """
-
         async def _run():
             async with self.engine:
-                return await self.profiles_async(firstName, lastName, timeout)
-
+                return await self.profiles(firstName, lastName, timeout)
         return asyncio.run(_run())
 
     # ============================================================================
     # JOBS DISCOVERY (by keyword + extensive filters)
     # ============================================================================
 
-    async def jobs_async(
+    async def jobs(
         self,
         url: Optional[Union[str, List[str]]] = None,
         location: Optional[Union[str, List[str]]] = None,
@@ -233,7 +242,7 @@ class LinkedInSearchScraper:
             ScrapeResult with matching jobs
 
         Example:
-            >>> result = await search.jobs_async(
+            >>> result = await search.jobs(
             ...     keyword="python developer",
             ...     location="New York",
             ...     remote=True,
@@ -302,7 +311,8 @@ class LinkedInSearchScraper:
 
         return await self._execute_search(payload=payload, dataset_id=dataset_id, timeout=timeout)
 
-    def jobs(
+
+    def jobs_sync(
         self,
         url: Optional[Union[str, List[str]]] = None,
         location: Optional[Union[str, List[str]]] = None,
@@ -317,21 +327,13 @@ class LinkedInSearchScraper:
         timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
-        Discover jobs (sync).
+        Discover jobs (sync version).
 
-        See jobs_async() for full documentation.
-
-        Example:
-            >>> result = search.jobs(
-            ...     keyword="python",
-            ...     location="NYC",
-            ...     remote=True
-            ... )
+        See jobs() for full documentation.
         """
-
         async def _run():
             async with self.engine:
-                return await self.jobs_async(
+                return await self.jobs(
                     url=url,
                     location=location,
                     keyword=keyword,
@@ -344,7 +346,6 @@ class LinkedInSearchScraper:
                     locationRadius=locationRadius,
                     timeout=timeout,
                 )
-
         return asyncio.run(_run())
 
     # ============================================================================

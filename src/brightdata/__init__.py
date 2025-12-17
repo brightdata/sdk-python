@@ -2,8 +2,11 @@
 
 __version__ = "2.0.0"
 
-# Export main client
-from .client import BrightDataClient, BrightData  # BrightData is alias for backward compat
+# Export main client (async)
+from .client import BrightDataClient
+
+# Export sync client adapter
+from .sync_client import SyncBrightDataClient
 
 # Export result models
 from .models import (
@@ -69,9 +72,10 @@ from .core.zone_manager import ZoneManager
 
 __all__ = [
     "__version__",
-    # Main client
+    # Main client (async)
     "BrightDataClient",
-    "BrightData",  # Backward compatibility alias
+    # Sync client adapter
+    "SyncBrightDataClient",
     # Result models
     "BaseResult",
     "ScrapeResult",

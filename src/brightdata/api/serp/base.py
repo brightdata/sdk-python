@@ -53,7 +53,7 @@ class BaseSERPService:
         self.timeout = timeout or self.DEFAULT_TIMEOUT
         self.max_retries = max_retries
 
-    async def search_async(
+    async def search(
         self,
         query: Union[str, List[str]],
         zone: str,
@@ -77,6 +77,11 @@ class BaseSERPService:
 
         Returns:
             SearchResult for single query, List[SearchResult] for multiple
+
+        Note:
+            For synchronous usage, use SyncBrightDataClient instead:
+            >>> with SyncBrightDataClient() as client:
+            ...     result = client.search.google(query)
         """
         is_single = isinstance(query, str)
         query_list = [query] if is_single else query
@@ -106,9 +111,6 @@ class BaseSERPService:
                 **kwargs,
             )
 
-    def search(self, *args, **kwargs):
-        """Synchronous search wrapper."""
-        return asyncio.run(self.search_async(*args, **kwargs))
 
     async def _search_single_async(
         self,

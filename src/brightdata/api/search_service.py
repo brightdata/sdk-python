@@ -3,9 +3,9 @@ Search service namespace (SERP API).
 
 Provides access to search engine result scrapers with normalized
 data across different search engines.
+All methods are async-only. For sync usage, use SyncBrightDataClient.
 """
 
-import asyncio
 from typing import Optional, Union, List, TYPE_CHECKING
 
 from ..models import SearchResult
@@ -51,7 +51,7 @@ class SearchService:
         self._chatgpt_search: Optional["ChatGPTSearchService"] = None
         self._instagram_search: Optional["InstagramSearchScraper"] = None
 
-    async def google_async(
+    async def google(
         self,
         query: Union[str, List[str]],
         location: Optional[str] = None,
@@ -77,11 +77,12 @@ class SearchService:
             SearchResult with normalized Google search data
 
         Example:
-            >>> result = await client.search.google_async(
-            ...     query="python tutorial",
-            ...     location="United States",
-            ...     num_results=20
-            ... )
+            >>> async with BrightDataClient() as client:
+            ...     result = await client.search.google(
+            ...         query="python tutorial",
+            ...         location="United States",
+            ...         num_results=20
+            ...     )
         """
         from .serp import GoogleSERPService
 
@@ -92,7 +93,7 @@ class SearchService:
             )
 
         zone = zone or self._client.serp_zone
-        return await self._google_service.search_async(
+        return await self._google_service.search(
             query=query,
             zone=zone,
             location=location,
@@ -102,28 +103,8 @@ class SearchService:
             **kwargs,
         )
 
-    def google(
-        self, query: Union[str, List[str]], **kwargs
-    ) -> Union[SearchResult, List[SearchResult]]:
-        """
-        Search Google synchronously.
 
-        See google_async() for full documentation.
-
-        Example:
-            >>> result = client.search.google(
-            ...     query="python tutorial",
-            ...     location="United States"
-            ... )
-        """
-
-        async def _run():
-            async with self._client.engine:
-                return await self.google_async(query, **kwargs)
-
-        return asyncio.run(_run())
-
-    async def bing_async(
+    async def bing(
         self,
         query: Union[str, List[str]],
         location: Optional[str] = None,
@@ -142,7 +123,7 @@ class SearchService:
             )
 
         zone = zone or self._client.serp_zone
-        return await self._bing_service.search_async(
+        return await self._bing_service.search(
             query=query,
             zone=zone,
             location=location,
@@ -151,16 +132,8 @@ class SearchService:
             **kwargs,
         )
 
-    def bing(self, query: Union[str, List[str]], **kwargs):
-        """Search Bing synchronously."""
 
-        async def _run():
-            async with self._client.engine:
-                return await self.bing_async(query, **kwargs)
-
-        return asyncio.run(_run())
-
-    async def yandex_async(
+    async def yandex(
         self,
         query: Union[str, List[str]],
         location: Optional[str] = None,
@@ -179,7 +152,7 @@ class SearchService:
             )
 
         zone = zone or self._client.serp_zone
-        return await self._yandex_service.search_async(
+        return await self._yandex_service.search(
             query=query,
             zone=zone,
             location=location,
@@ -188,14 +161,6 @@ class SearchService:
             **kwargs,
         )
 
-    def yandex(self, query: Union[str, List[str]], **kwargs):
-        """Search Yandex synchronously."""
-
-        async def _run():
-            async with self._client.engine:
-                return await self.yandex_async(query, **kwargs)
-
-        return asyncio.run(_run())
 
     @property
     def amazon(self):

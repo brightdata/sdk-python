@@ -1,5 +1,107 @@
 # Bright Data Python SDK Changelog
 
+## Version 2.1.0 - API Simplification & Naming Convention Fix
+
+### 🚨 Breaking Changes
+
+#### Removed GenericScraper
+```python
+# OLD (v2.0.0)
+result = await client.scrape.generic.url("https://example.com")
+
+# NEW (v2.1.0) - Use scrape_url() directly
+result = await client.scrape_url("https://example.com")
+```
+
+#### Async Method Naming Convention
+The `_async` suffix has been removed. Now `method()` is async by default, and `method_sync()` is the synchronous version.
+
+```python
+# OLD (v2.0.0)
+result = await scraper.products_async(url)
+await job.wait_async()
+data = await job.fetch_async()
+
+# NEW (v2.1.0)
+result = await scraper.products(url)
+await job.wait()
+data = await job.fetch()
+```
+
+#### CLI Command Change
+```bash
+# OLD
+brightdata scrape generic --url https://example.com
+
+# NEW
+brightdata scrape url --url https://example.com
+```
+
+### ✨ New Features
+
+#### Complete SyncBrightDataClient
+Added comprehensive `sync_client.py` with full coverage for all scrapers:
+
+```python
+from brightdata import SyncBrightDataClient
+
+with SyncBrightDataClient(token="...") as client:
+    # All methods work synchronously
+    result = client.scrape.amazon.products(url)
+    result = client.scrape.linkedin.profiles(url)
+    result = client.search.google("query")
+```
+
+**Supported sync wrappers:**
+- `SyncAmazonScraper` - products, reviews, sellers (+ trigger/status/fetch)
+- `SyncLinkedInScraper` - profiles, jobs, companies, posts
+- `SyncInstagramScraper` - profiles, posts, comments, reels
+- `SyncFacebookScraper` - posts_by_profile, posts_by_group, comments, reels
+- `SyncChatGPTScraper` - prompt, prompts
+- `SyncSearchService` - google, bing, yandex
+- `SyncCrawlerService` - crawl, scrape
+
+#### Context Manager Enforcement
+Client methods now require proper context manager initialization:
+
+```python
+# Correct usage
+async with BrightDataClient() as client:
+    result = await client.scrape_url(url)
+
+# Will raise RuntimeError
+client = BrightDataClient()
+result = await client.scrape_url(url)  # Error: not initialized
+```
+
+### 🔄 Migration Guide
+
+#### Method Renames
+| Old (v2.0.0) | New (v2.1.0) |
+|--------------|--------------|
+| `products_async()` | `products()` |
+| `reviews_async()` | `reviews()` |
+| `profiles_async()` | `profiles()` |
+| `jobs_async()` | `jobs()` |
+| `wait_async()` | `wait()` |
+| `fetch_async()` | `fetch()` |
+| `to_result_async()` | `to_result()` |
+| `status_async()` | `status()` |
+| `scrape.generic.url()` | `scrape_url()` |
+
+#### Quick Migration
+```bash
+# Find and replace in your codebase:
+_async() → ()
+scrape.generic.url → scrape_url
+```
+
+### 📝 Documentation
+- Simplified README with clearer examples
+- Updated all examples and tests to use new naming convention
+
+---
+
 ## Version 2.0.0 - Complete Architecture Rewrite
 
 ### 🚨 Breaking Changes
@@ -50,14 +152,14 @@ with ThreadPoolExecutor(max_workers=10) as executor:
 
 **New**: Native async/await throughout with sync wrappers
 ```python
-# New approach - native async
-async def scrape_async(self, url):
+# New approach - native async (method() is async by default)
+async def products(self, url):
     async with self.engine:
         return await self._execute_workflow(...)
 
-# Sync wrapper for compatibility
-def scrape(self, url):
-    return asyncio.run(self.scrape_async(url))
+# Sync client uses persistent event loop
+with SyncBrightDataClient() as client:
+    result = client.scrape.amazon.products(url)
 ```
 
 #### 2. Service-Based Architecture
@@ -102,11 +204,11 @@ data = await fetch_results(snapshot_id)  # Get results
 #### 2. Manual Job Control
 ```python
 # New capability - fine-grained control over scraping jobs
-job = await scraper.trigger(url)
+job = await scraper.products_trigger(url)
 # Do other work...
-status = await job.status_async()
+status = await job.status()
 if status == "ready":
-    data = await job.fetch_async()
+    data = await job.fetch()
 ```
 
 #### 3. Type-Safe Payloads (Dataclasses)
@@ -270,11 +372,11 @@ result = client.scrape(url)
 # New (async-first)
 async def main():
     async with BrightDataClient(token="...") as client:
-        result = await client.scrape_url_async(url)
+        result = await client.scrape_url(url)
 
-# Or keep using sync
-client = BrightDataClient(token="...")
-result = client.scrape_url(url)
+# Or use sync client
+with SyncBrightDataClient(token="...") as client:
+    result = client.scrape_url(url)
 ```
 
 

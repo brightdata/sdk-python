@@ -30,7 +30,7 @@ async def test_linkedin_profiles():
             print("📍 Profile URL: https://www.linkedin.com/in/williamhgates")
 
             try:
-                result = await scraper.profiles_async(
+                result = await scraper.profiles(
                     url="https://www.linkedin.com/in/williamhgates", timeout=180
                 )
 
@@ -76,7 +76,7 @@ async def test_linkedin_companies():
             print("📍 Company URL: https://www.linkedin.com/company/microsoft")
 
             try:
-                result = await scraper.companies_async(
+                result = await scraper.companies(
                     url="https://www.linkedin.com/company/microsoft", timeout=180
                 )
 
@@ -122,7 +122,7 @@ async def test_linkedin_jobs():
             print("📍 Job URL: https://www.linkedin.com/jobs/view/3787241244")
 
             try:
-                result = await scraper.jobs_async(
+                result = await scraper.jobs(
                     url="https://www.linkedin.com/jobs/view/3787241244", timeout=180
                 )
 
@@ -168,7 +168,7 @@ async def test_linkedin_search_jobs():
             print("📋 Search: keyword='python developer', location='New York'")
 
             try:
-                result = await scraper.jobs_async(
+                result = await scraper.jobs(
                     keyword="python developer", location="New York", timeout=180
                 )
 

@@ -138,7 +138,7 @@ print("-" * 80)
 print("Scraping https://httpbin.org/json (test URL)...")
 
 try:
-    result = client.scrape.generic.url("https://httpbin.org/json")
+    result = client.scrape_url("https://httpbin.org/json")
     
     if result.success:
         print("[OK] Generic scrape successful!")
@@ -194,7 +194,7 @@ def test_generic_scrape():
     url = url or "https://httpbin.org/html"
     
     print(f"\nScraping: {url}")
-    result = client.scrape.generic.url(url)
+    result = client.scrape_url(url)
     
     if result.success:
         print(f"[OK] Success!")
@@ -494,7 +494,7 @@ def test_batch_scraping():
         import time
         start = time.time()
         
-        results = client.scrape.generic.url(urls)
+        results = client.scrape_url(urls)
         
         elapsed = time.time() - start
         
@@ -530,7 +530,7 @@ def test_sync_vs_async():
         # Test sync mode
         print("\n1. Sync mode (immediate response):")
         start = time.time()
-        result_sync = client.scrape.generic.url(url)
+        result_sync = client.scrape_url(url)
         sync_time = time.time() - start
         
         print(f"   Time: {sync_time:.2f}s")
@@ -562,7 +562,7 @@ def show_complete_interface():
     print()
     
     print("SCRAPE (URL-based extraction):")
-    print("  client.scrape.generic.url(url)")
+    print("  client.scrape_url(url)")
     print("  client.scrape.amazon.products(url, timeout=240)")
     print("  client.scrape.amazon.reviews(url, pastDays, keyWord, numOfReviews, timeout=240)")
     print("  client.scrape.amazon.sellers(url, timeout=240)")
@@ -594,7 +594,7 @@ def show_complete_interface():
     
     print("ASYNC USAGE:")
     print("  async with BrightDataClient() as client:")
-    print("      result = await client.scrape.generic.url_async(url)")
+    print("      result = await client.scrape_url(url)")
     print()
 
 # Interactive loop

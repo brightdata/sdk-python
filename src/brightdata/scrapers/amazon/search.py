@@ -2,8 +2,10 @@
 Amazon Search Scraper - Discovery/parameter-based operations.
 
 Implements:
-- client.search.amazon.products() - Find products by keyword/category/filters
-- client.search.amazon.best_sellers() - Find best sellers by category
+- client.search.amazon.products()      - Find products by keyword/category/filters (async)
+- client.search.amazon.products_sync() - Find products by keyword/category/filters (sync)
+
+Async methods are the default. Sync methods use asyncio.run() internally.
 """
 
 import asyncio
@@ -58,7 +60,7 @@ class AmazonSearchScraper:
     # PRODUCTS SEARCH (by keyword + filters)
     # ============================================================================
 
-    async def products_async(
+    async def products(
         self,
         keyword: Optional[Union[str, List[str]]] = None,
         url: Optional[Union[str, List[str]]] = None,
@@ -71,7 +73,7 @@ class AmazonSearchScraper:
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
-        Search Amazon products by keyword and filters (async).
+        Search Amazon products by keyword and filters.
 
         Args:
             keyword: Search keyword(s) (e.g., "laptop", "wireless headphones")
@@ -88,18 +90,13 @@ class AmazonSearchScraper:
             ScrapeResult with matching products
 
         Example:
-            >>> # Search by keyword
-            >>> result = await scraper.products_async(
-            ...     keyword="laptop",
-            ...     min_price=50000,  # $500 in cents
-            ...     max_price=200000,  # $2000 in cents
-            ...     prime_eligible=True
-            ... )
-            >>>
-            >>> # Search by category URL
-            >>> result = await scraper.products_async(
-            ...     url="https://www.amazon.com/s?k=laptop&i=electronics"
-            ... )
+            >>> async with BrightDataClient() as client:
+            ...     result = await client.search.amazon.products(
+            ...         keyword="laptop",
+            ...         min_price=50000,  # $500 in cents
+            ...         max_price=200000,  # $2000 in cents
+            ...         prime_eligible=True
+            ...     )
         """
         # At least one search criteria required
         if not any([keyword, url, category]):
@@ -167,7 +164,8 @@ class AmazonSearchScraper:
             timeout=timeout,
         )
 
-    def products(
+
+    def products_sync(
         self,
         keyword: Optional[Union[str, List[str]]] = None,
         url: Optional[Union[str, List[str]]] = None,
@@ -180,22 +178,13 @@ class AmazonSearchScraper:
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
-        Search Amazon products by keyword and filters (sync).
+        Search Amazon products by keyword and filters (sync version).
 
-        See products_async() for documentation.
-
-        Example:
-            >>> result = scraper.products(
-            ...     keyword="laptop",
-            ...     min_price=50000,
-            ...     max_price=200000,
-            ...     prime_eligible=True
-            ... )
+        See products() for full documentation.
         """
-
         async def _run():
             async with self.engine:
-                return await self.products_async(
+                return await self.products(
                     keyword=keyword,
                     url=url,
                     category=category,
@@ -206,7 +195,6 @@ class AmazonSearchScraper:
                     country=country,
                     timeout=timeout,
                 )
-
         return asyncio.run(_run())
 
     # ============================================================================

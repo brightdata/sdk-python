@@ -3,6 +3,8 @@ Scrape Job - Represents a triggered scraping operation.
 
 Provides convenient methods for checking status and fetching results
 after triggering a scrape operation.
+
+All methods are async-only. For sync usage, use SyncBrightDataClient.
 """
 
 import asyncio
@@ -25,19 +27,19 @@ class ScrapeJob:
 
     Example:
         >>> # Trigger and get job
-        >>> job = await client.scrape.amazon.products_trigger_async(url)
+        >>> job = await client.scrape.amazon.products_trigger(url)
         >>>
         >>> # Check status
-        >>> status = await job.status_async()
+        >>> status = await job.status()
         >>>
         >>> # Wait for completion
-        >>> await job.wait_async(timeout=120)
+        >>> await job.wait(timeout=120)
         >>>
         >>> # Fetch results
-        >>> data = await job.fetch_async()
+        >>> data = await job.fetch()
         >>>
         >>> # Or get as ScrapeResult
-        >>> result = await job.to_result_async()
+        >>> result = await job.to_result()
     """
 
     def __init__(
@@ -75,9 +77,9 @@ class ScrapeJob:
     # ASYNC METHODS
     # ============================================================================
 
-    async def status_async(self, refresh: bool = True) -> str:
+    async def status(self, refresh: bool = True) -> str:
         """
-        Check job status (async).
+        Check job status.
 
         Args:
             refresh: If False, returns cached status if available
@@ -86,7 +88,7 @@ class ScrapeJob:
             Status string: "ready", "in_progress", "error", etc.
 
         Example:
-            >>> status = await job.status_async()
+            >>> status = await job.status()
             >>> print(f"Job status: {status}")
         """
         if not refresh and self._cached_status:
@@ -95,14 +97,15 @@ class ScrapeJob:
         self._cached_status = await self._api_client.get_status(self.snapshot_id)
         return self._cached_status
 
-    async def wait_async(
+
+    async def wait(
         self,
         timeout: int = 300,
         poll_interval: int = DEFAULT_POLL_INTERVAL,
         verbose: bool = False,
     ) -> str:
         """
-        Wait for job to complete (async).
+        Wait for job to complete.
 
         Args:
             timeout: Maximum seconds to wait
@@ -117,7 +120,7 @@ class ScrapeJob:
             APIError: If job fails
 
         Example:
-            >>> await job.wait_async(timeout=120, verbose=True)
+            >>> await job.wait(timeout=120, verbose=True)
             >>> print("Job completed!")
         """
         start_time = time.time()
@@ -128,7 +131,7 @@ class ScrapeJob:
             if elapsed > timeout:
                 raise TimeoutError(f"Job {self.snapshot_id} timed out after {timeout}s")
 
-            status = await self.status_async(refresh=True)
+            status = await self.status(refresh=True)
 
             if verbose:
                 print(f"   [{elapsed:.1f}s] Job status: {status}")
@@ -141,12 +144,13 @@ class ScrapeJob:
             # Still in progress (can be "running", "in_progress", "pending", etc.)
             await asyncio.sleep(poll_interval)
 
-    async def fetch_async(self, format: str = "json") -> Any:
-        """
-        Fetch job results (async).
 
-        Note: Does not check if job is ready. Use wait_async() first
-        or check status_async() to ensure job is complete.
+    async def fetch(self, format: str = "json") -> Any:
+        """
+        Fetch job results.
+
+        Note: Does not check if job is ready. Use wait() first
+        or check status() to ensure job is complete.
 
         Args:
             format: Result format ("json" or "raw")
@@ -155,19 +159,20 @@ class ScrapeJob:
             Job results
 
         Example:
-            >>> await job.wait_async()
-            >>> data = await job.fetch_async()
+            >>> await job.wait()
+            >>> data = await job.fetch()
         """
         self._cached_data = await self._api_client.fetch_result(self.snapshot_id, format=format)
         return self._cached_data
 
-    async def to_result_async(
+
+    async def to_result(
         self,
         timeout: int = 300,
         poll_interval: int = DEFAULT_POLL_INTERVAL,
     ) -> ScrapeResult:
         """
-        Wait for completion and return as ScrapeResult (async).
+        Wait for completion and return as ScrapeResult.
 
         Convenience method that combines wait + fetch + result creation.
 
@@ -179,7 +184,7 @@ class ScrapeJob:
             ScrapeResult object
 
         Example:
-            >>> result = await job.to_result_async()
+            >>> result = await job.to_result()
             >>> if result.success:
             ...     print(result.data)
         """
@@ -187,10 +192,10 @@ class ScrapeJob:
 
         try:
             # Wait for completion
-            await self.wait_async(timeout=timeout, poll_interval=poll_interval)
+            await self.wait(timeout=timeout, poll_interval=poll_interval)
 
             # Fetch results
-            data = await self.fetch_async()
+            data = await self.fetch()
 
             # Calculate timing
             end_time = datetime.now(timezone.utc)
@@ -219,33 +224,3 @@ class ScrapeJob:
                 metadata={"snapshot_id": self.snapshot_id},
             )
 
-    # ============================================================================
-    # SYNC WRAPPERS
-    # ============================================================================
-
-    def status(self, refresh: bool = True) -> str:
-        """Check job status (sync wrapper)."""
-        return asyncio.run(self.status_async(refresh=refresh))
-
-    def wait(
-        self,
-        timeout: int = 300,
-        poll_interval: int = DEFAULT_POLL_INTERVAL,
-        verbose: bool = False,
-    ) -> str:
-        """Wait for job to complete (sync wrapper)."""
-        return asyncio.run(
-            self.wait_async(timeout=timeout, poll_interval=poll_interval, verbose=verbose)
-        )
-
-    def fetch(self, format: str = "json") -> Any:
-        """Fetch job results (sync wrapper)."""
-        return asyncio.run(self.fetch_async(format=format))
-
-    def to_result(
-        self,
-        timeout: int = 300,
-        poll_interval: int = DEFAULT_POLL_INTERVAL,
-    ) -> ScrapeResult:
-        """Wait and return as ScrapeResult (sync wrapper)."""
-        return asyncio.run(self.to_result_async(timeout=timeout, poll_interval=poll_interval))

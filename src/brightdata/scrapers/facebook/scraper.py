@@ -43,8 +43,15 @@ class FacebookScraper(BaseWebScraper):
     Example:
         >>> scraper = FacebookScraper(bearer_token="token")
         >>>
-        >>> # Scrape posts from profile
-        >>> result = scraper.posts_by_profile(
+        >>> # Async usage
+        >>> result = await scraper.posts_by_profile(
+        ...     url="https://facebook.com/profile",
+        ...     num_of_posts=10,
+        ...     timeout=240
+        ... )
+        >>>
+        >>> # Sync usage
+        >>> result = scraper.posts_by_profile_sync(
         ...     url="https://facebook.com/profile",
         ...     num_of_posts=10,
         ...     timeout=240
@@ -67,7 +74,7 @@ class FacebookScraper(BaseWebScraper):
     # POSTS API - By Profile URL
     # ============================================================================
 
-    async def posts_by_profile_async(
+    async def posts_by_profile(
         self,
         url: Union[str, List[str]],
         num_of_posts: Optional[int] = None,
@@ -94,7 +101,7 @@ class FacebookScraper(BaseWebScraper):
             ScrapeResult or List[ScrapeResult] with post data
 
         Example:
-            >>> result = await scraper.posts_by_profile_async(
+            >>> result = await scraper.posts_by_profile(
             ...     url="https://facebook.com/profile",
             ...     num_of_posts=10,
             ...     start_date="01-01-2025",
@@ -118,7 +125,7 @@ class FacebookScraper(BaseWebScraper):
             sdk_function="posts_by_profile",
         )
 
-    def posts_by_profile(
+    def posts_by_profile_sync(
         self,
         url: Union[str, List[str]],
         num_of_posts: Optional[int] = None,
@@ -131,7 +138,7 @@ class FacebookScraper(BaseWebScraper):
 
         async def _run():
             async with self.engine:
-                return await self.posts_by_profile_async(
+                return await self.posts_by_profile(
                     url, num_of_posts, posts_to_not_include, start_date, end_date, timeout
                 )
 
@@ -139,7 +146,7 @@ class FacebookScraper(BaseWebScraper):
 
     # --- Trigger Interface (Manual Control) ---
 
-    async def posts_by_profile_trigger_async(
+    async def posts_by_profile_trigger(
         self,
         url: Union[str, List[str]],
         num_of_posts: Optional[int] = None,
@@ -177,31 +184,31 @@ class FacebookScraper(BaseWebScraper):
             cost_per_record=self.COST_PER_RECORD,
         )
 
-    def posts_by_profile_trigger(self, url: Union[str, List[str]], **kwargs) -> "ScrapeJob":
+    def posts_by_profile_trigger_sync(self, url: Union[str, List[str]], **kwargs) -> "ScrapeJob":
         """Trigger Facebook posts by profile scrape (sync wrapper)."""
-        return asyncio.run(self.posts_by_profile_trigger_async(url, **kwargs))
+        return asyncio.run(self.posts_by_profile_trigger(url, **kwargs))
 
-    async def posts_by_profile_status_async(self, snapshot_id: str) -> str:
+    async def posts_by_profile_status(self, snapshot_id: str) -> str:
         """Check Facebook posts by profile status (async)."""
         return await self._check_status_async(snapshot_id)
 
-    def posts_by_profile_status(self, snapshot_id: str) -> str:
+    def posts_by_profile_status_sync(self, snapshot_id: str) -> str:
         """Check Facebook posts by profile status (sync wrapper)."""
-        return asyncio.run(self.posts_by_profile_status_async(snapshot_id))
+        return asyncio.run(self.posts_by_profile_status(snapshot_id))
 
-    async def posts_by_profile_fetch_async(self, snapshot_id: str) -> Any:
+    async def posts_by_profile_fetch(self, snapshot_id: str) -> Any:
         """Fetch Facebook posts by profile results (async)."""
         return await self._fetch_results_async(snapshot_id)
 
-    def posts_by_profile_fetch(self, snapshot_id: str) -> Any:
+    def posts_by_profile_fetch_sync(self, snapshot_id: str) -> Any:
         """Fetch Facebook posts by profile results (sync wrapper)."""
-        return asyncio.run(self.posts_by_profile_fetch_async(snapshot_id))
+        return asyncio.run(self.posts_by_profile_fetch(snapshot_id))
 
     # ============================================================================
     # POSTS API - By Group URL
     # ============================================================================
 
-    async def posts_by_group_async(
+    async def posts_by_group(
         self,
         url: Union[str, List[str]],
         num_of_posts: Optional[int] = None,
@@ -228,7 +235,7 @@ class FacebookScraper(BaseWebScraper):
             ScrapeResult or List[ScrapeResult] with post data
 
         Example:
-            >>> result = await scraper.posts_by_group_async(
+            >>> result = await scraper.posts_by_group(
             ...     url="https://facebook.com/groups/example",
             ...     num_of_posts=20,
             ...     timeout=240
@@ -250,7 +257,7 @@ class FacebookScraper(BaseWebScraper):
             sdk_function="posts_by_group",
         )
 
-    def posts_by_group(
+    def posts_by_group_sync(
         self,
         url: Union[str, List[str]],
         num_of_posts: Optional[int] = None,
@@ -263,7 +270,7 @@ class FacebookScraper(BaseWebScraper):
 
         async def _run():
             async with self.engine:
-                return await self.posts_by_group_async(
+                return await self.posts_by_group(
                     url, num_of_posts, posts_to_not_include, start_date, end_date, timeout
                 )
 
@@ -271,7 +278,7 @@ class FacebookScraper(BaseWebScraper):
 
     # --- Trigger Interface (Manual Control) ---
 
-    async def posts_by_group_trigger_async(
+    async def posts_by_group_trigger(
         self, url: Union[str, List[str]], **kwargs
     ) -> "ScrapeJob":
         """Trigger Facebook posts by group scrape (async - manual control)."""
@@ -292,31 +299,31 @@ class FacebookScraper(BaseWebScraper):
             cost_per_record=self.COST_PER_RECORD,
         )
 
-    def posts_by_group_trigger(self, url: Union[str, List[str]], **kwargs) -> "ScrapeJob":
+    def posts_by_group_trigger_sync(self, url: Union[str, List[str]], **kwargs) -> "ScrapeJob":
         """Trigger Facebook posts by group scrape (sync wrapper)."""
-        return asyncio.run(self.posts_by_group_trigger_async(url, **kwargs))
+        return asyncio.run(self.posts_by_group_trigger(url, **kwargs))
 
-    async def posts_by_group_status_async(self, snapshot_id: str) -> str:
+    async def posts_by_group_status(self, snapshot_id: str) -> str:
         """Check Facebook posts by group status (async)."""
         return await self._check_status_async(snapshot_id)
 
-    def posts_by_group_status(self, snapshot_id: str) -> str:
+    def posts_by_group_status_sync(self, snapshot_id: str) -> str:
         """Check Facebook posts by group status (sync wrapper)."""
-        return asyncio.run(self.posts_by_group_status_async(snapshot_id))
+        return asyncio.run(self.posts_by_group_status(snapshot_id))
 
-    async def posts_by_group_fetch_async(self, snapshot_id: str) -> Any:
+    async def posts_by_group_fetch(self, snapshot_id: str) -> Any:
         """Fetch Facebook posts by group results (async)."""
         return await self._fetch_results_async(snapshot_id)
 
-    def posts_by_group_fetch(self, snapshot_id: str) -> Any:
+    def posts_by_group_fetch_sync(self, snapshot_id: str) -> Any:
         """Fetch Facebook posts by group results (sync wrapper)."""
-        return asyncio.run(self.posts_by_group_fetch_async(snapshot_id))
+        return asyncio.run(self.posts_by_group_fetch(snapshot_id))
 
     # ============================================================================
     # POSTS API - By Post URL
     # ============================================================================
 
-    async def posts_by_url_async(
+    async def posts_by_url(
         self,
         url: Union[str, List[str]],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
@@ -335,7 +342,7 @@ class FacebookScraper(BaseWebScraper):
             ScrapeResult or List[ScrapeResult] with post data
 
         Example:
-            >>> result = await scraper.posts_by_url_async(
+            >>> result = await scraper.posts_by_url(
             ...     url="https://facebook.com/post/123456",
             ...     timeout=240
             ... )
@@ -352,7 +359,7 @@ class FacebookScraper(BaseWebScraper):
             sdk_function="posts_by_url",
         )
 
-    def posts_by_url(
+    def posts_by_url_sync(
         self,
         url: Union[str, List[str]],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
@@ -361,13 +368,13 @@ class FacebookScraper(BaseWebScraper):
 
         async def _run():
             async with self.engine:
-                return await self.posts_by_url_async(url, timeout)
+                return await self.posts_by_url(url, timeout)
 
         return asyncio.run(_run())
 
     # --- Trigger Interface (Manual Control) ---
 
-    async def posts_by_url_trigger_async(self, url: Union[str, List[str]]) -> "ScrapeJob":
+    async def posts_by_url_trigger(self, url: Union[str, List[str]]) -> "ScrapeJob":
         """Trigger Facebook posts by URL scrape (async - manual control)."""
 
         sdk_function = get_caller_function_name()
@@ -377,31 +384,31 @@ class FacebookScraper(BaseWebScraper):
             sdk_function=sdk_function or "posts_by_url_trigger",
         )
 
-    def posts_by_url_trigger(self, url: Union[str, List[str]]) -> "ScrapeJob":
+    def posts_by_url_trigger_sync(self, url: Union[str, List[str]]) -> "ScrapeJob":
         """Trigger Facebook posts by URL scrape (sync wrapper)."""
-        return asyncio.run(self.posts_by_url_trigger_async(url))
+        return asyncio.run(self.posts_by_url_trigger(url))
 
-    async def posts_by_url_status_async(self, snapshot_id: str) -> str:
+    async def posts_by_url_status(self, snapshot_id: str) -> str:
         """Check Facebook posts by URL status (async)."""
         return await self._check_status_async(snapshot_id)
 
-    def posts_by_url_status(self, snapshot_id: str) -> str:
+    def posts_by_url_status_sync(self, snapshot_id: str) -> str:
         """Check Facebook posts by URL status (sync wrapper)."""
-        return asyncio.run(self.posts_by_url_status_async(snapshot_id))
+        return asyncio.run(self.posts_by_url_status(snapshot_id))
 
-    async def posts_by_url_fetch_async(self, snapshot_id: str) -> Any:
+    async def posts_by_url_fetch(self, snapshot_id: str) -> Any:
         """Fetch Facebook posts by URL results (async)."""
         return await self._fetch_results_async(snapshot_id)
 
-    def posts_by_url_fetch(self, snapshot_id: str) -> Any:
+    def posts_by_url_fetch_sync(self, snapshot_id: str) -> Any:
         """Fetch Facebook posts by URL results (sync wrapper)."""
-        return asyncio.run(self.posts_by_url_fetch_async(snapshot_id))
+        return asyncio.run(self.posts_by_url_fetch(snapshot_id))
 
     # ============================================================================
     # COMMENTS API - By Post URL
     # ============================================================================
 
-    async def comments_async(
+    async def comments(
         self,
         url: Union[str, List[str]],
         num_of_comments: Optional[int] = None,
@@ -428,7 +435,7 @@ class FacebookScraper(BaseWebScraper):
             ScrapeResult or List[ScrapeResult] with comment data
 
         Example:
-            >>> result = await scraper.comments_async(
+            >>> result = await scraper.comments(
             ...     url="https://facebook.com/post/123456",
             ...     num_of_comments=100,
             ...     start_date="01-01-2025",
@@ -452,7 +459,7 @@ class FacebookScraper(BaseWebScraper):
             sdk_function="comments",
         )
 
-    def comments(
+    def comments_sync(
         self,
         url: Union[str, List[str]],
         num_of_comments: Optional[int] = None,
@@ -465,7 +472,7 @@ class FacebookScraper(BaseWebScraper):
 
         async def _run():
             async with self.engine:
-                return await self.comments_async(
+                return await self.comments(
                     url, num_of_comments, comments_to_not_include, start_date, end_date, timeout
                 )
 
@@ -473,7 +480,7 @@ class FacebookScraper(BaseWebScraper):
 
     # --- Trigger Interface (Manual Control) ---
 
-    async def comments_trigger_async(self, url: Union[str, List[str]], **kwargs) -> "ScrapeJob":
+    async def comments_trigger(self, url: Union[str, List[str]], **kwargs) -> "ScrapeJob":
         """Trigger Facebook comments scrape (async - manual control)."""
         from ..job import ScrapeJob
 
@@ -492,31 +499,31 @@ class FacebookScraper(BaseWebScraper):
             cost_per_record=self.COST_PER_RECORD,
         )
 
-    def comments_trigger(self, url: Union[str, List[str]], **kwargs) -> "ScrapeJob":
+    def comments_trigger_sync(self, url: Union[str, List[str]], **kwargs) -> "ScrapeJob":
         """Trigger Facebook comments scrape (sync wrapper)."""
-        return asyncio.run(self.comments_trigger_async(url, **kwargs))
+        return asyncio.run(self.comments_trigger(url, **kwargs))
 
-    async def comments_status_async(self, snapshot_id: str) -> str:
+    async def comments_status(self, snapshot_id: str) -> str:
         """Check Facebook comments status (async)."""
         return await self._check_status_async(snapshot_id)
 
-    def comments_status(self, snapshot_id: str) -> str:
+    def comments_status_sync(self, snapshot_id: str) -> str:
         """Check Facebook comments status (sync wrapper)."""
-        return asyncio.run(self.comments_status_async(snapshot_id))
+        return asyncio.run(self.comments_status(snapshot_id))
 
-    async def comments_fetch_async(self, snapshot_id: str) -> Any:
+    async def comments_fetch(self, snapshot_id: str) -> Any:
         """Fetch Facebook comments results (async)."""
         return await self._fetch_results_async(snapshot_id)
 
-    def comments_fetch(self, snapshot_id: str) -> Any:
+    def comments_fetch_sync(self, snapshot_id: str) -> Any:
         """Fetch Facebook comments results (sync wrapper)."""
-        return asyncio.run(self.comments_fetch_async(snapshot_id))
+        return asyncio.run(self.comments_fetch(snapshot_id))
 
     # ============================================================================
     # REELS API - By Profile URL
     # ============================================================================
 
-    async def reels_async(
+    async def reels(
         self,
         url: Union[str, List[str]],
         num_of_posts: Optional[int] = None,
@@ -543,7 +550,7 @@ class FacebookScraper(BaseWebScraper):
             ScrapeResult or List[ScrapeResult] with reel data
 
         Example:
-            >>> result = await scraper.reels_async(
+            >>> result = await scraper.reels(
             ...     url="https://facebook.com/profile",
             ...     num_of_posts=50,
             ...     timeout=240
@@ -565,7 +572,7 @@ class FacebookScraper(BaseWebScraper):
             sdk_function="reels",
         )
 
-    def reels(
+    def reels_sync(
         self,
         url: Union[str, List[str]],
         num_of_posts: Optional[int] = None,
@@ -578,7 +585,7 @@ class FacebookScraper(BaseWebScraper):
 
         async def _run():
             async with self.engine:
-                return await self.reels_async(
+                return await self.reels(
                     url, num_of_posts, posts_to_not_include, start_date, end_date, timeout
                 )
 
@@ -586,7 +593,7 @@ class FacebookScraper(BaseWebScraper):
 
     # --- Trigger Interface (Manual Control) ---
 
-    async def reels_trigger_async(self, url: Union[str, List[str]], **kwargs) -> "ScrapeJob":
+    async def reels_trigger(self, url: Union[str, List[str]], **kwargs) -> "ScrapeJob":
         """Trigger Facebook reels scrape (async - manual control)."""
         from ..job import ScrapeJob
 
@@ -605,25 +612,25 @@ class FacebookScraper(BaseWebScraper):
             cost_per_record=self.COST_PER_RECORD,
         )
 
-    def reels_trigger(self, url: Union[str, List[str]], **kwargs) -> "ScrapeJob":
+    def reels_trigger_sync(self, url: Union[str, List[str]], **kwargs) -> "ScrapeJob":
         """Trigger Facebook reels scrape (sync wrapper)."""
-        return asyncio.run(self.reels_trigger_async(url, **kwargs))
+        return asyncio.run(self.reels_trigger(url, **kwargs))
 
-    async def reels_status_async(self, snapshot_id: str) -> str:
+    async def reels_status(self, snapshot_id: str) -> str:
         """Check Facebook reels status (async)."""
         return await self._check_status_async(snapshot_id)
 
-    def reels_status(self, snapshot_id: str) -> str:
+    def reels_status_sync(self, snapshot_id: str) -> str:
         """Check Facebook reels status (sync wrapper)."""
-        return asyncio.run(self.reels_status_async(snapshot_id))
+        return asyncio.run(self.reels_status(snapshot_id))
 
-    async def reels_fetch_async(self, snapshot_id: str) -> Any:
+    async def reels_fetch(self, snapshot_id: str) -> Any:
         """Fetch Facebook reels results (async)."""
         return await self._fetch_results_async(snapshot_id)
 
-    def reels_fetch(self, snapshot_id: str) -> Any:
+    def reels_fetch_sync(self, snapshot_id: str) -> Any:
         """Fetch Facebook reels results (sync wrapper)."""
-        return asyncio.run(self.reels_fetch_async(snapshot_id))
+        return asyncio.run(self.reels_fetch(snapshot_id))
 
     # ============================================================================
     # CORE SCRAPING LOGIC
@@ -752,7 +759,7 @@ class FacebookScraper(BaseWebScraper):
             poll_timeout=timeout,
             include_errors=True,
             normalize_func=self.normalize_result,
-            sdk_function="posts_by_profile",
+            sdk_function=sdk_function or "posts_by_profile",
         )
 
         if is_single and isinstance(result.data, list) and len(result.data) == 1:

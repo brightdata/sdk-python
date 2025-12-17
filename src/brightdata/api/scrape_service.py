@@ -2,9 +2,9 @@
 Scraping service namespace.
 
 Provides hierarchical access to specialized scrapers and generic scraping.
+All methods are async-only. For sync usage, use SyncBrightDataClient.
 """
 
-import asyncio
 from typing import Union, List, TYPE_CHECKING
 
 from ..models import ScrapeResult
@@ -28,7 +28,6 @@ class ScrapeService:
         self._chatgpt = None
         self._facebook = None
         self._instagram = None
-        self._generic = None
 
     @property
     def amazon(self):
@@ -184,39 +183,4 @@ class ScrapeService:
             )
         return self._instagram
 
-    @property
-    def generic(self):
-        """Access generic web scraper (Web Unlocker)."""
-        if self._generic is None:
-            self._generic = GenericScraper(self._client)
-        return self._generic
 
-
-class GenericScraper:
-    """Generic web scraper using Web Unlocker API."""
-
-    def __init__(self, client: "BrightDataClient"):
-        """Initialize generic scraper."""
-        self._client = client
-
-    async def url_async(
-        self,
-        url: Union[str, List[str]],
-        country: str = "",
-        response_format: str = "raw",
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
-        """Scrape URL(s) asynchronously."""
-        return await self._client.scrape_url_async(
-            url=url,
-            country=country,
-            response_format=response_format,
-        )
-
-    def url(self, *args, **kwargs) -> Union[ScrapeResult, List[ScrapeResult]]:
-        """Scrape URL(s) synchronously."""
-
-        async def _run():
-            async with self._client.engine:
-                return await self.url_async(*args, **kwargs)
-
-        return asyncio.run(_run())

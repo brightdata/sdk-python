@@ -1,4 +1,7 @@
-"""Web Unlocker API - High-level service wrapper for Bright Data's Web Unlocker proxy service."""
+"""Web Unlocker API - High-level service wrapper for Bright Data's Web Unlocker proxy service.
+
+All methods are async-only. For sync usage, use SyncBrightDataClient.
+"""
 
 from typing import Union, List, Optional, Dict, Any
 from datetime import datetime, timezone
@@ -224,34 +227,4 @@ class WebUnlockerService(BaseAPI):
 
         return processed_results
 
-    def scrape(
-        self,
-        url: Union[str, List[str]],
-        zone: str,
-        country: str = "",
-        response_format: str = "raw",
-        method: str = "GET",
-        timeout: Optional[int] = None,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
-        """
-        Scrape URL(s) synchronously.
-
-        Args:
-            url: Single URL string or list of URLs to scrape.
-            zone: Bright Data zone identifier.
-            country: Two-letter ISO country code for proxy location (optional).
-            response_format: Response format - "json" for structured data, "raw" for HTML string.
-            method: HTTP method for the request (default: "GET").
-            timeout: Request timeout in seconds.
-
-        Returns:
-            ScrapeResult for single URL, or List[ScrapeResult] for multiple URLs.
-        """
-        return self._execute_sync(
-            url=url,
-            zone=zone,
-            country=country,
-            response_format=response_format,
-            method=method,
-            timeout=timeout,
-        )
+    scrape = scrape_async

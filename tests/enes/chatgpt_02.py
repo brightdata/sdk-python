@@ -39,7 +39,7 @@ async def test_chatgpt():
             print("   Country: US (default)")
 
             scraper = client.scrape.chatgpt
-            result = await scraper.prompt_async(prompt=prompt, web_search=False, poll_timeout=60)
+            result = await scraper.prompt(prompt=prompt, web_search=False, poll_timeout=60)
 
             if result.success:
                 print("   ✅ Prompt successful!")
@@ -72,7 +72,7 @@ async def test_chatgpt():
             print("   Web search: True")
             print("   Country: US")
 
-            result = await scraper.prompt_async(
+            result = await scraper.prompt(
                 prompt=prompt, country="us", web_search=True, poll_timeout=90
             )
 
@@ -97,7 +97,7 @@ async def test_chatgpt():
             print(f"   Prompts: {prompts}")
             print("   Countries: ['us', 'us']")
 
-            result = await scraper.prompts_async(
+            result = await scraper.prompts(
                 prompts=prompts,
                 countries=["us", "us"],
                 web_searches=[False, False],
@@ -128,7 +128,7 @@ async def test_chatgpt():
             print(f"   Initial prompt: '{prompt}'")
             print(f"   Follow-up: '{follow_up}'")
 
-            result = await scraper.prompt_async(
+            result = await scraper.prompt(
                 prompt=prompt, additional_prompt=follow_up, web_search=False, poll_timeout=90
             )
 
@@ -186,17 +186,17 @@ async def test_chatgpt():
             print(f"   Prompt: '{prompt}'")
 
             # Trigger only
-            job = await scraper.prompt_trigger_async(prompt=prompt)
+            job = await scraper.prompt_trigger(prompt=prompt)
             print(f"   ✅ Triggered job: {job.snapshot_id}")
 
             # Check status
-            status = await scraper.prompt_status_async(job.snapshot_id)
+            status = await scraper.prompt_status(job.snapshot_id)
             print(f"   Initial status: {status}")
 
             # Poll until ready
             max_attempts = 30
             for attempt in range(max_attempts):
-                status = await scraper.prompt_status_async(job.snapshot_id)
+                status = await scraper.prompt_status(job.snapshot_id)
                 if status == "ready":
                     print(f"   Status ready after {attempt + 1} checks")
                     break
@@ -207,7 +207,7 @@ async def test_chatgpt():
 
             # Fetch results
             if status == "ready":
-                data = await scraper.prompt_fetch_async(job.snapshot_id)
+                data = await scraper.prompt_fetch(job.snapshot_id)
                 print("   ✅ Fetched data successfully")
                 if data and len(data) > 0:
                     print(f"   - Answer: {data[0].get('answer_text', 'N/A')[:100]}...")

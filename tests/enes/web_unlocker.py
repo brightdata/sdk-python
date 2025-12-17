@@ -33,7 +33,7 @@ async def test_web_unlocker_single_url():
         print("📍 URL: https://httpbin.org/html")
 
         try:
-            result = await client.scrape.generic.url_async(
+            result = await client.scrape_url(
                 url="https://httpbin.org/html", response_format="raw"
             )
 
@@ -86,7 +86,7 @@ async def test_web_unlocker_json_format():
         print("📍 URL: https://httpbin.org/json")
 
         try:
-            result = await client.scrape.generic.url_async(
+            result = await client.scrape_url(
                 url="https://httpbin.org/json", response_format="json"
             )
 
@@ -139,7 +139,7 @@ async def test_web_unlocker_multiple_urls():
         print(f"📋 URLs: {len(urls)} URLs")
 
         try:
-            results = await client.scrape.generic.url_async(url=urls, response_format="raw")
+            results = await client.scrape_url(url=urls, response_format="raw")
 
             print("\n✅ API call succeeded")
             print(f"📊 Got {len(results)} results")
@@ -191,7 +191,7 @@ async def test_web_unlocker_with_country():
         print("🌍 Country: US")
 
         try:
-            result = await client.scrape.generic.url_async(
+            result = await client.scrape_url(
                 url="https://httpbin.org/headers", country="us", response_format="raw"
             )
 

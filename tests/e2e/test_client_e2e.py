@@ -14,7 +14,7 @@ try:
 except ImportError:
     pass
 
-from brightdata import BrightDataClient
+from brightdata import BrightDataClient, SyncBrightDataClient
 
 
 @pytest.fixture
@@ -62,7 +62,6 @@ class TestHierarchicalServiceAccess:
         scrape = client.scrape
 
         # All scrapers should now be accessible
-        assert scrape.generic is not None
         assert scrape.amazon is not None
         assert scrape.linkedin is not None
         assert scrape.chatgpt is not None
@@ -101,26 +100,25 @@ class TestHierarchicalServiceAccess:
         assert callable(crawler.sitemap)
 
 
-class TestGenericScraperAccess:
-    """Test generic scraper through hierarchical access."""
+class TestWebUnlocker:
+    """Test Web Unlocker scraping via scrape_url()."""
 
     @pytest.mark.asyncio
-    async def test_generic_scraper_async(self, client):
-        """Test generic scraper through client.scrape.generic.url_async()."""
-        result = await client.scrape.generic.url_async(url="https://httpbin.org/html")
+    async def test_scrape_url_async(self, client):
+        """Test scrape_url() async."""
+        result = await client.scrape_url(url="https://httpbin.org/html")
 
         assert result is not None
         assert hasattr(result, "success")
         assert hasattr(result, "data")
 
-    def test_generic_scraper_sync(self, api_token):
-        """Test generic scraper synchronously."""
-        client = BrightDataClient(token=api_token)
+    def test_scrape_url_sync(self, api_token):
+        """Test scrape_url() synchronously using SyncBrightDataClient."""
+        with SyncBrightDataClient(token=api_token) as client:
+            result = client.scrape_url(url="https://httpbin.org/html")
 
-        result = client.scrape.generic.url(url="https://httpbin.org/html")
-
-        assert result is not None
-        assert result.success or result.error is not None
+            assert result is not None
+            assert result.success or result.error is not None
 
 
 class TestConnectionVerification:
@@ -204,7 +202,7 @@ class TestUserExperience:
         assert hasattr(chatgpt_scraper, "prompt")
 
         print("\n✅ Hierarchical access pattern is intuitive!")
-        print("  - client.scrape.generic.url()  ✅ (working)")
+        print("  - client.scrape_url()  ✅ (working)")
         print("  - client.scrape.amazon.products()  ✅ (working)")
         print("  - client.scrape.linkedin.jobs()  ✅ (working)")
         print("  - client.scrape.chatgpt.prompt()  ✅ (working)")
@@ -310,7 +308,7 @@ if __name__ == "__main__":
         print("✅ Services available: scrape, search, crawler")
         print()
         print("Example usage:")
-        print("  result = client.scrape.generic.url('https://example.com')")
+        print("  result = client.scrape_url('https://example.com')")
         print("  results = client.search.google('python scraping')")
         print("  pages = client.crawler.discover('https://example.com')")
     except Exception as e:

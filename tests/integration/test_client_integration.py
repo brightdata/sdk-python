@@ -14,7 +14,7 @@ try:
 except ImportError:
     pass
 
-from brightdata import BrightDataClient
+from brightdata import BrightDataClient, SyncBrightDataClient
 from brightdata.exceptions import AuthenticationError
 
 
@@ -29,8 +29,15 @@ def api_token():
 
 @pytest.fixture
 def client(api_token):
-    """Create client instance for testing."""
+    """Create async client instance for testing (must be used with async context)."""
     return BrightDataClient(token=api_token)
+
+
+@pytest.fixture
+def sync_client(api_token):
+    """Create sync client instance for testing."""
+    with SyncBrightDataClient(token=api_token) as client:
+        yield client
 
 
 @pytest.fixture
@@ -61,9 +68,9 @@ class TestConnectionTesting:
             is_valid = await client.test_connection()
             assert is_valid is False
 
-    def test_connection_sync_with_valid_token(self, client):
-        """Test synchronous connection test."""
-        is_valid = client.test_connection_sync()
+    def test_connection_sync_with_valid_token(self, sync_client):
+        """Test synchronous connection test using SyncBrightDataClient."""
+        is_valid = sync_client.test_connection()
 
         assert is_valid is True
 
@@ -112,9 +119,9 @@ class TestAccountInfo:
 
             assert "Invalid token" in str(exc_info.value) or "401" in str(exc_info.value)
 
-    def test_get_account_info_sync(self, client):
-        """Test synchronous account info retrieval."""
-        info = client.get_account_info_sync()
+    def test_get_account_info_sync(self, sync_client):
+        """Test synchronous account info retrieval using SyncBrightDataClient."""
+        info = sync_client.get_account_info()
 
         assert isinstance(info, dict)
         assert "zones" in info
@@ -153,10 +160,15 @@ class TestClientInitializationWithValidation:
         client = BrightDataClient(token=api_token, validate_token=True)
         assert client.token == api_token
 
-    def test_client_with_validate_token_true_and_invalid_token(self):
-        """Test client raises error on init if token is invalid and validation enabled."""
+    @pytest.mark.asyncio
+    async def test_client_with_validate_token_true_and_invalid_token(self):
+        """Test client raises error on __aenter__ if token is invalid and validation enabled."""
+        client = BrightDataClient(
+            token="invalid_token_123456789", validate_token=True, auto_create_zones=False
+        )
         with pytest.raises(AuthenticationError):
-            BrightDataClient(token="invalid_token_123456789", validate_token=True)
+            async with client:
+                pass  # Should not reach here
 
     def test_client_with_validate_token_false_accepts_any_token(self):
         """Test client accepts any token format when validation disabled."""
@@ -172,15 +184,15 @@ class TestLegacyAPICompatibility:
     async def test_scrape_url_async_works(self, async_client):
         """Test legacy scrape_url_async method works."""
         # Simple test URL
-        result = await async_client.scrape_url_async(url="https://httpbin.org/html")
+        result = await async_client.scrape_url(url="https://httpbin.org/html")
 
         assert result is not None
         assert hasattr(result, "success")
         assert hasattr(result, "data")
 
-    def test_scrape_url_sync_works(self, client):
-        """Test legacy scrape_url method works synchronously."""
-        result = client.scrape_url(url="https://httpbin.org/html")
+    def test_scrape_url_sync_works(self, sync_client):
+        """Test scrape_url method works synchronously using SyncBrightDataClient."""
+        result = sync_client.scrape_url(url="https://httpbin.org/html")
 
         assert result is not None
         assert hasattr(result, "success")
@@ -201,9 +213,10 @@ class TestClientErrorHandling:
             assert is_valid is False
 
     def test_sync_connection_test_returns_false_on_error(self):
-        """Test sync connection test returns False on errors."""
-        client = BrightDataClient(token="test_token_123456789")
-
-        # Should return False, not raise exception
-        is_valid = client.test_connection_sync()
-        assert is_valid is False
+        """Test sync connection test returns False on errors using SyncBrightDataClient."""
+        with SyncBrightDataClient(
+            token="test_token_123456789", auto_create_zones=False
+        ) as client:
+            # Should return False, not raise exception
+            is_valid = client.test_connection()
+            assert is_valid is False

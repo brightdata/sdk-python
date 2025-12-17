@@ -31,7 +31,7 @@ async def test_serp_raw_html_issue():
 
         try:
             # Make the search request
-            result = await client.search.google_async(query="pizza")
+            result = await client.search.google(query="pizza")
 
             print("\n✅ API call succeeded")
             print(f"⏱️  Elapsed: {result.elapsed_ms():.2f}ms" if result.elapsed_ms() else "")
@@ -77,7 +77,7 @@ async def test_serp_raw_html_issue():
                 service.data_normalizer.normalize = capture_raw
 
                 # Make the request
-                await service.search_async(query="pizza", zone=client.serp_zone)
+                await service.search(query="pizza", zone=client.serp_zone)
 
                 if raw_response:
                     print("\n📦 Raw API response structure:")
