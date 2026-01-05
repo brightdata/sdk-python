@@ -31,7 +31,6 @@ class SyncBrightDataClient:
     def __init__(
         self,
         token: Optional[str] = None,
-        customer_id: Optional[str] = None,
         timeout: int = 30,
         web_unlocker_zone: Optional[str] = None,
         serp_zone: Optional[str] = None,
@@ -46,7 +45,6 @@ class SyncBrightDataClient:
 
         Args:
             token: Bright Data API token (or set BRIGHT_DATA_API_TOKEN env var)
-            customer_id: Customer ID (optional, extracted from token if not provided)
             timeout: Default request timeout in seconds
             web_unlocker_zone: Zone name for Web Unlocker API
             serp_zone: Zone name for SERP API
@@ -72,7 +70,6 @@ class SyncBrightDataClient:
 
         self._async_client = BrightDataClient(
             token=token,
-            customer_id=customer_id,
             timeout=timeout,
             web_unlocker_zone=web_unlocker_zone,
             serp_zone=serp_zone,

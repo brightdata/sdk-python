@@ -15,6 +15,7 @@ from ...exceptions import ValidationError
 from ...utils.validation import validate_zone_name
 from ...utils.retry import retry_with_backoff
 from ...utils.function_detection import get_caller_function_name
+from ..async_unblocker import AsyncUnblockerClient
 
 
 class BaseSERPService:
@@ -53,6 +54,9 @@ class BaseSERPService:
         self.timeout = timeout or self.DEFAULT_TIMEOUT
         self.max_retries = max_retries
 
+        # Async unblocker client for async mode support
+        self.async_unblocker = AsyncUnblockerClient(engine)
+
     async def search(
         self,
         query: Union[str, List[str]],
@@ -61,6 +65,9 @@ class BaseSERPService:
         language: str = "en",
         device: str = "desktop",
         num_results: int = 10,
+        mode: str = "sync",
+        poll_interval: int = 2,
+        poll_timeout: int = 30,
         **kwargs,
     ) -> Union[SearchResult, List[SearchResult]]:
         """
@@ -73,13 +80,19 @@ class BaseSERPService:
             language: Language code
             device: Device type
             num_results: Number of results to return
+            mode: "sync" (default, blocking) or "async" (non-blocking with polling)
+            poll_interval: Seconds between polls (async mode only, default: 2)
+            poll_timeout: Max wait time in seconds (async mode only, default: 30)
             **kwargs: Engine-specific parameters
 
         Returns:
             SearchResult for single query, List[SearchResult] for multiple
 
         Note:
-            For synchronous usage, use SyncBrightDataClient instead:
+            - Sync mode (default): Uses /request endpoint, blocks until results ready
+            - Async mode: Uses /unblocker/req + /unblocker/get_result, polls for results
+            - Both modes return the same normalized data structure
+            - For synchronous usage, use SyncBrightDataClient instead:
             >>> with SyncBrightDataClient() as client:
             ...     result = client.search.google(query)
         """
@@ -89,27 +102,56 @@ class BaseSERPService:
         self._validate_zone(zone)
         self._validate_queries(query_list)
 
-        if len(query_list) == 1:
-            result = await self._search_single_async(
-                query=query_list[0],
-                zone=zone,
-                location=location,
-                language=language,
-                device=device,
-                num_results=num_results,
-                **kwargs,
-            )
-            return result
+        # Route based on mode
+        if mode == "async":
+            # Async mode: use unblocker endpoints with polling
+            if len(query_list) == 1:
+                return await self._search_single_async_unblocker(
+                    query=query_list[0],
+                    zone=zone,
+                    location=location,
+                    language=language,
+                    device=device,
+                    num_results=num_results,
+                    poll_interval=poll_interval,
+                    poll_timeout=poll_timeout,
+                    **kwargs,
+                )
+            else:
+                return await self._search_multiple_async_unblocker(
+                    queries=query_list,
+                    zone=zone,
+                    location=location,
+                    language=language,
+                    device=device,
+                    num_results=num_results,
+                    poll_interval=poll_interval,
+                    poll_timeout=poll_timeout,
+                    **kwargs,
+                )
         else:
-            return await self._search_multiple_async(
-                queries=query_list,
-                zone=zone,
-                location=location,
-                language=language,
-                device=device,
-                num_results=num_results,
-                **kwargs,
-            )
+            # Sync mode (default): use /request endpoint (existing behavior)
+            if len(query_list) == 1:
+                result = await self._search_single_async(
+                    query=query_list[0],
+                    zone=zone,
+                    location=location,
+                    language=language,
+                    device=device,
+                    num_results=num_results,
+                    **kwargs,
+                )
+                return result
+            else:
+                return await self._search_multiple_async(
+                    queries=query_list,
+                    zone=zone,
+                    location=location,
+                    language=language,
+                    device=device,
+                    num_results=num_results,
+                    **kwargs,
+                )
 
 
     async def _search_single_async(
@@ -250,6 +292,176 @@ class BaseSERPService:
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
+        processed_results = []
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                processed_results.append(
+                    SearchResult(
+                        success=False,
+                        query={"q": queries[i]},
+                        error=f"Exception: {str(result)}",
+                        search_engine=self.SEARCH_ENGINE,
+                        trigger_sent_at=datetime.now(timezone.utc),
+                        data_fetched_at=datetime.now(timezone.utc),
+                    )
+                )
+            else:
+                processed_results.append(result)
+
+        return processed_results
+
+    async def _search_single_async_unblocker(
+        self,
+        query: str,
+        zone: str,
+        location: Optional[str],
+        language: str,
+        device: str,
+        num_results: int,
+        poll_interval: int,
+        poll_timeout: int,
+        **kwargs,
+    ) -> SearchResult:
+        """
+        Execute single search using async unblocker endpoints.
+
+        This method:
+        1. Builds search URL
+        2. Triggers async request via /unblocker/req
+        3. Polls /unblocker/get_result until ready or timeout
+        4. Fetches and normalizes results
+
+        Note: Response from async endpoint is already parsed SERP data
+        (unlike sync endpoint which may wrap it in status_code/body structure).
+        """
+        trigger_sent_at = datetime.now(timezone.utc)
+
+        # Build search URL with brd_json=1 for parsed results
+        search_url = self.url_builder.build(
+            query=query,
+            location=location,
+            language=language,
+            device=device,
+            num_results=num_results,
+            **kwargs,
+        )
+
+        # Trigger async request (no customer_id needed - derived from token)
+        response_id = await self.async_unblocker.trigger(zone=zone, url=search_url)
+
+        if not response_id:
+            return SearchResult(
+                success=False,
+                query={"q": query},
+                error="Failed to trigger async request (no response_id received)",
+                search_engine=self.SEARCH_ENGINE,
+                trigger_sent_at=trigger_sent_at,
+                data_fetched_at=datetime.now(timezone.utc),
+            )
+
+        # Poll until ready or timeout
+        start_time = datetime.now(timezone.utc)
+
+        while True:
+            elapsed = (datetime.now(timezone.utc) - start_time).total_seconds()
+
+            # Check timeout
+            if elapsed > poll_timeout:
+                return SearchResult(
+                    success=False,
+                    query={"q": query},
+                    error=f"Polling timeout after {poll_timeout}s (response_id: {response_id})",
+                    search_engine=self.SEARCH_ENGINE,
+                    trigger_sent_at=trigger_sent_at,
+                    data_fetched_at=datetime.now(timezone.utc),
+                )
+
+            # Check status
+            status = await self.async_unblocker.get_status(zone, response_id)
+
+            if status == "ready":
+                # Results are ready - fetch them
+                data_fetched_at = datetime.now(timezone.utc)
+
+                try:
+                    # Fetch results
+                    data = await self.async_unblocker.fetch_result(zone, response_id)
+
+                    # Data from async endpoint is already parsed SERP format
+                    # The data_normalizer.normalize() will handle it
+                    normalized_data = self.data_normalizer.normalize(data)
+
+                    return SearchResult(
+                        success=True,
+                        query={"q": query, "location": location, "language": language},
+                        data=normalized_data.get("results", []),
+                        total_found=normalized_data.get("total_results"),
+                        search_engine=self.SEARCH_ENGINE,
+                        country=location,
+                        results_per_page=num_results,
+                        trigger_sent_at=trigger_sent_at,
+                        data_fetched_at=data_fetched_at,
+                    )
+                except Exception as e:
+                    return SearchResult(
+                        success=False,
+                        query={"q": query},
+                        error=f"Failed to fetch results: {str(e)}",
+                        search_engine=self.SEARCH_ENGINE,
+                        trigger_sent_at=trigger_sent_at,
+                        data_fetched_at=data_fetched_at,
+                    )
+
+            elif status == "error":
+                return SearchResult(
+                    success=False,
+                    query={"q": query},
+                    error=f"Async request failed (response_id: {response_id})",
+                    search_engine=self.SEARCH_ENGINE,
+                    trigger_sent_at=trigger_sent_at,
+                    data_fetched_at=datetime.now(timezone.utc),
+                )
+
+            # Still pending - wait and retry
+            await asyncio.sleep(poll_interval)
+
+    async def _search_multiple_async_unblocker(
+        self,
+        queries: List[str],
+        zone: str,
+        location: Optional[str],
+        language: str,
+        device: str,
+        num_results: int,
+        poll_interval: int,
+        poll_timeout: int,
+        **kwargs,
+    ) -> List[SearchResult]:
+        """
+        Execute multiple searches using async unblocker.
+
+        Triggers all searches concurrently, then polls each independently.
+        This is more efficient than sequential execution.
+        """
+        tasks = [
+            self._search_single_async_unblocker(
+                query=q,
+                zone=zone,
+                location=location,
+                language=language,
+                device=device,
+                num_results=num_results,
+                poll_interval=poll_interval,
+                poll_timeout=poll_timeout,
+                **kwargs,
+            )
+            for q in queries
+        ]
+
+        # Execute all searches concurrently
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Process results, converting exceptions to SearchResult errors
         processed_results = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):

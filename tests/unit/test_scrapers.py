@@ -69,7 +69,7 @@ class TestBaseWebScraper:
         assert hasattr(scraper, "engine")
 
     def test_base_scraper_has_scrape_methods(self):
-        """Test base scraper has scrape methods."""
+        """Test base scraper has scrape methods (async-first API)."""
 
         class TestScraper(BaseWebScraper):
             DATASET_ID = "test_123"
@@ -77,9 +77,7 @@ class TestBaseWebScraper:
         scraper = TestScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "scrape")
-        assert hasattr(scraper, "scrape_async")
         assert callable(scraper.scrape)
-        assert callable(scraper.scrape_async)
 
     def test_base_scraper_has_normalize_result_method(self):
         """Test base scraper has normalize_result method."""
@@ -175,19 +173,17 @@ class TestAmazonScraper:
         assert scraper.COST_PER_RECORD == 0.001  # Uses DEFAULT_COST_PER_RECORD
 
     def test_amazon_scraper_has_products_method(self):
-        """Test AmazonScraper has products search method."""
+        """Test AmazonScraper has products search method (async-first API)."""
         scraper = AmazonScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "products")
-        assert hasattr(scraper, "products_async")
         assert callable(scraper.products)
 
     def test_amazon_scraper_has_reviews_method(self):
-        """Test AmazonScraper has reviews method."""
+        """Test AmazonScraper has reviews method (async-first API)."""
         scraper = AmazonScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "reviews")
-        assert hasattr(scraper, "reviews_async")
         assert callable(scraper.reviews)
 
     def test_amazon_scraper_registered_in_registry(self):
@@ -209,27 +205,24 @@ class TestLinkedInScraper:
         assert hasattr(scraper, "DATASET_ID_JOBS")
 
     def test_linkedin_scraper_has_profiles_method(self):
-        """Test LinkedInScraper has profiles search method."""
+        """Test LinkedInScraper has profiles search method (async-first API)."""
         scraper = LinkedInScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "profiles")
-        assert hasattr(scraper, "profiles_async")
         assert callable(scraper.profiles)
 
     def test_linkedin_scraper_has_companies_method(self):
-        """Test LinkedInScraper has companies search method."""
+        """Test LinkedInScraper has companies search method (async-first API)."""
         scraper = LinkedInScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "companies")
-        assert hasattr(scraper, "companies_async")
         assert callable(scraper.companies)
 
     def test_linkedin_scraper_has_jobs_method(self):
-        """Test LinkedInScraper has jobs search method."""
+        """Test LinkedInScraper has jobs search method (async-first API)."""
         scraper = LinkedInScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "jobs")
-        assert hasattr(scraper, "jobs_async")
         assert callable(scraper.jobs)
 
     def test_linkedin_scraper_registered_in_registry(self):
@@ -249,30 +242,31 @@ class TestChatGPTScraper:
         assert scraper.DATASET_ID.startswith("gd_")
 
     def test_chatgpt_scraper_has_prompt_method(self):
-        """Test ChatGPTScraper has prompt method."""
+        """Test ChatGPTScraper has prompt method (async-first API)."""
         scraper = ChatGPTScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "prompt")
-        assert hasattr(scraper, "prompt_async")
         assert callable(scraper.prompt)
 
     def test_chatgpt_scraper_has_prompts_method(self):
-        """Test ChatGPTScraper has prompts (batch) method."""
+        """Test ChatGPTScraper has prompts (batch) method (async-first API)."""
         scraper = ChatGPTScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "prompts")
-        assert hasattr(scraper, "prompts_async")
         assert callable(scraper.prompts)
 
     def test_chatgpt_scraper_scrape_raises_not_implemented(self):
         """Test ChatGPTScraper raises NotImplementedError for scrape()."""
+        import asyncio
         scraper = ChatGPTScraper(bearer_token="test_token_123456789")
 
-        with pytest.raises(NotImplementedError) as exc_info:
-            scraper.scrape("https://chatgpt.com/")
+        async def test_scrape():
+            with pytest.raises(NotImplementedError) as exc_info:
+                await scraper.scrape("https://chatgpt.com/")
+            assert "doesn't support URL-based scraping" in str(exc_info.value)
+            assert "Use prompt()" in str(exc_info.value)
 
-        assert "doesn't support URL-based scraping" in str(exc_info.value)
-        assert "Use prompt()" in str(exc_info.value)
+        asyncio.get_event_loop().run_until_complete(test_scrape())
 
     def test_chatgpt_scraper_registered_in_registry(self):
         """Test ChatGPTScraper is registered for 'chatgpt' domain."""
@@ -330,21 +324,21 @@ class TestScrapeVsSearchDistinction:
             assert hasattr(scraper, "scrape")
             assert callable(scraper.scrape)
 
-    def test_platforms_have_consistent_async_sync_pairs(self):
-        """Test all methods have async/sync pairs."""
+    def test_platforms_have_all_methods(self):
+        """Test all platforms have their methods (async-first API)."""
         amazon = AmazonScraper(bearer_token="test_token_123456789")
         linkedin = LinkedInScraper(bearer_token="test_token_123456789")
 
         # Amazon - all URL-based scrape methods
-        assert hasattr(amazon, "products") and hasattr(amazon, "products_async")
-        assert hasattr(amazon, "reviews") and hasattr(amazon, "reviews_async")
-        assert hasattr(amazon, "sellers") and hasattr(amazon, "sellers_async")
+        assert hasattr(amazon, "products") and callable(amazon.products)
+        assert hasattr(amazon, "reviews") and callable(amazon.reviews)
+        assert hasattr(amazon, "sellers") and callable(amazon.sellers)
 
         # LinkedIn - URL-based scrape methods
-        assert hasattr(linkedin, "posts") and hasattr(linkedin, "posts_async")
-        assert hasattr(linkedin, "jobs") and hasattr(linkedin, "jobs_async")
-        assert hasattr(linkedin, "profiles") and hasattr(linkedin, "profiles_async")
-        assert hasattr(linkedin, "companies") and hasattr(linkedin, "companies_async")
+        assert hasattr(linkedin, "posts") and callable(linkedin.posts)
+        assert hasattr(linkedin, "jobs") and callable(linkedin.jobs)
+        assert hasattr(linkedin, "profiles") and callable(linkedin.profiles)
+        assert hasattr(linkedin, "companies") and callable(linkedin.companies)
 
 
 class TestClientIntegration:
@@ -360,7 +354,6 @@ class TestClientIntegration:
         assert hasattr(client.scrape, "amazon")
         assert hasattr(client.scrape, "linkedin")
         assert hasattr(client.scrape, "chatgpt")
-        assert hasattr(client.scrape, "generic")
 
     def test_client_scraper_access_returns_correct_instances(self):
         """Test client returns correct scraper instances."""
@@ -419,15 +412,19 @@ class TestInterfaceConsistency:
 
     def test_chatgpt_interface_matches_spec(self):
         """Test ChatGPT scraper matches interface specification."""
+        import asyncio
         scraper = ChatGPTScraper(bearer_token="test_token_123456789")
 
         # Prompt-based (ChatGPT specific)
         assert hasattr(scraper, "prompt")
         assert hasattr(scraper, "prompts")
 
-        # scrape() should raise NotImplementedError
-        with pytest.raises(NotImplementedError):
-            scraper.scrape("https://chatgpt.com/")
+        # scrape() should raise NotImplementedError (async method)
+        async def test_scrape():
+            with pytest.raises(NotImplementedError):
+                await scraper.scrape("https://chatgpt.com/")
+
+        asyncio.get_event_loop().run_until_complete(test_scrape())
 
 
 class TestPhilosophicalPrinciples:
@@ -438,13 +435,11 @@ class TestPhilosophicalPrinciples:
         amazon = AmazonScraper(bearer_token="test_token_123456789")
         linkedin = LinkedInScraper(bearer_token="test_token_123456789")
 
-        # Both should have scrape() method
+        # Both should have scrape() method (async-first API)
         assert hasattr(amazon, "scrape")
         assert hasattr(linkedin, "scrape")
-
-        # Both should have async/sync pairs
-        assert hasattr(amazon, "scrape_async")
-        assert hasattr(linkedin, "scrape_async")
+        assert callable(amazon.scrape)
+        assert callable(linkedin.scrape)
 
     def test_scrape_vs_search_is_clear(self):
         """Test scrape vs search distinction is clear."""

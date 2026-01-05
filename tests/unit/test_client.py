@@ -3,7 +3,7 @@
 import os
 import pytest
 from unittest.mock import patch
-from brightdata import BrightDataClient, BrightData
+from brightdata import BrightDataClient
 from brightdata.exceptions import ValidationError
 
 
@@ -70,22 +70,6 @@ class TestClientInitialization:
 
         assert "Invalid token format" in str(exc_info.value)
 
-    def test_client_loads_customer_id_from_env(self):
-        """Test client loads customer ID from environment."""
-        with patch.dict(
-            os.environ,
-            {
-                "BRIGHTDATA_API_TOKEN": "test_token_123456789",
-                "BRIGHTDATA_CUSTOMER_ID": "customer_123",
-            },
-        ):
-            client = BrightDataClient()
-            assert client.customer_id == "customer_123"
-
-    def test_client_accepts_customer_id_parameter(self):
-        """Test client accepts customer ID as parameter."""
-        client = BrightDataClient(token="test_token_123456789", customer_id="explicit_customer_123")
-        assert client.customer_id == "explicit_customer_123"
 
 
 class TestClientTokenManagement:
@@ -114,7 +98,6 @@ class TestClientServiceProperties:
         assert scrape_service is not None
 
         # All scrapers should now work
-        assert scrape_service.generic is not None
         assert scrape_service.amazon is not None
         assert scrape_service.linkedin is not None
         assert scrape_service.chatgpt is not None
@@ -134,13 +117,10 @@ class TestClientServiceProperties:
         search_service = client.search
         assert search_service is not None
 
-        # All search methods should exist and be callable
+        # All search methods should exist and be callable (async-first API)
         assert callable(search_service.google)
-        assert callable(search_service.google_async)
         assert callable(search_service.bing)
-        assert callable(search_service.bing_async)
         assert callable(search_service.yandex)
-        assert callable(search_service.yandex_async)
 
     def test_crawler_service_property(self):
         """Test crawler service property returns CrawlerService."""
@@ -155,17 +135,10 @@ class TestClientServiceProperties:
 class TestClientBackwardCompatibility:
     """Test backward compatibility with old API."""
 
-    def test_brightdata_alias_exists(self):
-        """Test BrightData alias exists for backward compatibility."""
-
-        client = BrightData(token="test_token_123456789")
-        assert isinstance(client, BrightDataClient)
-
     def test_scrape_url_method_exists(self):
         """Test scrape_url method exists for backward compatibility."""
         client = BrightDataClient(token="test_token_123456789")
         assert hasattr(client, "scrape_url")
-        assert hasattr(client, "scrape_url_async")
 
 
 class TestClientRepr:

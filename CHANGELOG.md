@@ -1,6 +1,68 @@
 # Bright Data Python SDK Changelog
 
-## Version 2.1.0 - API Simplification & Naming Convention Fix
+## Version 2.1.0 - Async Mode, API Simplification & Bug Fixes
+
+### ✨ New Features
+
+#### SERP Async Mode
+
+Added non-blocking async mode for SERP API using Bright Data's unblocker endpoints:
+
+```python
+from brightdata import BrightDataClient
+
+async with BrightDataClient() as client:
+    # Non-blocking - polls for results
+    result = await client.search.google(
+        query="python programming",
+        mode="async",        # Enable async mode
+        poll_interval=2,     # Check every 2 seconds
+        poll_timeout=30      # Give up after 30 seconds
+    )
+```
+
+**Supported Engines:** Google, Bing, Yandex
+
+**Performance:** SERP async mode typically completes in ~3 seconds.
+
+#### Web Unlocker Async Mode
+
+Added non-blocking async mode for Web Unlocker API:
+
+```python
+async with BrightDataClient() as client:
+    result = await client.scrape_url(
+        url="https://example.com",
+        mode="async",
+        poll_interval=5,     # Check every 5 seconds
+        poll_timeout=180     # Web Unlocker async takes ~2 minutes
+    )
+
+    # Batch scraping multiple URLs
+    urls = ["https://example.com", "https://example.org"]
+    results = await client.scrape_url(url=urls, mode="async", poll_timeout=180)
+```
+
+**Performance Warning:** Web Unlocker async mode takes ~2 minutes to complete. For faster single-URL scraping, use the default sync mode.
+
+**How async mode works:**
+1. Triggers request to `/unblocker/req` (returns immediately)
+2. Polls `/unblocker/get_result` until ready or timeout
+3. Returns same data structure as sync mode
+
+**Key Benefits:**
+- ✅ Non-blocking requests - continue work while scraping
+- ✅ Batch optimization - trigger multiple URLs, collect later
+- ✅ Same data structure as sync mode
+- ✅ **No extra configuration** - works with existing zones
+- ✅ **No customer_id required** - derived from API token
+
+**See:** [Async Mode Guide](docs/async_mode_guide.md) for detailed usage
+
+### 🐛 Bug Fixes
+
+- **Fixed SyncBrightDataClient**: Removed unused `customer_id` parameter that was incorrectly being passed to `BrightDataClient`
+- **Fixed Web Unlocker async timeout**: Changed default `poll_timeout` from 30s to 180s (Web Unlocker async takes ~145 seconds)
 
 ### 🚨 Breaking Changes
 
@@ -45,7 +107,7 @@ Added comprehensive `sync_client.py` with full coverage for all scrapers:
 ```python
 from brightdata import SyncBrightDataClient
 
-with SyncBrightDataClient(token="...") as client:
+with SyncBrightDataClient() as client:
     # All methods work synchronously
     result = client.scrape.amazon.products(url)
     result = client.scrape.linkedin.profiles(url)
@@ -96,9 +158,15 @@ _async() → ()
 scrape.generic.url → scrape_url
 ```
 
-### 📝 Documentation
+### 📚 Documentation
+- Added [Async Mode Guide](docs/async_mode_guide.md) - comprehensive guide to async mode
 - Simplified README with clearer examples
 - Updated all examples and tests to use new naming convention
+
+### 🧪 Testing
+- Added unit tests for `AsyncUnblockerClient`
+- Added integration tests for SERP and Web Unlocker async modes
+- Verified backwards compatibility (existing code works unchanged)
 
 ---
 

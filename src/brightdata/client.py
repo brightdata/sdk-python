@@ -74,7 +74,6 @@ class BrightDataClient:
     def __init__(
         self,
         token: Optional[str] = None,
-        customer_id: Optional[str] = None,
         timeout: int = DEFAULT_TIMEOUT,
         web_unlocker_zone: Optional[str] = None,
         serp_zone: Optional[str] = None,
@@ -93,7 +92,6 @@ class BrightDataClient:
         Args:
             token: API token. If None, loads from BRIGHTDATA_API_TOKEN environment variable
                   (supports .env files via python-dotenv)
-            customer_id: Customer ID (optional, can also be set via BRIGHTDATA_CUSTOMER_ID)
             timeout: Default timeout in seconds for all requests (default: 30)
             web_unlocker_zone: Zone name for web unlocker (default: "sdk_unlocker")
             serp_zone: Zone name for SERP API (default: "sdk_serp")
@@ -119,7 +117,6 @@ class BrightDataClient:
             ... )
         """
         self.token = self._load_token(token)
-        self.customer_id = customer_id or os.getenv("BRIGHTDATA_CUSTOMER_ID")
         self.timeout = timeout
         self.web_unlocker_zone = web_unlocker_zone or self.DEFAULT_WEB_UNLOCKER_ZONE
         self.serp_zone = serp_zone or self.DEFAULT_SERP_ZONE
@@ -387,7 +384,6 @@ class BrightDataClient:
                         )
 
                     account_info = {
-                        "customer_id": self.customer_id,
                         "zones": zones,
                         "zone_count": len(zones),
                         "token_valid": True,
@@ -473,12 +469,26 @@ class BrightDataClient:
         response_format: str = "raw",
         method: str = "GET",
         timeout: Optional[int] = None,
+        mode: str = "sync",
+        poll_interval: int = 2,
+        poll_timeout: int = 30,
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
         Direct scraping method (flat API).
 
         For backward compatibility. Prefer using hierarchical API:
         client.scrape_url(...) for new code.
+
+        Args:
+            url: Single URL or list of URLs to scrape
+            zone: Zone name (uses web_unlocker_zone if not provided)
+            country: Country code for proxy location
+            response_format: "raw" for HTML or "json" for structured data
+            method: HTTP method (default: GET)
+            timeout: Request timeout in seconds
+            mode: "sync" (default, blocking) or "async" (non-blocking with polling)
+            poll_interval: Seconds between polls (async mode only, default: 2)
+            poll_timeout: Max wait time in seconds (async mode only, default: 30)
         """
         self._ensure_initialized()
         if self._web_unlocker_service is None:
@@ -492,6 +502,9 @@ class BrightDataClient:
             response_format=response_format,
             method=method,
             timeout=timeout,
+            mode=mode,
+            poll_interval=poll_interval,
+            poll_timeout=poll_timeout,
         )
 
 
