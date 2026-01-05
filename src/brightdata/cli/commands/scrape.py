@@ -41,16 +41,16 @@ def scrape_group(
 # ============================================================================
 
 
-@scrape_group.command("generic")
+@scrape_group.command("url")
 @click.argument("url", required=True)
 @click.option("--country", default="", help="Country code for targeting")
 @click.option("--response-format", default="raw", help="Response format (raw, json)")
 @click.pass_context
-def scrape_generic(ctx: click.Context, url: str, country: str, response_format: str) -> None:
-    """Scrape any URL using generic web scraper."""
+def scrape_url(ctx: click.Context, url: str, country: str, response_format: str) -> None:
+    """Scrape any URL using Web Unlocker."""
     try:
         client = create_client(ctx.obj["api_key"])
-        result = client.scrape.generic.url(
+        result = client.scrape_url(
             url=url, country=country, response_format=response_format
         )
         output_result(result, ctx.obj["output_format"], ctx.obj["output_file"])

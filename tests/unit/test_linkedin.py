@@ -8,35 +8,31 @@ class TestLinkedInScraperURLBased:
     """Test LinkedIn scraper (URL-based extraction)."""
 
     def test_linkedin_scraper_has_posts_method(self):
-        """Test LinkedIn scraper has posts method."""
+        """Test LinkedIn scraper has posts method (async-first API)."""
         scraper = LinkedInScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "posts")
-        assert hasattr(scraper, "posts_async")
         assert callable(scraper.posts)
 
     def test_linkedin_scraper_has_jobs_method(self):
-        """Test LinkedIn scraper has jobs method."""
+        """Test LinkedIn scraper has jobs method (async-first API)."""
         scraper = LinkedInScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "jobs")
-        assert hasattr(scraper, "jobs_async")
         assert callable(scraper.jobs)
 
     def test_linkedin_scraper_has_profiles_method(self):
-        """Test LinkedIn scraper has profiles method."""
+        """Test LinkedIn scraper has profiles method (async-first API)."""
         scraper = LinkedInScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "profiles")
-        assert hasattr(scraper, "profiles_async")
         assert callable(scraper.profiles)
 
     def test_linkedin_scraper_has_companies_method(self):
-        """Test LinkedIn scraper has companies method."""
+        """Test LinkedIn scraper has companies method (async-first API)."""
         scraper = LinkedInScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "companies")
-        assert hasattr(scraper, "companies_async")
         assert callable(scraper.companies)
 
     def test_posts_method_signature(self):
@@ -95,27 +91,24 @@ class TestLinkedInSearchScraper:
     """Test LinkedIn search service (discovery/parameter-based)."""
 
     def test_linkedin_search_has_posts_method(self):
-        """Test LinkedIn search has posts discovery method."""
+        """Test LinkedIn search has posts discovery method (async-first API)."""
         search = LinkedInSearchScraper(bearer_token="test_token_123456789")
 
         assert hasattr(search, "posts")
-        assert hasattr(search, "posts_async")
         assert callable(search.posts)
 
     def test_linkedin_search_has_profiles_method(self):
-        """Test LinkedIn search has profiles discovery method."""
+        """Test LinkedIn search has profiles discovery method (async-first API)."""
         search = LinkedInSearchScraper(bearer_token="test_token_123456789")
 
         assert hasattr(search, "profiles")
-        assert hasattr(search, "profiles_async")
         assert callable(search.profiles)
 
     def test_linkedin_search_has_jobs_method(self):
-        """Test LinkedIn search has jobs discovery method."""
+        """Test LinkedIn search has jobs discovery method (async-first API)."""
         search = LinkedInSearchScraper(bearer_token="test_token_123456789")
 
         assert hasattr(search, "jobs")
-        assert hasattr(search, "jobs_async")
         assert callable(search.jobs)
 
     def test_search_posts_signature(self):
@@ -471,30 +464,28 @@ class TestParameterArraySupport:
         assert "Union" in annotation or "str" in annotation
 
 
-class TestSyncAsyncPairs:
-    """Test all methods have async/sync pairs."""
+class TestAsyncFirstAPI:
+    """Test all methods follow async-first pattern."""
 
-    def test_scraper_has_async_sync_pairs(self):
-        """Test scraper has async/sync pairs for all methods."""
+    def test_scraper_has_all_methods(self):
+        """Test scraper has all methods (async-first API, no _async suffix)."""
         scraper = LinkedInScraper(bearer_token="test_token_123456789")
 
         methods = ["posts", "jobs", "profiles", "companies"]
 
         for method in methods:
             assert hasattr(scraper, method)
-            assert hasattr(scraper, f"{method}_async")
             assert callable(getattr(scraper, method))
-            assert callable(getattr(scraper, f"{method}_async"))
 
-    def test_search_has_async_sync_pairs(self):
-        """Test search has async/sync pairs for all methods."""
+    def test_search_has_all_methods(self):
+        """Test search has all methods (async-first API, no _async suffix)."""
         search = LinkedInSearchScraper(bearer_token="test_token_123456789")
 
         methods = ["posts", "profiles", "jobs"]
 
         for method in methods:
             assert hasattr(search, method)
-            assert hasattr(search, f"{method}_async")
+            assert callable(getattr(search, method))
 
 
 class TestPhilosophicalPrinciples:

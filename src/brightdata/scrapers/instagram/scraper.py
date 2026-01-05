@@ -44,8 +44,14 @@ class InstagramScraper(BaseWebScraper):
     Example:
         >>> scraper = InstagramScraper(bearer_token="token")
         >>>
-        >>> # Scrape profile
-        >>> result = scraper.profiles(
+        >>> # Async usage
+        >>> result = await scraper.profiles(
+        ...     url="https://instagram.com/username",
+        ...     timeout=240
+        ... )
+        >>>
+        >>> # Sync usage
+        >>> result = scraper.profiles_sync(
         ...     url="https://instagram.com/username",
         ...     timeout=240
         ... )
@@ -66,7 +72,7 @@ class InstagramScraper(BaseWebScraper):
     # PROFILES API - By URL
     # ============================================================================
 
-    async def profiles_async(
+    async def profiles(
         self,
         url: Union[str, List[str]],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
@@ -85,7 +91,7 @@ class InstagramScraper(BaseWebScraper):
             ScrapeResult or List[ScrapeResult] with profile data
 
         Example:
-            >>> result = await scraper.profiles_async(
+            >>> result = await scraper.profiles(
             ...     url="https://instagram.com/username",
             ...     timeout=240
             ... )
@@ -102,7 +108,7 @@ class InstagramScraper(BaseWebScraper):
             sdk_function="profiles",
         )
 
-    def profiles(
+    def profiles_sync(
         self,
         url: Union[str, List[str]],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
@@ -111,13 +117,13 @@ class InstagramScraper(BaseWebScraper):
 
         async def _run():
             async with self.engine:
-                return await self.profiles_async(url, timeout)
+                return await self.profiles(url, timeout)
 
         return asyncio.run(_run())
 
     # --- Trigger Interface (Manual Control) ---
 
-    async def profiles_trigger_async(self, url: Union[str, List[str]]) -> "ScrapeJob":
+    async def profiles_trigger(self, url: Union[str, List[str]]) -> "ScrapeJob":
         """Trigger Instagram profiles scrape (async - manual control)."""
 
         sdk_function = get_caller_function_name()
@@ -127,31 +133,31 @@ class InstagramScraper(BaseWebScraper):
             sdk_function=sdk_function or "profiles_trigger",
         )
 
-    def profiles_trigger(self, url: Union[str, List[str]]) -> "ScrapeJob":
+    def profiles_trigger_sync(self, url: Union[str, List[str]]) -> "ScrapeJob":
         """Trigger Instagram profiles scrape (sync wrapper)."""
-        return asyncio.run(self.profiles_trigger_async(url))
+        return asyncio.run(self.profiles_trigger(url))
 
-    async def profiles_status_async(self, snapshot_id: str) -> str:
+    async def profiles_status(self, snapshot_id: str) -> str:
         """Check Instagram profiles status (async)."""
         return await self._check_status_async(snapshot_id)
 
-    def profiles_status(self, snapshot_id: str) -> str:
+    def profiles_status_sync(self, snapshot_id: str) -> str:
         """Check Instagram profiles status (sync wrapper)."""
-        return asyncio.run(self.profiles_status_async(snapshot_id))
+        return asyncio.run(self.profiles_status(snapshot_id))
 
-    async def profiles_fetch_async(self, snapshot_id: str) -> Any:
+    async def profiles_fetch(self, snapshot_id: str) -> Any:
         """Fetch Instagram profiles results (async)."""
         return await self._fetch_results_async(snapshot_id)
 
-    def profiles_fetch(self, snapshot_id: str) -> Any:
+    def profiles_fetch_sync(self, snapshot_id: str) -> Any:
         """Fetch Instagram profiles results (sync wrapper)."""
-        return asyncio.run(self.profiles_fetch_async(snapshot_id))
+        return asyncio.run(self.profiles_fetch(snapshot_id))
 
     # ============================================================================
     # POSTS API - By URL
     # ============================================================================
 
-    async def posts_async(
+    async def posts(
         self,
         url: Union[str, List[str]],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
@@ -170,7 +176,7 @@ class InstagramScraper(BaseWebScraper):
             ScrapeResult or List[ScrapeResult] with post data
 
         Example:
-            >>> result = await scraper.posts_async(
+            >>> result = await scraper.posts(
             ...     url="https://instagram.com/p/ABC123",
             ...     timeout=240
             ... )
@@ -187,7 +193,7 @@ class InstagramScraper(BaseWebScraper):
             sdk_function="posts",
         )
 
-    def posts(
+    def posts_sync(
         self,
         url: Union[str, List[str]],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
@@ -196,13 +202,13 @@ class InstagramScraper(BaseWebScraper):
 
         async def _run():
             async with self.engine:
-                return await self.posts_async(url, timeout)
+                return await self.posts(url, timeout)
 
         return asyncio.run(_run())
 
     # --- Trigger Interface (Manual Control) ---
 
-    async def posts_trigger_async(self, url: Union[str, List[str]]) -> "ScrapeJob":
+    async def posts_trigger(self, url: Union[str, List[str]]) -> "ScrapeJob":
         """Trigger Instagram posts scrape (async - manual control)."""
 
         sdk_function = get_caller_function_name()
@@ -210,31 +216,31 @@ class InstagramScraper(BaseWebScraper):
             urls=url, dataset_id=self.DATASET_ID_POSTS, sdk_function=sdk_function or "posts_trigger"
         )
 
-    def posts_trigger(self, url: Union[str, List[str]]) -> "ScrapeJob":
+    def posts_trigger_sync(self, url: Union[str, List[str]]) -> "ScrapeJob":
         """Trigger Instagram posts scrape (sync wrapper)."""
-        return asyncio.run(self.posts_trigger_async(url))
+        return asyncio.run(self.posts_trigger(url))
 
-    async def posts_status_async(self, snapshot_id: str) -> str:
+    async def posts_status(self, snapshot_id: str) -> str:
         """Check Instagram posts status (async)."""
         return await self._check_status_async(snapshot_id)
 
-    def posts_status(self, snapshot_id: str) -> str:
+    def posts_status_sync(self, snapshot_id: str) -> str:
         """Check Instagram posts status (sync wrapper)."""
-        return asyncio.run(self.posts_status_async(snapshot_id))
+        return asyncio.run(self.posts_status(snapshot_id))
 
-    async def posts_fetch_async(self, snapshot_id: str) -> Any:
+    async def posts_fetch(self, snapshot_id: str) -> Any:
         """Fetch Instagram posts results (async)."""
         return await self._fetch_results_async(snapshot_id)
 
-    def posts_fetch(self, snapshot_id: str) -> Any:
+    def posts_fetch_sync(self, snapshot_id: str) -> Any:
         """Fetch Instagram posts results (sync wrapper)."""
-        return asyncio.run(self.posts_fetch_async(snapshot_id))
+        return asyncio.run(self.posts_fetch(snapshot_id))
 
     # ============================================================================
     # COMMENTS API - By Post URL
     # ============================================================================
 
-    async def comments_async(
+    async def comments(
         self,
         url: Union[str, List[str]],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
@@ -253,7 +259,7 @@ class InstagramScraper(BaseWebScraper):
             ScrapeResult or List[ScrapeResult] with comment data
 
         Example:
-            >>> result = await scraper.comments_async(
+            >>> result = await scraper.comments(
             ...     url="https://instagram.com/p/ABC123",
             ...     timeout=240
             ... )
@@ -270,7 +276,7 @@ class InstagramScraper(BaseWebScraper):
             sdk_function="comments",
         )
 
-    def comments(
+    def comments_sync(
         self,
         url: Union[str, List[str]],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
@@ -279,13 +285,13 @@ class InstagramScraper(BaseWebScraper):
 
         async def _run():
             async with self.engine:
-                return await self.comments_async(url, timeout)
+                return await self.comments(url, timeout)
 
         return asyncio.run(_run())
 
     # --- Trigger Interface (Manual Control) ---
 
-    async def comments_trigger_async(self, url: Union[str, List[str]]) -> "ScrapeJob":
+    async def comments_trigger(self, url: Union[str, List[str]]) -> "ScrapeJob":
         """Trigger Instagram comments scrape (async - manual control)."""
 
         sdk_function = get_caller_function_name()
@@ -295,31 +301,31 @@ class InstagramScraper(BaseWebScraper):
             sdk_function=sdk_function or "comments_trigger",
         )
 
-    def comments_trigger(self, url: Union[str, List[str]]) -> "ScrapeJob":
+    def comments_trigger_sync(self, url: Union[str, List[str]]) -> "ScrapeJob":
         """Trigger Instagram comments scrape (sync wrapper)."""
-        return asyncio.run(self.comments_trigger_async(url))
+        return asyncio.run(self.comments_trigger(url))
 
-    async def comments_status_async(self, snapshot_id: str) -> str:
+    async def comments_status(self, snapshot_id: str) -> str:
         """Check Instagram comments status (async)."""
         return await self._check_status_async(snapshot_id)
 
-    def comments_status(self, snapshot_id: str) -> str:
+    def comments_status_sync(self, snapshot_id: str) -> str:
         """Check Instagram comments status (sync wrapper)."""
-        return asyncio.run(self.comments_status_async(snapshot_id))
+        return asyncio.run(self.comments_status(snapshot_id))
 
-    async def comments_fetch_async(self, snapshot_id: str) -> Any:
+    async def comments_fetch(self, snapshot_id: str) -> Any:
         """Fetch Instagram comments results (async)."""
         return await self._fetch_results_async(snapshot_id)
 
-    def comments_fetch(self, snapshot_id: str) -> Any:
+    def comments_fetch_sync(self, snapshot_id: str) -> Any:
         """Fetch Instagram comments results (sync wrapper)."""
-        return asyncio.run(self.comments_fetch_async(snapshot_id))
+        return asyncio.run(self.comments_fetch(snapshot_id))
 
     # ============================================================================
     # REELS API - By URL
     # ============================================================================
 
-    async def reels_async(
+    async def reels(
         self,
         url: Union[str, List[str]],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
@@ -338,7 +344,7 @@ class InstagramScraper(BaseWebScraper):
             ScrapeResult or List[ScrapeResult] with reel data
 
         Example:
-            >>> result = await scraper.reels_async(
+            >>> result = await scraper.reels(
             ...     url="https://instagram.com/reel/ABC123",
             ...     timeout=240
             ... )
@@ -355,7 +361,7 @@ class InstagramScraper(BaseWebScraper):
             sdk_function="reels",
         )
 
-    def reels(
+    def reels_sync(
         self,
         url: Union[str, List[str]],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
@@ -364,13 +370,13 @@ class InstagramScraper(BaseWebScraper):
 
         async def _run():
             async with self.engine:
-                return await self.reels_async(url, timeout)
+                return await self.reels(url, timeout)
 
         return asyncio.run(_run())
 
     # --- Trigger Interface (Manual Control) ---
 
-    async def reels_trigger_async(self, url: Union[str, List[str]]) -> "ScrapeJob":
+    async def reels_trigger(self, url: Union[str, List[str]]) -> "ScrapeJob":
         """Trigger Instagram reels scrape (async - manual control)."""
 
         sdk_function = get_caller_function_name()
@@ -378,25 +384,25 @@ class InstagramScraper(BaseWebScraper):
             urls=url, dataset_id=self.DATASET_ID_REELS, sdk_function=sdk_function or "reels_trigger"
         )
 
-    def reels_trigger(self, url: Union[str, List[str]]) -> "ScrapeJob":
+    def reels_trigger_sync(self, url: Union[str, List[str]]) -> "ScrapeJob":
         """Trigger Instagram reels scrape (sync wrapper)."""
-        return asyncio.run(self.reels_trigger_async(url))
+        return asyncio.run(self.reels_trigger(url))
 
-    async def reels_status_async(self, snapshot_id: str) -> str:
+    async def reels_status(self, snapshot_id: str) -> str:
         """Check Instagram reels status (async)."""
         return await self._check_status_async(snapshot_id)
 
-    def reels_status(self, snapshot_id: str) -> str:
+    def reels_status_sync(self, snapshot_id: str) -> str:
         """Check Instagram reels status (sync wrapper)."""
-        return asyncio.run(self.reels_status_async(snapshot_id))
+        return asyncio.run(self.reels_status(snapshot_id))
 
-    async def reels_fetch_async(self, snapshot_id: str) -> Any:
+    async def reels_fetch(self, snapshot_id: str) -> Any:
         """Fetch Instagram reels results (async)."""
         return await self._fetch_results_async(snapshot_id)
 
-    def reels_fetch(self, snapshot_id: str) -> Any:
+    def reels_fetch_sync(self, snapshot_id: str) -> Any:
         """Fetch Instagram reels results (sync wrapper)."""
-        return asyncio.run(self.reels_fetch_async(snapshot_id))
+        return asyncio.run(self.reels_fetch(snapshot_id))
 
     # ============================================================================
     # CORE SCRAPING LOGIC

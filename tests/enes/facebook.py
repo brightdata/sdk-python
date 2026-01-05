@@ -31,7 +31,7 @@ async def test_facebook_posts_by_profile():
             print("📋 Parameters: num_of_posts=5")
 
             try:
-                result = await scraper.posts_by_profile_async(
+                result = await scraper.posts_by_profile(
                     url="https://www.facebook.com/facebook", num_of_posts=5, timeout=240
                 )
 
@@ -88,7 +88,7 @@ async def test_facebook_posts_by_group():
             print("📋 Parameters: num_of_posts=5")
 
             try:
-                result = await scraper.posts_by_group_async(
+                result = await scraper.posts_by_group(
                     url="https://www.facebook.com/groups/example", num_of_posts=5, timeout=240
                 )
 
@@ -141,7 +141,7 @@ async def test_facebook_posts_by_url():
             print("📍 Post URL: https://www.facebook.com/facebook/posts/123456789")
 
             try:
-                result = await scraper.posts_by_url_async(
+                result = await scraper.posts_by_url(
                     url="https://www.facebook.com/facebook/posts/123456789", timeout=240
                 )
 
@@ -193,7 +193,7 @@ async def test_facebook_comments():
             print("📋 Parameters: num_of_comments=10")
 
             try:
-                result = await scraper.comments_async(
+                result = await scraper.comments(
                     url="https://www.facebook.com/facebook/posts/123456789",
                     num_of_comments=10,
                     timeout=240,
@@ -250,7 +250,7 @@ async def test_facebook_reels():
             print("📋 Parameters: num_of_posts=5")
 
             try:
-                result = await scraper.reels_async(
+                result = await scraper.reels(
                     url="https://www.facebook.com/facebook", num_of_posts=5, timeout=240
                 )
 

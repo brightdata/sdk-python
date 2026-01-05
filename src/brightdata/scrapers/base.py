@@ -343,6 +343,28 @@ class BaseWebScraper(ABC):
         """Fetch scrape job results (internal sync wrapper)."""
         return _run_blocking(self._fetch_results_async(snapshot_id, format=format))
 
+    # ============================================================================
+    # CONTEXT MANAGER SUPPORT (for standalone usage)
+    # ============================================================================
+
+    async def __aenter__(self):
+        """
+        Async context manager entry for standalone scraper usage.
+
+        When using a scraper directly (not through BrightDataClient),
+        use the context manager to ensure proper engine lifecycle management.
+
+        Example:
+            >>> async with AmazonScraper(token="...") as scraper:
+            ...     result = await scraper.products(url)
+        """
+        await self.engine.__aenter__()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit - cleanup engine."""
+        await self.engine.__aexit__(exc_type, exc_val, exc_tb)
+
     def __repr__(self) -> str:
         """String representation for debugging."""
         platform = self.PLATFORM_NAME or self.__class__.__name__

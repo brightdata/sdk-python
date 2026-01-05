@@ -30,7 +30,7 @@ async def test_amazon_products():
             print("📍 Product URL: https://www.amazon.com/dp/B0CRMZHDG8")
 
             try:
-                result = await scraper.products_async(
+                result = await scraper.products(
                     url="https://www.amazon.com/dp/B0CRMZHDG8", timeout=240
                 )
 
@@ -82,7 +82,7 @@ async def test_amazon_reviews():
             print("📋 Parameters: pastDays=30, numOfReviews=10")
 
             try:
-                result = await scraper.reviews_async(
+                result = await scraper.reviews(
                     url="https://www.amazon.com/dp/B0CRMZHDG8",
                     pastDays=30,
                     numOfReviews=10,

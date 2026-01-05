@@ -8,49 +8,39 @@ class TestFacebookScraperURLBased:
     """Test Facebook scraper (URL-based extraction)."""
 
     def test_facebook_scraper_has_posts_by_profile_method(self):
-        """Test Facebook scraper has posts_by_profile method."""
+        """Test Facebook scraper has posts_by_profile method (async-first API)."""
         scraper = FacebookScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "posts_by_profile")
-        assert hasattr(scraper, "posts_by_profile_async")
         assert callable(scraper.posts_by_profile)
-        assert callable(scraper.posts_by_profile_async)
 
     def test_facebook_scraper_has_posts_by_group_method(self):
-        """Test Facebook scraper has posts_by_group method."""
+        """Test Facebook scraper has posts_by_group method (async-first API)."""
         scraper = FacebookScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "posts_by_group")
-        assert hasattr(scraper, "posts_by_group_async")
         assert callable(scraper.posts_by_group)
-        assert callable(scraper.posts_by_group_async)
 
     def test_facebook_scraper_has_posts_by_url_method(self):
-        """Test Facebook scraper has posts_by_url method."""
+        """Test Facebook scraper has posts_by_url method (async-first API)."""
         scraper = FacebookScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "posts_by_url")
-        assert hasattr(scraper, "posts_by_url_async")
         assert callable(scraper.posts_by_url)
-        assert callable(scraper.posts_by_url_async)
 
     def test_facebook_scraper_has_comments_method(self):
-        """Test Facebook scraper has comments method."""
+        """Test Facebook scraper has comments method (async-first API)."""
         scraper = FacebookScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "comments")
-        assert hasattr(scraper, "comments_async")
         assert callable(scraper.comments)
-        assert callable(scraper.comments_async)
 
     def test_facebook_scraper_has_reels_method(self):
-        """Test Facebook scraper has reels method."""
+        """Test Facebook scraper has reels method (async-first API)."""
         scraper = FacebookScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "reels")
-        assert hasattr(scraper, "reels_async")
         assert callable(scraper.reels)
-        assert callable(scraper.reels_async)
 
     def test_posts_by_profile_method_signature(self):
         """Test posts_by_profile method has correct signature."""

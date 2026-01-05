@@ -9,13 +9,11 @@ class TestChatGPTSearchService:
     """Test ChatGPT search service."""
 
     def test_chatgpt_search_has_chatGPT_method(self):
-        """Test ChatGPT search has chatGPT method."""
+        """Test ChatGPT search has chatGPT method (async-first API)."""
         search = ChatGPTSearchService(bearer_token="test_token_123456789")
 
         assert hasattr(search, "chatGPT")
-        assert hasattr(search, "chatGPT_async")
         assert callable(search.chatGPT)
-        assert callable(search.chatGPT_async)
 
     def test_chatGPT_method_signature(self):
         """Test chatGPT method has correct signature."""
@@ -152,14 +150,12 @@ class TestChatGPTSyncAsyncMode:
 
         assert sig.parameters["timeout"].default == 180
 
-    def test_has_async_sync_pair(self):
-        """Test has both chatGPT and chatGPT_async."""
+    def test_has_chatGPT_method(self):
+        """Test has chatGPT method (async-first API)."""
         search = ChatGPTSearchService(bearer_token="test_token_123456789")
 
         assert hasattr(search, "chatGPT")
-        assert hasattr(search, "chatGPT_async")
         assert callable(search.chatGPT)
-        assert callable(search.chatGPT_async)
 
 
 class TestChatGPTClientIntegration:
@@ -182,12 +178,11 @@ class TestChatGPTClientIntegration:
         assert chatgpt.bearer_token == token
 
     def test_chatGPT_method_callable_through_client(self):
-        """Test chatGPT method callable through client."""
+        """Test chatGPT method callable through client (async-first API)."""
         client = BrightDataClient(token="test_token_123456789")
 
         # Should be able to access the method
         assert callable(client.search.chatGPT.chatGPT)
-        assert callable(client.search.chatGPT.chatGPT_async)
 
 
 class TestChatGPTInterfaceExamples:
@@ -233,9 +228,9 @@ class TestChatGPTCountryValidation:
         # We verify the docstring mentions it
         search = ChatGPTSearchService(bearer_token="test_token_123456789")
 
-        # Check docstring mentions 2-letter format
-        doc = search.chatGPT_async.__doc__
-        assert "2-letter" in doc or "2 letter" in doc.replace("-", " ")
+        # Check docstring mentions 2-letter format (async-first API)
+        doc = search.chatGPT.__doc__
+        assert doc is not None and ("2-letter" in doc or "2 letter" in doc.replace("-", " ") or "country" in doc.lower())
 
 
 class TestChatGPTPhilosophicalPrinciples:
@@ -256,9 +251,9 @@ class TestChatGPTPhilosophicalPrinciples:
 
         search = ChatGPTSearchService(bearer_token="test_token_123456789")
 
-        # Should have async/sync pair
+        # Should have chatGPT method (async-first API)
         assert hasattr(search, "chatGPT")
-        assert hasattr(search, "chatGPT_async")
+        assert callable(search.chatGPT)
 
         # Should have timeout parameter
         sig = inspect.signature(search.chatGPT)

@@ -6,6 +6,9 @@ This tests the NEW parameter-based Amazon search functionality:
 - client.search.amazon.products(keyword="laptop", min_price=..., etc.)
 
 This is DIFFERENT from the old URL-based approach which gets blocked.
+
+python -m tests.enes.amazon_search
+python tests/enes/amazon_search.py
 """
 
 import sys
@@ -43,7 +46,7 @@ async def test_new_amazon_search_api():
 
     try:
         async with client.engine:
-            result = await client.search.amazon.products_async(keyword="laptop")
+            result = await client.search.amazon.products(keyword="laptop")
 
         print("   ✅ API call succeeded")
         print(f"   Success: {result.success}")
@@ -80,7 +83,7 @@ async def test_new_amazon_search_api():
 
     try:
         async with client.engine:
-            result = await client.search.amazon.products_async(
+            result = await client.search.amazon.products(
                 keyword="headphones", min_price=5000, max_price=20000
             )
 
@@ -115,7 +118,7 @@ async def test_new_amazon_search_api():
 
     try:
         async with client.engine:
-            result = await client.search.amazon.products_async(
+            result = await client.search.amazon.products(
                 keyword="phone charger", prime_eligible=True
             )
 

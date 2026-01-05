@@ -34,28 +34,28 @@ async def example_basic_trigger():
         
         # Step 1: Trigger the scrape (returns immediately)
         print("\n🚀 Triggering Amazon product scrape...")
-        job = await amazon.products_trigger_async(
+        job = await amazon.products_trigger(
             url="https://www.amazon.com/dp/B0CRMZHDG8"
         )
         print(f"✅ Job triggered: {job.snapshot_id}")
         
         # Step 2: Check status manually
         print("\n🔍 Checking job status...")
-        status = await job.status_async()
+        status = await job.status()
         print(f"Status: {status}")
         
         # Step 3: Wait for completion (with custom timeout)
         print("\n⏳ Waiting for completion...")
-        await job.wait_async(timeout=180, verbose=True)
+        await job.wait(timeout=180, verbose=True)
         
         # Step 4: Fetch results
         print("\n📥 Fetching results...")
-        data = await job.fetch_async()
+        data = await job.fetch()
         print(f"✅ Got {len(data) if isinstance(data, list) else 1} records")
         
         # Or use convenience method (wait + fetch + wrap in ScrapeResult)
         print("\n💡 Alternative: Use to_result_async()...")
-        result = await job.to_result_async()
+        result = await job.to_result()
         print(f"Success: {result.success}")
         print(f"Cost: ${result.cost:.4f}")
 
@@ -85,7 +85,7 @@ async def example_concurrent_scraping():
         print("\n🚀 Triggering multiple scrapes...")
         jobs = []
         for i, url in enumerate(urls, 1):
-            job = await amazon.products_trigger_async(url=url)
+            job = await amazon.products_trigger(url=url)
             jobs.append(job)
             print(f"   [{i}/{len(urls)}] Triggered: {job.snapshot_id[:12]}...")
         
@@ -96,7 +96,7 @@ async def example_concurrent_scraping():
         results = []
         for i, job in enumerate(jobs, 1):
             print(f"   [{i}/{len(jobs)}] Waiting for job {job.snapshot_id[:12]}...")
-            result = await job.to_result_async(timeout=180)
+            result = await job.to_result(timeout=180)
             results.append(result)
         
         # Step 3: Process all results
@@ -124,7 +124,7 @@ async def example_custom_polling():
         
         # Trigger the scrape
         print("\n🚀 Triggering scrape...")
-        job = await amazon.products_trigger_async(
+        job = await amazon.products_trigger(
             url="https://www.amazon.com/dp/B0CRMZHDG8"
         )
         print(f"✅ Job ID: {job.snapshot_id}")
@@ -136,14 +136,14 @@ async def example_custom_polling():
         max_attempts = 30
         
         for attempt in range(max_attempts):
-            status = await job.status_async()
+            status = await job.status()
             elapsed = time.time() - job.triggered_at.timestamp()
             
             print(f"   [{elapsed:.1f}s] Attempt {attempt + 1}: {status}")
             
             if status == "ready":
                 print("✅ Job completed!")
-                data = await job.fetch_async()
+                data = await job.fetch()
                 print(f"📥 Got {len(data) if isinstance(data, list) else 1} records")
                 break
             elif status == "error":
@@ -173,7 +173,7 @@ async def example_save_and_resume():
         
         # Phase 1: Trigger and save job ID
         print("\n📝 Phase 1: Trigger and save job ID...")
-        job = await amazon.products_trigger_async(
+        job = await amazon.products_trigger(
             url="https://www.amazon.com/dp/B0CRMZHDG8"
         )
         snapshot_id = job.snapshot_id
@@ -189,12 +189,12 @@ async def example_save_and_resume():
         print(f"📂 Loading snapshot_id: {snapshot_id}")
         
         # Check status using the snapshot_id directly
-        status = await amazon.products_status_async(snapshot_id)
+        status = await amazon.products_status(snapshot_id)
         print(f"Status: {status}")
         
         # Fetch if ready
         if status == "ready":
-            data = await amazon.products_fetch_async(snapshot_id)
+            data = await amazon.products_fetch(snapshot_id)
             print(f"✅ Fetched {len(data) if isinstance(data, list) else 1} records")
         else:
             print("⏳ Job not ready yet, would need to wait longer...")

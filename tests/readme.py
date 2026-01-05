@@ -104,13 +104,13 @@ class TestQuickStartSimpleScraping:
         Line: 101-118
         """
         # From README:
-        # result = client.scrape.generic.url("https://example.com")
+        # result = client.scrape_url("https://example.com")
         # if result.success:
         #     print(f"Success: {result.success}")
         #     print(f"Data: {result.data[:200]}...")
         #     print(f"Time: {result.elapsed_ms():.2f}ms")
 
-        result = client.scrape.generic.url("https://example.com")
+        result = client.scrape_url("https://example.com")
 
         assert result is not None, "Result is None"
         assert hasattr(result, "success"), "Result missing 'success' attribute"
@@ -673,7 +673,7 @@ class TestAsyncUsage:
         # From README:
         # async def scrape_multiple():
         #     async with BrightDataClient() as client:
-        #         results = await client.scrape.generic.url_async([
+        #         results = await client.scrape_url([
         #             "https://example1.com",
         #             "https://example2.com",
         #             "https://example3.com"
@@ -682,7 +682,7 @@ class TestAsyncUsage:
         #             print(f"Success: {result.success}")
 
         async with BrightDataClient(token=api_token) as client:
-            results = await client.scrape.generic.url_async(
+            results = await client.scrape_url(
                 ["https://httpbin.org/html", "https://example.com", "https://httpbin.org/json"]
             )
 
@@ -771,7 +771,7 @@ class TestResultObjects:
         # result.elapsed_ms(), result.get_timing_breakdown()
         # result.to_dict(), result.to_json(indent=2)
 
-        result = client.scrape.generic.url("https://example.com")
+        result = client.scrape_url("https://example.com")
 
         # Verify all attributes
         assert hasattr(result, "success"), "Missing 'success' attribute"
@@ -828,13 +828,13 @@ class TestAdvancedUsage:
         # From README:
         # async def scrape_profiles():
         #     async with BrightDataClient() as client:
-        #         result = await client.scrape.linkedin.profiles_async(
+        #         result = await client.scrape.linkedin.profiles(
         #             url="https://linkedin.com/in/johndoe",
         #             timeout=300
         #         )
 
         async with BrightDataClient(token=api_token) as client:
-            result = await client.scrape.linkedin.profiles_async(
+            result = await client.scrape.linkedin.profiles(
                 url="https://linkedin.com/in/williamhgates", timeout=300
             )
 

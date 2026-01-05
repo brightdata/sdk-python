@@ -29,7 +29,16 @@ class InstagramSearchScraper:
 
     Example:
         >>> scraper = InstagramSearchScraper(bearer_token="token")
-        >>> result = scraper.posts(
+        >>>
+        >>> # Async usage
+        >>> result = await scraper.posts(
+        ...     url="https://instagram.com/username",
+        ...     num_of_posts=10,
+        ...     post_type="reel"
+        ... )
+        >>>
+        >>> # Sync usage
+        >>> result = scraper.posts_sync(
         ...     url="https://instagram.com/username",
         ...     num_of_posts=10,
         ...     post_type="reel"
@@ -62,7 +71,7 @@ class InstagramSearchScraper:
     # POSTS DISCOVERY (by profile URL with filters)
     # ============================================================================
 
-    async def posts_async(
+    async def posts(
         self,
         url: Union[str, List[str]],
         num_of_posts: Optional[int] = None,
@@ -91,7 +100,7 @@ class InstagramSearchScraper:
             ScrapeResult or List[ScrapeResult] with discovered posts
 
         Example:
-            >>> result = await scraper.posts_async(
+            >>> result = await scraper.posts(
             ...     url="https://instagram.com/username",
             ...     num_of_posts=10,
             ...     start_date="01-01-2025",
@@ -115,7 +124,7 @@ class InstagramSearchScraper:
             timeout=timeout,
         )
 
-    def posts(
+    def posts_sync(
         self,
         url: Union[str, List[str]],
         num_of_posts: Optional[int] = None,
@@ -129,7 +138,7 @@ class InstagramSearchScraper:
 
         async def _run():
             async with self.engine:
-                return await self.posts_async(
+                return await self.posts(
                     url,
                     num_of_posts,
                     posts_to_not_include,
@@ -145,7 +154,7 @@ class InstagramSearchScraper:
     # REELS DISCOVERY (by profile or search URL with filters)
     # ============================================================================
 
-    async def reels_async(
+    async def reels(
         self,
         url: Union[str, List[str]],
         num_of_posts: Optional[int] = None,
@@ -172,7 +181,7 @@ class InstagramSearchScraper:
             ScrapeResult or List[ScrapeResult] with discovered reels
 
         Example:
-            >>> result = await scraper.reels_async(
+            >>> result = await scraper.reels(
             ...     url="https://instagram.com/username",
             ...     num_of_posts=50,
             ...     start_date="01-01-2025",
@@ -196,7 +205,7 @@ class InstagramSearchScraper:
             sdk_function="reels",
         )
 
-    def reels(
+    def reels_sync(
         self,
         url: Union[str, List[str]],
         num_of_posts: Optional[int] = None,
@@ -209,7 +218,7 @@ class InstagramSearchScraper:
 
         async def _run():
             async with self.engine:
-                return await self.reels_async(
+                return await self.reels(
                     url, num_of_posts, posts_to_not_include, start_date, end_date, timeout
                 )
 
