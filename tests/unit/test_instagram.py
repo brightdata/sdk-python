@@ -8,40 +8,32 @@ class TestInstagramScraperURLBased:
     """Test Instagram scraper (URL-based extraction)."""
 
     def test_instagram_scraper_has_profiles_method(self):
-        """Test Instagram scraper has profiles method."""
+        """Test Instagram scraper has profiles method (async-first API)."""
         scraper = InstagramScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "profiles")
-        assert hasattr(scraper, "profiles_async")
         assert callable(scraper.profiles)
-        assert callable(scraper.profiles_async)
 
     def test_instagram_scraper_has_posts_method(self):
-        """Test Instagram scraper has posts method."""
+        """Test Instagram scraper has posts method (async-first API)."""
         scraper = InstagramScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "posts")
-        assert hasattr(scraper, "posts_async")
         assert callable(scraper.posts)
-        assert callable(scraper.posts_async)
 
     def test_instagram_scraper_has_comments_method(self):
-        """Test Instagram scraper has comments method."""
+        """Test Instagram scraper has comments method (async-first API)."""
         scraper = InstagramScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "comments")
-        assert hasattr(scraper, "comments_async")
         assert callable(scraper.comments)
-        assert callable(scraper.comments_async)
 
     def test_instagram_scraper_has_reels_method(self):
-        """Test Instagram scraper has reels method."""
+        """Test Instagram scraper has reels method (async-first API)."""
         scraper = InstagramScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "reels")
-        assert hasattr(scraper, "reels_async")
         assert callable(scraper.reels)
-        assert callable(scraper.reels_async)
 
     def test_profiles_method_signature(self):
         """Test profiles method has correct signature."""
@@ -95,22 +87,18 @@ class TestInstagramSearchScraper:
     """Test Instagram search scraper (parameter-based discovery)."""
 
     def test_instagram_search_scraper_has_posts_method(self):
-        """Test Instagram search scraper has posts method."""
+        """Test Instagram search scraper has posts method (async-first API)."""
         scraper = InstagramSearchScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "posts")
-        assert hasattr(scraper, "posts_async")
         assert callable(scraper.posts)
-        assert callable(scraper.posts_async)
 
     def test_instagram_search_scraper_has_reels_method(self):
-        """Test Instagram search scraper has reels method."""
+        """Test Instagram search scraper has reels method (async-first API)."""
         scraper = InstagramSearchScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "reels")
-        assert hasattr(scraper, "reels_async")
         assert callable(scraper.reels)
-        assert callable(scraper.reels_async)
 
     def test_search_posts_method_signature(self):
         """Test search posts method has correct signature."""

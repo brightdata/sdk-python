@@ -29,7 +29,7 @@ async def test_chatgpt_single_prompt():
         print("📋 Prompt: 'Explain async programming in Python in 2 sentences'")
 
         try:
-            result = await scraper.prompt_async(
+            result = await scraper.prompt(
                 prompt="Explain async programming in Python in 2 sentences",
                 web_search=False,
                 poll_timeout=180,
@@ -83,7 +83,7 @@ async def test_chatgpt_web_search():
         print("🌐 Web search: Enabled")
 
         try:
-            result = await scraper.prompt_async(
+            result = await scraper.prompt(
                 prompt="What are the latest developments in AI in 2025?",
                 web_search=True,
                 poll_timeout=180,
@@ -140,7 +140,7 @@ async def test_chatgpt_multiple_prompts():
         print("📋 Prompts: ['What is Python?', 'What is JavaScript?']")
 
         try:
-            result = await scraper.prompts_async(
+            result = await scraper.prompts(
                 prompts=[
                     "What is Python in one sentence?",
                     "What is JavaScript in one sentence?",

@@ -8,31 +8,25 @@ class TestAmazonScraperURLBased:
     """Test Amazon scraper (URL-based extraction)."""
 
     def test_amazon_scraper_has_products_method(self):
-        """Test Amazon scraper has products method."""
+        """Test Amazon scraper has products method (async-first API)."""
         scraper = AmazonScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "products")
-        assert hasattr(scraper, "products_async")
         assert callable(scraper.products)
-        assert callable(scraper.products_async)
 
     def test_amazon_scraper_has_reviews_method(self):
-        """Test Amazon scraper has reviews method."""
+        """Test Amazon scraper has reviews method (async-first API)."""
         scraper = AmazonScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "reviews")
-        assert hasattr(scraper, "reviews_async")
         assert callable(scraper.reviews)
-        assert callable(scraper.reviews_async)
 
     def test_amazon_scraper_has_sellers_method(self):
-        """Test Amazon scraper has sellers method."""
+        """Test Amazon scraper has sellers method (async-first API)."""
         scraper = AmazonScraper(bearer_token="test_token_123456789")
 
         assert hasattr(scraper, "sellers")
-        assert hasattr(scraper, "sellers_async")
         assert callable(scraper.sellers)
-        assert callable(scraper.sellers_async)
 
     def test_products_method_signature(self):
         """Test products method has correct signature."""
@@ -207,20 +201,18 @@ class TestAmazonParameterArraySupport:
         assert "List" in url_annotation or "list" in url_annotation
 
 
-class TestAmazonSyncAsyncPairs:
-    """Test all methods have async/sync pairs."""
+class TestAmazonAsyncFirstAPI:
+    """Test all methods follow async-first pattern."""
 
-    def test_all_methods_have_pairs(self):
-        """Test all methods have async/sync pairs."""
+    def test_all_methods_exist(self):
+        """Test all methods exist (async-first API, no _async suffix)."""
         scraper = AmazonScraper(bearer_token="test_token_123456789")
 
         methods = ["products", "reviews", "sellers"]
 
         for method in methods:
             assert hasattr(scraper, method)
-            assert hasattr(scraper, f"{method}_async")
             assert callable(getattr(scraper, method))
-            assert callable(getattr(scraper, f"{method}_async"))
 
 
 class TestAmazonClientIntegration:

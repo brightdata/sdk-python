@@ -30,7 +30,7 @@ async def test_instagram_profiles():
             print("📍 Profile URL: https://www.instagram.com/instagram")
 
             try:
-                result = await scraper.profiles_async(
+                result = await scraper.profiles(
                     url="https://www.instagram.com/instagram", timeout=180
                 )
 
@@ -78,7 +78,7 @@ async def test_instagram_posts():
             print("📍 Post URL: https://www.instagram.com/p/C9z9z9z9z9z")
 
             try:
-                result = await scraper.posts_async(
+                result = await scraper.posts(
                     url="https://www.instagram.com/p/C9z9z9z9z9z", timeout=180
                 )
 
@@ -124,7 +124,7 @@ async def test_instagram_reels():
             print("📍 Reel URL: https://www.instagram.com/reel/ABC123")
 
             try:
-                result = await scraper.reels_async(
+                result = await scraper.reels(
                     url="https://www.instagram.com/reel/ABC123", timeout=180
                 )
 
@@ -170,7 +170,7 @@ async def test_instagram_search_posts():
             print("📋 Search: profile url, num_of_posts=10")
 
             try:
-                result = await scraper.posts_async(
+                result = await scraper.posts(
                     url="https://www.instagram.com/instagram", num_of_posts=10, timeout=180
                 )
 

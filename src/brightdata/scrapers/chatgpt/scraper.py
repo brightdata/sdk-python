@@ -28,16 +28,25 @@ class ChatGPTScraper(BaseWebScraper):
     Supports prompts with optional web search and follow-up conversations.
 
     Methods:
-        prompt(): Single prompt interaction
-        prompts(): Batch prompt processing
+        prompt(): Single prompt interaction (async)
+        prompt_sync(): Single prompt interaction (sync)
+        prompts(): Batch prompt processing (async)
+        prompts_sync(): Batch prompt processing (sync)
 
     Example:
         >>> scraper = ChatGPTScraper(bearer_token="token")
-        >>> result = scraper.prompt(
+        >>>
+        >>> # Async
+        >>> result = await scraper.prompt(
         ...     prompt="Explain async programming in Python",
         ...     web_search=False
         ... )
-        >>> print(result.data)
+        >>>
+        >>> # Sync
+        >>> result = scraper.prompt_sync(
+        ...     prompt="Explain async programming in Python",
+        ...     web_search=False
+        ... )
     """
 
     DATASET_ID = "gd_m7aof0k82r803d5bjm"  # ChatGPT dataset
@@ -49,7 +58,7 @@ class ChatGPTScraper(BaseWebScraper):
     # PROMPT METHODS
     # ============================================================================
 
-    async def prompt_async(
+    async def prompt(
         self,
         prompt: str,
         country: str = "us",
@@ -73,7 +82,7 @@ class ChatGPTScraper(BaseWebScraper):
             ScrapeResult with ChatGPT response
 
         Example:
-            >>> result = await scraper.prompt_async(
+            >>> result = await scraper.prompt(
             ...     prompt="What are the latest trends in AI?",
             ...     web_search=True
             ... )
@@ -111,19 +120,34 @@ class ChatGPTScraper(BaseWebScraper):
 
         return result
 
-    def prompt(self, prompt: str, **kwargs) -> ScrapeResult:
+
+    def prompt_sync(
+        self,
+        prompt: str,
+        country: str = "us",
+        web_search: bool = False,
+        additional_prompt: Optional[str] = None,
+        poll_interval: int = DEFAULT_POLL_INTERVAL,
+        poll_timeout: Optional[int] = None,
+    ) -> ScrapeResult:
         """
         Send prompt to ChatGPT (sync).
 
-        See prompt_async() for full documentation.
+        See prompt() for full documentation.
 
         Example:
-            >>> result = scraper.prompt("Explain Python asyncio")
+            >>> result = scraper.prompt_sync("Explain Python asyncio")
         """
-
         async def _run():
             async with self.engine:
-                return await self.prompt_async(prompt, **kwargs)
+                return await self.prompt(
+                    prompt=prompt,
+                    country=country,
+                    web_search=web_search,
+                    additional_prompt=additional_prompt,
+                    poll_interval=poll_interval,
+                    poll_timeout=poll_timeout,
+                )
 
         return asyncio.run(_run())
 
@@ -131,7 +155,7 @@ class ChatGPTScraper(BaseWebScraper):
     # PROMPT TRIGGER/STATUS/FETCH (Manual Control)
     # ============================================================================
 
-    async def prompt_trigger_async(
+    async def prompt_trigger(
         self,
         prompt: str,
         country: str = "us",
@@ -167,7 +191,8 @@ class ChatGPTScraper(BaseWebScraper):
             cost_per_record=self.COST_PER_RECORD,
         )
 
-    def prompt_trigger(
+
+    def prompt_trigger_sync(
         self,
         prompt: str,
         country: str = "us",
@@ -175,27 +200,40 @@ class ChatGPTScraper(BaseWebScraper):
         additional_prompt: Optional[str] = None,
     ) -> "ScrapeJob":
         """Trigger ChatGPT prompt (sync wrapper)."""
-        return asyncio.run(
-            self.prompt_trigger_async(prompt, country, web_search, additional_prompt)
-        )
+        async def _run():
+            async with self.engine:
+                return await self.prompt_trigger(prompt, country, web_search, additional_prompt)
+        return asyncio.run(_run())
 
-    async def prompt_status_async(self, snapshot_id: str) -> str:
+    async def prompt_status(self, snapshot_id: str) -> str:
         """Check ChatGPT prompt status (async)."""
         return await self._check_status_async(snapshot_id)
 
-    def prompt_status(self, snapshot_id: str) -> str:
-        """Check ChatGPT prompt status (sync wrapper)."""
-        return asyncio.run(self.prompt_status_async(snapshot_id))
 
-    async def prompt_fetch_async(self, snapshot_id: str) -> Any:
+    def prompt_status_sync(self, snapshot_id: str) -> str:
+        """Check ChatGPT prompt status (sync wrapper)."""
+        async def _run():
+            async with self.engine:
+                return await self.prompt_status(snapshot_id)
+        return asyncio.run(_run())
+
+    async def prompt_fetch(self, snapshot_id: str) -> Any:
         """Fetch ChatGPT prompt results (async)."""
         return await self._fetch_results_async(snapshot_id)
 
-    def prompt_fetch(self, snapshot_id: str) -> Any:
-        """Fetch ChatGPT prompt results (sync wrapper)."""
-        return asyncio.run(self.prompt_fetch_async(snapshot_id))
 
-    async def prompts_async(
+    def prompt_fetch_sync(self, snapshot_id: str) -> Any:
+        """Fetch ChatGPT prompt results (sync wrapper)."""
+        async def _run():
+            async with self.engine:
+                return await self.prompt_fetch(snapshot_id)
+        return asyncio.run(_run())
+
+    # ============================================================================
+    # BATCH PROMPTS METHODS
+    # ============================================================================
+
+    async def prompts(
         self,
         prompts: List[str],
         countries: Optional[List[str]] = None,
@@ -219,7 +257,7 @@ class ChatGPTScraper(BaseWebScraper):
             ScrapeResult with list of ChatGPT responses
 
         Example:
-            >>> result = await scraper.prompts_async(
+            >>> result = await scraper.prompts(
             ...     prompts=[
             ...         "Explain Python",
             ...         "Explain JavaScript",
@@ -262,16 +300,31 @@ class ChatGPTScraper(BaseWebScraper):
 
         return result
 
-    def prompts(self, prompts: List[str], **kwargs) -> ScrapeResult:
+
+    def prompts_sync(
+        self,
+        prompts: List[str],
+        countries: Optional[List[str]] = None,
+        web_searches: Optional[List[bool]] = None,
+        additional_prompts: Optional[List[str]] = None,
+        poll_interval: int = DEFAULT_POLL_INTERVAL,
+        poll_timeout: Optional[int] = None,
+    ) -> ScrapeResult:
         """
         Send multiple prompts (sync).
 
-        See prompts_async() for full documentation.
+        See prompts() for full documentation.
         """
-
         async def _run():
             async with self.engine:
-                return await self.prompts_async(prompts, **kwargs)
+                return await self.prompts(
+                    prompts=prompts,
+                    countries=countries,
+                    web_searches=web_searches,
+                    additional_prompts=additional_prompts,
+                    poll_interval=poll_interval,
+                    poll_timeout=poll_timeout,
+                )
 
         return asyncio.run(_run())
 
@@ -279,7 +332,7 @@ class ChatGPTScraper(BaseWebScraper):
     # PROMPTS TRIGGER/STATUS/FETCH (Manual Control for batch)
     # ============================================================================
 
-    async def prompts_trigger_async(
+    async def prompts_trigger(
         self,
         prompts: List[str],
         countries: Optional[List[str]] = None,
@@ -315,7 +368,8 @@ class ChatGPTScraper(BaseWebScraper):
             cost_per_record=self.COST_PER_RECORD,
         )
 
-    def prompts_trigger(
+
+    def prompts_trigger_sync(
         self,
         prompts: List[str],
         countries: Optional[List[str]] = None,
@@ -323,31 +377,40 @@ class ChatGPTScraper(BaseWebScraper):
         additional_prompts: Optional[List[str]] = None,
     ) -> "ScrapeJob":
         """Trigger ChatGPT batch prompts (sync wrapper)."""
-        return asyncio.run(
-            self.prompts_trigger_async(prompts, countries, web_searches, additional_prompts)
-        )
+        async def _run():
+            async with self.engine:
+                return await self.prompts_trigger(prompts, countries, web_searches, additional_prompts)
+        return asyncio.run(_run())
 
-    async def prompts_status_async(self, snapshot_id: str) -> str:
+    async def prompts_status(self, snapshot_id: str) -> str:
         """Check ChatGPT batch prompts status (async)."""
         return await self._check_status_async(snapshot_id)
 
-    def prompts_status(self, snapshot_id: str) -> str:
-        """Check ChatGPT batch prompts status (sync wrapper)."""
-        return asyncio.run(self.prompts_status_async(snapshot_id))
 
-    async def prompts_fetch_async(self, snapshot_id: str) -> Any:
+    def prompts_status_sync(self, snapshot_id: str) -> str:
+        """Check ChatGPT batch prompts status (sync wrapper)."""
+        async def _run():
+            async with self.engine:
+                return await self.prompts_status(snapshot_id)
+        return asyncio.run(_run())
+
+    async def prompts_fetch(self, snapshot_id: str) -> Any:
         """Fetch ChatGPT batch prompts results (async)."""
         return await self._fetch_results_async(snapshot_id)
 
-    def prompts_fetch(self, snapshot_id: str) -> Any:
+
+    def prompts_fetch_sync(self, snapshot_id: str) -> Any:
         """Fetch ChatGPT batch prompts results (sync wrapper)."""
-        return asyncio.run(self.prompts_fetch_async(snapshot_id))
+        async def _run():
+            async with self.engine:
+                return await self.prompts_fetch(snapshot_id)
+        return asyncio.run(_run())
 
     # ============================================================================
     # SCRAPE OVERRIDE (ChatGPT doesn't use URL-based scraping)
     # ============================================================================
 
-    async def scrape_async(
+    async def scrape(
         self, urls: Union[str, List[str]], **kwargs
     ) -> Union[ScrapeResult, List[ScrapeResult]]:
         """
@@ -360,7 +423,8 @@ class ChatGPTScraper(BaseWebScraper):
             "Use prompt() or prompts() methods instead."
         )
 
-    def scrape(self, urls: Union[str, List[str]], **kwargs):
+
+    def scrape_sync(self, urls: Union[str, List[str]], **kwargs):
         """ChatGPT doesn't support URL-based scraping."""
         raise NotImplementedError(
             "ChatGPT scraper doesn't support URL-based scraping. "

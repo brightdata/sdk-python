@@ -52,7 +52,7 @@ async def test_caching_issue():
             )
             async with temp:
                 try:
-                    await temp.scrape_url_async("https://example.com", zone=test_zone)
+                    await temp.scrape_url("https://example.com", zone=test_zone)
                 except Exception:
                     pass
             print(f"   Zone '{test_zone}' created")

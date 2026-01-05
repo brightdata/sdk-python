@@ -22,6 +22,9 @@ except ImportError:
 # resource tracking may still emit warnings during rapid create/destroy cycles
 warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed.*<aiohttp")
 warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed.*<ssl.SSLSocket")
+# Suppress RuntimeWarning for coroutines not awaited in __del__ cleanup
+# This happens because aiohttp's connector.close() is async in 3.x
+warnings.filterwarnings("ignore", category=RuntimeWarning, message="coroutine.*TCPConnector.close.*never awaited")
 
 
 class AsyncEngine:
@@ -125,9 +128,19 @@ class AsyncEngine:
         if hasattr(self, "_session") and self._session:
             try:
                 if not self._session.closed:
-                    # Can't use async here, so just close the connector directly
-                    if hasattr(self._session, "_connector") and self._session._connector:
-                        self._session._connector.close()
+                    # In newer aiohttp versions, connector.close() is async.
+                    # We can't await in __del__, so we need to handle this carefully.
+                    # The best we can do is mark the session as needing cleanup
+                    # and suppress the warning since proper cleanup should happen
+                    # in __aexit__.
+                    connector = getattr(self._session, "_connector", None)
+                    if connector and not connector.closed:
+                        # For aiohttp 3.x, close() returns a coroutine
+                        # We need to check if it's a coroutine and handle accordingly
+                        close_result = connector.close()
+                        if asyncio.iscoroutine(close_result):
+                            # Can't await here - just close the coroutine to prevent warning
+                            close_result.close()
             except Exception:
                 # Silently ignore any errors during __del__
                 pass

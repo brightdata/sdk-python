@@ -17,16 +17,14 @@ class TestBaseSERPService:
         assert hasattr(BaseSERPService, "ENDPOINT")
 
     def test_base_serp_has_search_methods(self):
-        """Test base SERP service has search methods."""
+        """Test base SERP service has search methods (async-first API)."""
         from brightdata.core.engine import AsyncEngine
 
         engine = AsyncEngine("test_token_123456789")
         service = GoogleSERPService(engine)
 
         assert hasattr(service, "search")
-        assert hasattr(service, "search_async")
         assert callable(service.search)
-        assert callable(service.search_async)
 
     def test_base_serp_has_data_normalizer(self):
         """Test base SERP has data_normalizer."""
@@ -258,34 +256,30 @@ class TestClientIntegration:
         assert client.search is not None
 
     def test_search_service_has_google_method(self):
-        """Test search service has google() method."""
+        """Test search service has google() method (async-first API)."""
         from brightdata import BrightDataClient
 
         client = BrightDataClient(token="test_token_123456789")
 
         assert hasattr(client.search, "google")
-        assert hasattr(client.search, "google_async")
         assert callable(client.search.google)
-        assert callable(client.search.google_async)
 
     def test_search_service_has_bing_method(self):
-        """Test search service has bing() method."""
+        """Test search service has bing() method (async-first API)."""
         from brightdata import BrightDataClient
 
         client = BrightDataClient(token="test_token_123456789")
 
         assert hasattr(client.search, "bing")
-        assert hasattr(client.search, "bing_async")
         assert callable(client.search.bing)
 
     def test_search_service_has_yandex_method(self):
-        """Test search service has yandex() method."""
+        """Test search service has yandex() method (async-first API)."""
         from brightdata import BrightDataClient
 
         client = BrightDataClient(token="test_token_123456789")
 
         assert hasattr(client.search, "yandex")
-        assert hasattr(client.search, "yandex_async")
         assert callable(client.search.yandex)
 
 
@@ -316,8 +310,8 @@ class TestSERPInterfaceConsistency:
 
         client = BrightDataClient(token="test_token_123456789")
 
-        # Check return type hints if available
-        google_sig = inspect.signature(client.search.google_async)
+        # Check return type hints if available (async-first API)
+        google_sig = inspect.signature(client.search.google)
         # Return annotation should mention SearchResult or List[SearchResult]
         if google_sig.return_annotation != inspect.Signature.empty:
             assert "SearchResult" in str(google_sig.return_annotation)

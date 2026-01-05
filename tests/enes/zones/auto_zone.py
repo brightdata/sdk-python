@@ -93,7 +93,7 @@ def test_auto_zone_creation():
         async def create_web_unlocker():
             async with client:
                 # This should trigger zone creation
-                result = await client.scrape_url_async(
+                result = await client.scrape_url(
                     url="https://example.com", zone=client.web_unlocker_zone
                 )
                 return result
@@ -119,7 +119,7 @@ def test_auto_zone_creation():
         async def create_serp():
             async with client:
                 # This should trigger SERP zone creation
-                result = await client.search.google_async(query="test", zone=client.serp_zone)
+                result = await client.search.google(query="test", zone=client.serp_zone)
                 return result
 
         asyncio.run(create_serp())

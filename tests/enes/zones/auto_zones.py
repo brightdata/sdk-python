@@ -92,7 +92,7 @@ def test_auto_zone_creation():
         print(f"\n1️⃣ Attempting to create Web Unlocker zone: {client.web_unlocker_zone}")
         try:
             async with client:
-                await client.scrape_url_async(
+                await client.scrape_url(
                     url="https://example.com", zone=client.web_unlocker_zone
                 )
                 print("   ✅ Zone operation completed")
@@ -114,7 +114,7 @@ def test_auto_zone_creation():
         print(f"\n2️⃣ Attempting to create SERP zone: {client.serp_zone}")
         try:
             async with client:
-                await client.search.google_async(query="test", zone=client.serp_zone)
+                await client.search.google(query="test", zone=client.serp_zone)
                 print("   ✅ Zone operation completed")
                 results.append(("SERP", client.serp_zone, True))
         except Exception as e:
