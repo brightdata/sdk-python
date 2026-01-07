@@ -13,7 +13,7 @@ from .utils import handle_error
 
 
 @click.group(invoke_without_command=True)
-@click.version_option(version="2.0.0", prog_name="brightdata")
+@click.version_option(version="2.1.0", prog_name="brightdata")
 @click.option("--banner/--no-banner", default=True, help="Show/hide banner on startup")
 @click.pass_context
 def cli(ctx: click.Context, banner: bool) -> None:

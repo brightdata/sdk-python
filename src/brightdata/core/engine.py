@@ -92,7 +92,7 @@ class AsyncEngine:
             headers={
                 "Authorization": f"Bearer {self.bearer_token}",
                 "Content-Type": "application/json",
-                "User-Agent": "brightdata-sdk/2.0.0",
+                "User-Agent": "brightdata-sdk/2.1.0",
             },
         )
 

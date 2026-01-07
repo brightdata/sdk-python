@@ -1,6 +1,6 @@
 """Bright Data Python SDK - Modern async-first SDK for Bright Data APIs."""
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 
 # Export main client (async)
 from .client import BrightDataClient
