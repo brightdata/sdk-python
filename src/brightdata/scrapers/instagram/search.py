@@ -287,6 +287,7 @@ class InstagramSearchScraper:
             include_errors=True,
             normalize_func=None,
             sdk_function=sdk_function,
+            extra_params={"type": "discover_new", "discover_by": "url"},
         )
 
         if is_single and isinstance(result.data, list) and len(result.data) == 1:

@@ -329,3 +329,79 @@ class TestInstagramScraperExports:
         assert IG.__name__ == "InstagramScraper"
         assert IGSearch is not None
         assert IGSearch.__name__ == "InstagramSearchScraper"
+
+
+class TestInstagramDiscoverExtraParams:
+    """Test Instagram discover endpoints include required extra_params."""
+
+    def test_workflow_executor_execute_accepts_extra_params(self):
+        """Test WorkflowExecutor.execute accepts extra_params parameter."""
+        import inspect
+        from brightdata.scrapers.workflow import WorkflowExecutor
+
+        sig = inspect.signature(WorkflowExecutor.execute)
+        assert "extra_params" in sig.parameters
+
+    def test_api_client_trigger_accepts_extra_params(self):
+        """Test DatasetAPIClient.trigger accepts extra_params parameter."""
+        import inspect
+        from brightdata.scrapers.api_client import DatasetAPIClient
+
+        sig = inspect.signature(DatasetAPIClient.trigger)
+        assert "extra_params" in sig.parameters
+
+    def test_discover_posts_passes_extra_params(self):
+        """Test Instagram search posts passes discovery extra_params to workflow executor."""
+        from unittest.mock import AsyncMock, patch
+
+        scraper = InstagramSearchScraper(bearer_token="test_token_123456789")
+
+        # Mock the workflow executor's execute method
+        with patch.object(scraper.workflow_executor, "execute", new_callable=AsyncMock) as mock_execute:
+            # Set up mock return value
+            from brightdata.models import ScrapeResult
+
+            mock_execute.return_value = ScrapeResult(
+                success=True,
+                data=[{"test": "data"}],
+                platform="instagram",
+            )
+
+            # Call the posts method (need to run async)
+            import asyncio
+
+            asyncio.run(scraper.posts(url="https://instagram.com/test"))
+
+            # Verify execute was called with extra_params
+            mock_execute.assert_called_once()
+            call_kwargs = mock_execute.call_args.kwargs
+            assert "extra_params" in call_kwargs
+            assert call_kwargs["extra_params"] == {"type": "discover_new", "discover_by": "url"}
+
+    def test_discover_reels_passes_extra_params(self):
+        """Test Instagram search reels passes discovery extra_params to workflow executor."""
+        from unittest.mock import AsyncMock, patch
+
+        scraper = InstagramSearchScraper(bearer_token="test_token_123456789")
+
+        # Mock the workflow executor's execute method
+        with patch.object(scraper.workflow_executor, "execute", new_callable=AsyncMock) as mock_execute:
+            # Set up mock return value
+            from brightdata.models import ScrapeResult
+
+            mock_execute.return_value = ScrapeResult(
+                success=True,
+                data=[{"test": "data"}],
+                platform="instagram",
+            )
+
+            # Call the reels method (need to run async)
+            import asyncio
+
+            asyncio.run(scraper.reels(url="https://instagram.com/test"))
+
+            # Verify execute was called with extra_params
+            mock_execute.assert_called_once()
+            call_kwargs = mock_execute.call_args.kwargs
+            assert "extra_params" in call_kwargs
+            assert call_kwargs["extra_params"] == {"type": "discover_new", "discover_by": "url"}
