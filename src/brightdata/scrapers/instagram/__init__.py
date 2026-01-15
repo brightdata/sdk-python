@@ -1,4 +1,4 @@
-"""Instagram scraper for profiles, posts, comments, and reels."""
+"""Instagram scrapers for URL-based and parameter-based extraction."""
 
 from .scraper import InstagramScraper
 from .search import InstagramSearchScraper

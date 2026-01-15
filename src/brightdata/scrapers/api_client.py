@@ -45,6 +45,7 @@ class DatasetAPIClient:
         dataset_id: str,
         include_errors: bool = True,
         sdk_function: Optional[str] = None,
+        extra_params: Optional[Dict[str, str]] = None,
     ) -> Optional[str]:
         """
         Trigger dataset collection and get snapshot_id.
@@ -54,6 +55,8 @@ class DatasetAPIClient:
             dataset_id: Bright Data dataset identifier
             include_errors: Include error records in results
             sdk_function: SDK function name for monitoring
+            extra_params: Additional query parameters (e.g., for discovery endpoints:
+                          {"type": "discover_new", "discover_by": "user_name"})
 
         Returns:
             snapshot_id if successful, None otherwise
@@ -68,6 +71,9 @@ class DatasetAPIClient:
 
         if sdk_function:
             params["sdk_function"] = sdk_function
+
+        if extra_params:
+            params.update(extra_params)
 
         async with self.engine.post_to_url(
             self.TRIGGER_URL, json_data=payload, params=params

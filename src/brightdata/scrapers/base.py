@@ -246,7 +246,11 @@ class BaseWebScraper(ABC):
     # ============================================================================
 
     async def _trigger_scrape_async(
-        self, urls: Union[str, List[str]], sdk_function: Optional[str] = None, **kwargs
+        self,
+        urls: Union[str, List[str]],
+        dataset_id: Optional[str] = None,
+        sdk_function: Optional[str] = None,
+        **kwargs,
     ) -> ScrapeJob:
         """
         Trigger scrape job (internal async method).
@@ -257,6 +261,7 @@ class BaseWebScraper(ABC):
 
         Args:
             urls: URL or list of URLs to scrape
+            dataset_id: Optional dataset ID (defaults to self.DATASET_ID if not provided)
             sdk_function: SDK function name for monitoring
             **kwargs: Additional platform-specific parameters
 
@@ -278,10 +283,10 @@ class BaseWebScraper(ABC):
         # Build payload
         payload = self._build_scrape_payload(url_list, **kwargs)
 
-        # Trigger via API
+        # Trigger via API (use provided dataset_id or fall back to class default)
         snapshot_id = await self.api_client.trigger(
             payload=payload,
-            dataset_id=self.DATASET_ID,
+            dataset_id=dataset_id or self.DATASET_ID,
             include_errors=True,
             sdk_function=sdk_function,
         )
@@ -298,10 +303,18 @@ class BaseWebScraper(ABC):
         )
 
     def _trigger_scrape(
-        self, urls: Union[str, List[str]], sdk_function: Optional[str] = None, **kwargs
+        self,
+        urls: Union[str, List[str]],
+        dataset_id: Optional[str] = None,
+        sdk_function: Optional[str] = None,
+        **kwargs,
     ) -> ScrapeJob:
         """Trigger scrape job (internal sync wrapper)."""
-        return _run_blocking(self._trigger_scrape_async(urls, sdk_function=sdk_function, **kwargs))
+        return _run_blocking(
+            self._trigger_scrape_async(
+                urls, dataset_id=dataset_id, sdk_function=sdk_function, **kwargs
+            )
+        )
 
     async def _check_status_async(self, snapshot_id: str) -> str:
         """
