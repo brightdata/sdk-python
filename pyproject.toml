@@ -7,7 +7,7 @@ where = ["src"]
 
 [project]
 name = "brightdata-sdk"
-version = "2.1.0"
+version = "2.1.1"
 description = "Modern async-first Python SDK for Bright Data APIs"
 authors = [{name = "Bright Data", email = "support@brightdata.com"}]
 license = {text = "MIT"}

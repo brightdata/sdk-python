@@ -5,6 +5,7 @@ import aiohttp
 import ssl
 import warnings
 from typing import Optional, Dict, Any
+from .. import __version__
 from ..exceptions import AuthenticationError, NetworkError, TimeoutError, SSLError
 from ..constants import HTTP_UNAUTHORIZED, HTTP_FORBIDDEN
 from ..utils.ssl_helpers import is_ssl_certificate_error, get_ssl_error_message
@@ -92,7 +93,7 @@ class AsyncEngine:
             headers={
                 "Authorization": f"Bearer {self.bearer_token}",
                 "Content-Type": "application/json",
-                "User-Agent": "brightdata-sdk/2.1.0",
+                "User-Agent": f"brightdata-sdk/{__version__}",
             },
         )
 

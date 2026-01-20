@@ -46,8 +46,8 @@ class TestInstagramScraperURLBased:
         assert "url" in sig.parameters
         assert "timeout" in sig.parameters
 
-        # Defaults
-        assert sig.parameters["timeout"].default == 240
+        # Defaults (180s = DEFAULT_TIMEOUT_SHORT, same as LinkedIn)
+        assert sig.parameters["timeout"].default == 180
 
     def test_posts_method_signature(self):
         """Test posts method has correct signature."""
@@ -58,7 +58,7 @@ class TestInstagramScraperURLBased:
 
         assert "url" in sig.parameters
         assert "timeout" in sig.parameters
-        assert sig.parameters["timeout"].default == 240
+        assert sig.parameters["timeout"].default == 180
 
     def test_comments_method_signature(self):
         """Test comments method has correct signature."""
@@ -69,7 +69,7 @@ class TestInstagramScraperURLBased:
 
         assert "url" in sig.parameters
         assert "timeout" in sig.parameters
-        assert sig.parameters["timeout"].default == 240
+        assert sig.parameters["timeout"].default == 180
 
     def test_reels_method_signature(self):
         """Test reels method has correct signature."""
@@ -80,11 +80,18 @@ class TestInstagramScraperURLBased:
 
         assert "url" in sig.parameters
         assert "timeout" in sig.parameters
-        assert sig.parameters["timeout"].default == 240
+        assert sig.parameters["timeout"].default == 180
 
 
 class TestInstagramSearchScraper:
     """Test Instagram search scraper (parameter-based discovery)."""
+
+    def test_instagram_search_scraper_has_profiles_method(self):
+        """Test Instagram search scraper has profiles method for username discovery."""
+        scraper = InstagramSearchScraper(bearer_token="test_token_123456789")
+
+        assert hasattr(scraper, "profiles")
+        assert callable(scraper.profiles)
 
     def test_instagram_search_scraper_has_posts_method(self):
         """Test Instagram search scraper has posts method (async-first API)."""
@@ -100,6 +107,25 @@ class TestInstagramSearchScraper:
         assert hasattr(scraper, "reels")
         assert callable(scraper.reels)
 
+    def test_instagram_search_scraper_has_reels_all_method(self):
+        """Test Instagram search scraper has reels_all method."""
+        scraper = InstagramSearchScraper(bearer_token="test_token_123456789")
+
+        assert hasattr(scraper, "reels_all")
+        assert callable(scraper.reels_all)
+
+    def test_search_profiles_method_signature(self):
+        """Test search profiles method has correct signature."""
+        import inspect
+
+        scraper = InstagramSearchScraper(bearer_token="test_token_123456789")
+        sig = inspect.signature(scraper.profiles)
+
+        # Required: user_name parameter (NOT url)
+        assert "user_name" in sig.parameters
+        assert "timeout" in sig.parameters
+        assert sig.parameters["timeout"].default == 180
+
     def test_search_posts_method_signature(self):
         """Test search posts method has correct signature."""
         import inspect
@@ -112,14 +138,14 @@ class TestInstagramSearchScraper:
 
         # Optional filters
         assert "num_of_posts" in sig.parameters
-        assert "posts_to_not_include" in sig.parameters
         assert "start_date" in sig.parameters
         assert "end_date" in sig.parameters
         assert "post_type" in sig.parameters
+        assert "posts_to_not_include" in sig.parameters
         assert "timeout" in sig.parameters
 
-        # Defaults
-        assert sig.parameters["timeout"].default == 240
+        # Defaults (180s = DEFAULT_TIMEOUT_SHORT)
+        assert sig.parameters["timeout"].default == 180
 
     def test_search_reels_method_signature(self):
         """Test search reels method has correct signature."""
@@ -130,11 +156,24 @@ class TestInstagramSearchScraper:
 
         assert "url" in sig.parameters
         assert "num_of_posts" in sig.parameters
-        assert "posts_to_not_include" in sig.parameters
         assert "start_date" in sig.parameters
         assert "end_date" in sig.parameters
         assert "timeout" in sig.parameters
-        assert sig.parameters["timeout"].default == 240
+        assert sig.parameters["timeout"].default == 180
+
+    def test_search_reels_all_method_signature(self):
+        """Test search reels_all method has correct signature."""
+        import inspect
+
+        scraper = InstagramSearchScraper(bearer_token="test_token_123456789")
+        sig = inspect.signature(scraper.reels_all)
+
+        assert "url" in sig.parameters
+        assert "num_of_posts" in sig.parameters
+        assert "start_date" in sig.parameters
+        assert "end_date" in sig.parameters
+        assert "timeout" in sig.parameters
+        assert sig.parameters["timeout"].default == 180
 
 
 class TestInstagramDatasetIDs:
@@ -145,14 +184,12 @@ class TestInstagramDatasetIDs:
         scraper = InstagramScraper(bearer_token="test_token_123456789")
 
         assert scraper.DATASET_ID  # Default: Profiles
-        assert scraper.DATASET_ID_PROFILES
         assert scraper.DATASET_ID_POSTS
         assert scraper.DATASET_ID_COMMENTS
         assert scraper.DATASET_ID_REELS
 
         # All should start with gd_
         assert scraper.DATASET_ID.startswith("gd_")
-        assert scraper.DATASET_ID_PROFILES.startswith("gd_")
         assert scraper.DATASET_ID_POSTS.startswith("gd_")
         assert scraper.DATASET_ID_COMMENTS.startswith("gd_")
         assert scraper.DATASET_ID_REELS.startswith("gd_")
@@ -161,11 +198,13 @@ class TestInstagramDatasetIDs:
         """Test search scraper has dataset IDs."""
         scraper = InstagramSearchScraper(bearer_token="test_token_123456789")
 
-        assert scraper.DATASET_ID_POSTS_DISCOVER
-        assert scraper.DATASET_ID_REELS_DISCOVER
+        assert scraper.DATASET_ID_PROFILES
+        assert scraper.DATASET_ID_POSTS
+        assert scraper.DATASET_ID_REELS
 
-        assert scraper.DATASET_ID_POSTS_DISCOVER.startswith("gd_")
-        assert scraper.DATASET_ID_REELS_DISCOVER.startswith("gd_")
+        assert scraper.DATASET_ID_PROFILES.startswith("gd_")
+        assert scraper.DATASET_ID_POSTS.startswith("gd_")
+        assert scraper.DATASET_ID_REELS.startswith("gd_")
 
     def test_scraper_has_platform_name(self):
         """Test scraper has correct platform name."""
@@ -237,8 +276,10 @@ class TestInstagramClientIntegration:
         """Test client.search.instagram has discovery methods."""
         client = BrightDataClient(token="test_token_123456789")
 
+        assert hasattr(client.search.instagram, "profiles")
         assert hasattr(client.search.instagram, "posts")
         assert hasattr(client.search.instagram, "reels")
+        assert hasattr(client.search.instagram, "reels_all")
 
     def test_instagram_search_instance_from_client(self):
         """Test Instagram search instance is InstagramSearchScraper."""
@@ -329,3 +370,21 @@ class TestInstagramScraperExports:
         assert IG.__name__ == "InstagramScraper"
         assert IGSearch is not None
         assert IGSearch.__name__ == "InstagramSearchScraper"
+
+
+class TestInstagramDiscoveryExtraParams:
+    """Test Instagram discovery uses extra_params correctly."""
+
+    def test_search_scraper_has_execute_discovery_method(self):
+        """Test search scraper has internal _execute_discovery method."""
+        scraper = InstagramSearchScraper(bearer_token="test_token_123456789")
+
+        assert hasattr(scraper, "_execute_discovery")
+        assert callable(scraper._execute_discovery)
+
+    def test_search_scraper_has_context_manager(self):
+        """Test search scraper supports async context manager."""
+        scraper = InstagramSearchScraper(bearer_token="test_token_123456789")
+
+        assert hasattr(scraper, "__aenter__")
+        assert hasattr(scraper, "__aexit__")

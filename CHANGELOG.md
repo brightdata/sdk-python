@@ -1,5 +1,67 @@
 # Bright Data Python SDK Changelog
 
+## Version 2.1.1 - Instagram Scrapers & Version Centralization
+
+### ✨ New Features
+
+#### Complete Instagram Scraper Implementation
+
+Full Instagram scraping support with URL-based extraction and discovery endpoints:
+
+**URL-based Scraping (`client.scrape.instagram`)**
+- `profiles(url)` - Extract profile data from Instagram profile URL
+- `posts(url)` - Extract post data from Instagram post URL
+- `comments(url)` - Extract comments from Instagram post URL
+- `reels(url)` - Extract reel data from Instagram reel URL
+
+**Discovery/Search (`client.search.instagram`)**
+- `profiles(user_name)` - Discover profile by exact username lookup
+- `posts(url, num_of_posts, start_date, end_date, post_type)` - Discover posts from profile
+- `reels(url, num_of_posts, start_date, end_date)` - Discover reels from profile
+- `reels_all(url, num_of_posts, start_date, end_date)` - Discover all reels from profile
+
+```python
+async with BrightDataClient() as client:
+    # URL-based scraping
+    post = await client.scrape.instagram.posts("https://instagram.com/p/ABC123/")
+    reel = await client.scrape.instagram.reels("https://instagram.com/reel/XYZ789/")
+
+    # Discovery by username
+    profile = await client.search.instagram.profiles(user_name="nasa")
+
+    # Discover posts from profile with filters
+    posts = await client.search.instagram.posts(
+        url="https://instagram.com/nasa",
+        num_of_posts=10,
+        start_date="2024-01-01",
+        end_date="2024-12-31"
+    )
+```
+
+### 🔧 Internal Improvements
+
+#### Version Centralization
+
+Version is now managed from a single source (`pyproject.toml`). All other files read it dynamically via `importlib.metadata`.
+
+**Before (5 files to update):**
+- `pyproject.toml`
+- `src/brightdata/__init__.py`
+- `src/brightdata/_version.py`
+- `src/brightdata/core/engine.py`
+- `src/brightdata/cli/main.py`
+
+**After (1 file to update):**
+- `pyproject.toml` ← Single source of truth
+
+**Changes:**
+- `__init__.py` now uses `importlib.metadata.version("brightdata-sdk")`
+- `_version.py` deleted (no longer needed)
+- `engine.py` imports `__version__` for User-Agent header
+- `cli/main.py` imports `__version__` for `--version` flag
+
+---
+
 ## Version 2.1.0 - Async Mode, API Simplification & Bug Fixes
 
 ### ✨ New Features

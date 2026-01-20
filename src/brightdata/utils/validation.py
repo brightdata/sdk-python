@@ -154,3 +154,45 @@ def validate_http_method(method: str) -> None:
     valid_methods = ("GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS")
     if method.upper() not in valid_methods:
         raise ValidationError(f"Invalid HTTP method: {method}. Must be one of: {valid_methods}")
+
+
+def validate_instagram_date(date: str) -> None:
+    """
+    Validate Instagram date format (MM-DD-YYYY).
+
+    Instagram API requires dates in MM-DD-YYYY format, not ISO format.
+
+    Args:
+        date: Date string to validate.
+
+    Raises:
+        ValidationError: If date format is invalid.
+
+    Example:
+        >>> validate_instagram_date("01-15-2025")  # Valid
+        >>> validate_instagram_date("2025-01-15")  # Raises ValidationError
+    """
+    if not date or not isinstance(date, str):
+        raise ValidationError("Date must be a non-empty string")
+
+    # Check MM-DD-YYYY format
+    if not re.match(r"^\d{2}-\d{2}-\d{4}$", date):
+        raise ValidationError(
+            f"Invalid date format: {date}. Instagram requires MM-DD-YYYY format (e.g., '01-15-2025')"
+        )
+
+    # Validate actual date values
+    try:
+        month, day, year = date.split("-")
+        month_int = int(month)
+        day_int = int(day)
+        year_int = int(year)
+
+        if not (1 <= month_int <= 12):
+            raise ValidationError(f"Invalid month in date: {date}. Month must be 01-12")
+        if not (1 <= day_int <= 31):
+            raise ValidationError(f"Invalid day in date: {date}. Day must be 01-31")
+        if not (1900 <= year_int <= 2100):
+            raise ValidationError(f"Invalid year in date: {date}. Year must be 1900-2100")
+    except ValueError:
+        raise ValidationError(f"Invalid date format: {date}. Instagram requires MM-DD-YYYY format")

@@ -122,17 +122,23 @@ class TestSDKFunctionParameterTracking:
             sig = inspect.signature(scraper._scrape_urls)
             assert "sdk_function" in sig.parameters
 
-    def test_instagram_scraper_methods_accept_sdk_function(self):
-        """Test Instagram scraper methods can track sdk_function."""
+    def test_instagram_scraper_methods_use_function_detection(self):
+        """Test Instagram scraper methods use function detection internally."""
         from brightdata.scrapers.instagram import InstagramScraper
         import inspect
 
         scraper = InstagramScraper(bearer_token="test_token_123456789")
 
-        # Check if internal methods accept sdk_function parameter
+        # Instagram scraper's _scrape_urls calls get_caller_function_name() internally
+        # rather than accepting sdk_function as a parameter
         if hasattr(scraper, "_scrape_urls"):
+            # Verify the method exists and is callable
+            assert callable(scraper._scrape_urls)
+            # Check it has the expected parameters (url, dataset_id, timeout)
             sig = inspect.signature(scraper._scrape_urls)
-            assert "sdk_function" in sig.parameters
+            assert "url" in sig.parameters
+            assert "dataset_id" in sig.parameters
+            assert "timeout" in sig.parameters
 
 
 class TestSDKFunctionUsagePatterns:

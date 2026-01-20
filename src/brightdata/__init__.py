@@ -1,6 +1,12 @@
 """Bright Data Python SDK - Modern async-first SDK for Bright Data APIs."""
 
-__version__ = "2.1.0"
+from importlib.metadata import version, PackageNotFoundError
+
+try:
+    __version__ = version("brightdata-sdk")
+except PackageNotFoundError:
+    # Package not installed (development mode without pip install -e)
+    __version__ = "0.0.0.dev"
 
 # Export main client (async)
 from .client import BrightDataClient

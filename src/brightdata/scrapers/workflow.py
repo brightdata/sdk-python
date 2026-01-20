@@ -52,6 +52,7 @@ class WorkflowExecutor:
         include_errors: bool = True,
         normalize_func: Optional[Callable[[Any], Any]] = None,
         sdk_function: Optional[str] = None,
+        extra_params: Optional[Dict[str, str]] = None,
     ) -> ScrapeResult:
         """
         Execute complete trigger/poll/fetch workflow.
@@ -64,6 +65,8 @@ class WorkflowExecutor:
             include_errors: Include error records
             normalize_func: Optional function to normalize result data
             sdk_function: SDK function name for monitoring
+            extra_params: Additional query parameters for trigger (e.g., for discovery endpoints:
+                          {"type": "discover_new", "discover_by": "user_name"})
 
         Returns:
             ScrapeResult with data or error
@@ -76,6 +79,7 @@ class WorkflowExecutor:
                 dataset_id=dataset_id,
                 include_errors=include_errors,
                 sdk_function=sdk_function,
+                extra_params=extra_params,
             )
         except APIError as e:
             return ScrapeResult(

@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 StatusType = Literal["ready", "error", "timeout", "in_progress"]
-PlatformType = Optional[Literal["linkedin", "amazon", "chatgpt"]]
+PlatformType = Optional[Literal["linkedin", "amazon", "chatgpt", "instagram", "facebook"]]
 SearchEngineType = Optional[Literal["google", "bing", "yandex"]]
 
 

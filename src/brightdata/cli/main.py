@@ -7,13 +7,14 @@ Provides a unified command-line interface for all search and scrape operations.
 import click
 import sys
 
+from brightdata import __version__
 from .commands import scrape_group, search_group
 from .banner import print_banner
 from .utils import handle_error
 
 
 @click.group(invoke_without_command=True)
-@click.version_option(version="2.1.0", prog_name="brightdata")
+@click.version_option(version=__version__, prog_name="brightdata")
 @click.option("--banner/--no-banner", default=True, help="Show/hide banner on startup")
 @click.pass_context
 def cli(ctx: click.Context, banner: bool) -> None:
