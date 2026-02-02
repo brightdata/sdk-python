@@ -103,4 +103,3 @@ print(f"   result.get_timing_breakdown(): {len(r2.get_timing_breakdown())} keys"
 print("\n" + "=" * 60)
 print("ALL TESTS PASSED - FUNCTIONALITY VERIFIED!")
 print("=" * 60)
-

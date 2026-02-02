@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 
 from ..models import ScrapeResult
 from ..constants import DEFAULT_POLL_INTERVAL, DEFAULT_POLL_TIMEOUT
+from ..exceptions import DataNotReadyError
 
 
 async def poll_until_ready(
@@ -123,6 +124,11 @@ async def poll_until_ready(
 
             try:
                 data = await fetch_result_func(snapshot_id)
+            except DataNotReadyError:
+                # Race condition: status said "ready" but fetch returned HTTP 202
+                # Continue polling - wait and try again
+                await asyncio.sleep(poll_interval)
+                continue
             except Exception as e:
                 return ScrapeResult(
                     success=False,

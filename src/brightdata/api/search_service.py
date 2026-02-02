@@ -19,6 +19,8 @@ if TYPE_CHECKING:
     from ..scrapers.linkedin.search import LinkedInSearchScraper
     from ..scrapers.chatgpt.search import ChatGPTSearchService
     from ..scrapers.instagram.search import InstagramSearchScraper
+    from ..scrapers.tiktok.search import TikTokSearchScraper
+    from ..scrapers.youtube.search import YouTubeSearchScraper
 
 
 class SearchService:
@@ -50,6 +52,8 @@ class SearchService:
         self._linkedin_search: Optional["LinkedInSearchScraper"] = None
         self._chatgpt_search: Optional["ChatGPTSearchService"] = None
         self._instagram_search: Optional["InstagramSearchScraper"] = None
+        self._tiktok_search: Optional["TikTokSearchScraper"] = None
+        self._youtube_search: Optional["YouTubeSearchScraper"] = None
 
     async def google(
         self,
@@ -290,3 +294,79 @@ class SearchService:
                 bearer_token=self._client.token, engine=self._client.engine
             )
         return self._instagram_search
+
+    @property
+    def tiktok(self):
+        """
+        Access TikTok search service for discovery operations.
+
+        Returns:
+            TikTokSearchScraper for discovering profiles and posts
+
+        Example:
+            >>> # Discover profiles by search URL
+            >>> result = await client.search.tiktok.profiles(
+            ...     search_url="https://www.tiktok.com/search?q=music",
+            ...     country="US"
+            ... )
+            >>>
+            >>> # Discover posts by keyword
+            >>> result = await client.search.tiktok.posts_by_keyword(
+            ...     keyword="#trending",
+            ...     num_of_posts=50
+            ... )
+            >>>
+            >>> # Discover posts from profile
+            >>> result = await client.search.tiktok.posts_by_profile(
+            ...     url="https://www.tiktok.com/@username",
+            ...     num_of_posts=20
+            ... )
+        """
+        if self._tiktok_search is None:
+            from ..scrapers.tiktok.search import TikTokSearchScraper
+
+            self._tiktok_search = TikTokSearchScraper(
+                bearer_token=self._client.token, engine=self._client.engine
+            )
+        return self._tiktok_search
+
+    @property
+    def youtube(self):
+        """
+        Access YouTube search service for discovery operations.
+
+        Returns:
+            YouTubeSearchScraper for discovering videos and channels
+
+        Example:
+            >>> # Discover videos by keyword
+            >>> result = await client.search.youtube.videos_by_keyword(
+            ...     keyword="python tutorial",
+            ...     num_of_videos=20
+            ... )
+            >>>
+            >>> # Discover videos by hashtag
+            >>> result = await client.search.youtube.videos_by_hashtag(
+            ...     hashtag="#coding",
+            ...     num_of_videos=50
+            ... )
+            >>>
+            >>> # Discover videos from channel
+            >>> result = await client.search.youtube.videos_by_channel(
+            ...     url="https://www.youtube.com/@MrBeast",
+            ...     num_of_videos=100
+            ... )
+            >>>
+            >>> # Discover channels by keyword
+            >>> result = await client.search.youtube.channels_by_keyword(
+            ...     keyword="tech review",
+            ...     num_of_channels=10
+            ... )
+        """
+        if self._youtube_search is None:
+            from ..scrapers.youtube.search import YouTubeSearchScraper
+
+            self._youtube_search = YouTubeSearchScraper(
+                bearer_token=self._client.token, engine=self._client.engine
+            )
+        return self._youtube_search

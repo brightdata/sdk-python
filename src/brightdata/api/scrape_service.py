@@ -26,6 +26,9 @@ class ScrapeService:
         self._chatgpt = None
         self._facebook = None
         self._instagram = None
+        self._perplexity = None
+        self._tiktok = None
+        self._youtube = None
 
     @property
     def amazon(self):
@@ -180,3 +183,108 @@ class ScrapeService:
                 bearer_token=self._client.token, engine=self._client.engine
             )
         return self._instagram
+
+    @property
+    def perplexity(self):
+        """
+        Access Perplexity AI scraper.
+
+        Returns:
+            PerplexityScraper instance for Perplexity AI search
+
+        Example:
+            >>> # Single search
+            >>> result = await client.scrape.perplexity.search(
+            ...     prompt="What are the latest AI trends?",
+            ...     country="US"
+            ... )
+            >>>
+            >>> # Batch search
+            >>> result = await client.scrape.perplexity.search(
+            ...     prompt=["What is Python?", "What is JavaScript?"],
+            ...     country=["US", "GB"]
+            ... )
+        """
+        if self._perplexity is None:
+            from ..scrapers.perplexity import PerplexityScraper
+
+            self._perplexity = PerplexityScraper(
+                bearer_token=self._client.token, engine=self._client.engine
+            )
+        return self._perplexity
+
+    @property
+    def tiktok(self):
+        """
+        Access TikTok scraper.
+
+        Returns:
+            TikTokScraper instance for TikTok data extraction
+
+        Example:
+            >>> # Collect profile data
+            >>> result = await client.scrape.tiktok.profiles(
+            ...     url="https://www.tiktok.com/@username"
+            ... )
+            >>>
+            >>> # Collect posts
+            >>> result = await client.scrape.tiktok.posts(
+            ...     url="https://www.tiktok.com/@user/video/123456"
+            ... )
+            >>>
+            >>> # Discover posts by keyword
+            >>> result = await client.scrape.tiktok.posts_by_keyword(
+            ...     keyword="#trending",
+            ...     num_of_posts=50
+            ... )
+            >>>
+            >>> # Collect comments
+            >>> result = await client.scrape.tiktok.comments(
+            ...     url="https://www.tiktok.com/@user/video/123456"
+            ... )
+            >>>
+            >>> # Fast API - posts from profile
+            >>> result = await client.scrape.tiktok.posts_by_profile_fast(
+            ...     url="https://www.tiktok.com/@bbc"
+            ... )
+        """
+        if self._tiktok is None:
+            from ..scrapers.tiktok import TikTokScraper
+
+            self._tiktok = TikTokScraper(
+                bearer_token=self._client.token, engine=self._client.engine
+            )
+        return self._tiktok
+
+    @property
+    def youtube(self):
+        """
+        Access YouTube scraper.
+
+        Returns:
+            YouTubeScraper instance for YouTube data extraction
+
+        Example:
+            >>> # Collect video data
+            >>> result = await client.scrape.youtube.videos(
+            ...     url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+            ... )
+            >>>
+            >>> # Collect channel data
+            >>> result = await client.scrape.youtube.channels(
+            ...     url="https://www.youtube.com/@MrBeast/about"
+            ... )
+            >>>
+            >>> # Collect comments
+            >>> result = await client.scrape.youtube.comments(
+            ...     url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            ...     num_of_comments=100
+            ... )
+        """
+        if self._youtube is None:
+            from ..scrapers.youtube import YouTubeScraper
+
+            self._youtube = YouTubeScraper(
+                bearer_token=self._client.token, engine=self._client.engine
+            )
+        return self._youtube

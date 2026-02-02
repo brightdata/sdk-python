@@ -39,6 +39,12 @@ class APIError(BrightDataError):
         self.response_text = response_text
 
 
+class DataNotReadyError(BrightDataError):
+    """Data is not ready yet (HTTP 202). Should retry."""
+
+    pass
+
+
 class TimeoutError(BrightDataError):
     """Operation timed out."""
 

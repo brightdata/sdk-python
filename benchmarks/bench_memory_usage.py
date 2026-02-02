@@ -1,2 +1,1 @@
 """Benchmark: Memory usage."""
-

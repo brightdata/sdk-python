@@ -35,6 +35,31 @@ try:
 except ImportError:
     InstagramSearchScraper = None
 
+try:
+    from .perplexity.scraper import PerplexityScraper
+except ImportError:
+    PerplexityScraper = None
+
+try:
+    from .tiktok.scraper import TikTokScraper
+except ImportError:
+    TikTokScraper = None
+
+try:
+    from .tiktok.search import TikTokSearchScraper
+except ImportError:
+    TikTokSearchScraper = None
+
+try:
+    from .youtube.scraper import YouTubeScraper
+except ImportError:
+    YouTubeScraper = None
+
+try:
+    from .youtube.search import YouTubeSearchScraper
+except ImportError:
+    YouTubeSearchScraper = None
+
 
 __all__ = [
     "BaseWebScraper",
@@ -49,4 +74,9 @@ __all__ = [
     "FacebookScraper",
     "InstagramScraper",
     "InstagramSearchScraper",
+    "PerplexityScraper",
+    "TikTokScraper",
+    "TikTokSearchScraper",
+    "YouTubeScraper",
+    "YouTubeSearchScraper",
 ]

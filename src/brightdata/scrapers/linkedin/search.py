@@ -50,7 +50,8 @@ class LinkedInSearchScraper:
 
     # Dataset IDs for different LinkedIn types
     DATASET_ID_POSTS = "gd_lyy3tktm25m4avu764"
-    DATASET_ID_PROFILES = "gd_l1viktl72bvl7bjuj0"
+    DATASET_ID_PROFILES = "gd_l1viktl72bvl7bjuj0"  # URL-based profile scraping
+    DATASET_ID_PROFILES_DISCOVERY = "gd_m8d03he47z8nwb5xc"  # Name-based profile search
     DATASET_ID_JOBS = "gd_lpfll7v5hcqtkxl6l"  # URL-based job scraping
     DATASET_ID_JOBS_DISCOVERY = "gd_m487ihp32jtc4ujg45"  # Keyword/location discovery
 
@@ -78,7 +79,7 @@ class LinkedInSearchScraper:
 
     async def posts(
         self,
-        profile_url: Union[str, List[str]],
+        url: Union[str, List[str]],
         start_date: Optional[Union[str, List[str]]] = None,
         end_date: Optional[Union[str, List[str]]] = None,
         timeout: int = DEFAULT_TIMEOUT_SHORT,
@@ -87,7 +88,7 @@ class LinkedInSearchScraper:
         Discover posts from LinkedIn profile(s) within date range.
 
         Args:
-            profile_url: Profile URL(s) to get posts from (required)
+            url: Profile URL(s) to get posts from (required)
             start_date: Start date in yyyy-mm-dd format (optional)
             end_date: End date in yyyy-mm-dd format (optional)
             timeout: Operation timeout in seconds
@@ -97,20 +98,20 @@ class LinkedInSearchScraper:
 
         Example:
             >>> result = await search.posts(
-            ...     profile_url="https://linkedin.com/in/johndoe",
+            ...     url="https://linkedin.com/in/johndoe",
             ...     start_date="2025-01-01",
             ...     end_date="2025-12-31"
             ... )
         """
         # Normalize to lists
-        profile_urls = [profile_url] if isinstance(profile_url, str) else profile_url
+        profile_urls = [url] if isinstance(url, str) else url
         start_dates = self._normalize_param(start_date, len(profile_urls))
         end_dates = self._normalize_param(end_date, len(profile_urls))
 
-        # Build payload
+        # Build payload - API requires "url" field, not "profile_url"
         payload = []
-        for i, url in enumerate(profile_urls):
-            item: Dict[str, Any] = {"profile_url": url}
+        for i, profile_url in enumerate(profile_urls):
+            item: Dict[str, Any] = {"url": profile_url}
 
             if start_dates and i < len(start_dates):
                 item["start_date"] = start_dates[i]
@@ -119,14 +120,17 @@ class LinkedInSearchScraper:
 
             payload.append(item)
 
-        # Execute search
+        # Execute search with discovery params
         return await self._execute_search(
-            payload=payload, dataset_id=self.DATASET_ID_POSTS, timeout=timeout
+            payload=payload,
+            dataset_id=self.DATASET_ID_POSTS,
+            timeout=timeout,
+            extra_params={"type": "discover_new", "discover_by": "profile_url"},
         )
 
     def posts_sync(
         self,
-        profile_url: Union[str, List[str]],
+        url: Union[str, List[str]],
         start_date: Optional[Union[str, List[str]]] = None,
         end_date: Optional[Union[str, List[str]]] = None,
         timeout: int = DEFAULT_TIMEOUT_SHORT,
@@ -139,7 +143,7 @@ class LinkedInSearchScraper:
 
         async def _run():
             async with self.engine:
-                return await self.posts(profile_url, start_date, end_date, timeout)
+                return await self.posts(url, start_date, end_date, timeout)
 
         return asyncio.run(_run())
 
@@ -149,16 +153,16 @@ class LinkedInSearchScraper:
 
     async def profiles(
         self,
-        firstName: Union[str, List[str]],
-        lastName: Optional[Union[str, List[str]]] = None,
+        first_name: Union[str, List[str]],
+        last_name: Optional[Union[str, List[str]]] = None,
         timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
         Find LinkedIn profiles by name.
 
         Args:
-            firstName: First name(s) to search (required)
-            lastName: Last name(s) to search (optional)
+            first_name: First name(s) to search (required)
+            last_name: Last name(s) to search (optional)
             timeout: Operation timeout in seconds
 
         Returns:
@@ -166,32 +170,35 @@ class LinkedInSearchScraper:
 
         Example:
             >>> result = await search.profiles(
-            ...     firstName="John",
-            ...     lastName="Doe"
+            ...     first_name="John",
+            ...     last_name="Doe"
             ... )
         """
         # Normalize to lists
-        first_names = [firstName] if isinstance(firstName, str) else firstName
-        last_names = self._normalize_param(lastName, len(first_names))
+        first_names = [first_name] if isinstance(first_name, str) else first_name
+        last_names = self._normalize_param(last_name, len(first_names))
 
-        # Build payload
+        # Build payload - API requires url + first_name + last_name
         payload = []
-        for i, first_name in enumerate(first_names):
-            item: Dict[str, Any] = {"firstName": first_name}
+        for i, fname in enumerate(first_names):
+            item: Dict[str, Any] = {
+                "url": "https://www.linkedin.com",
+                "first_name": fname,
+            }
 
             if last_names and i < len(last_names):
-                item["lastName"] = last_names[i]
+                item["last_name"] = last_names[i]
 
             payload.append(item)
 
         return await self._execute_search(
-            payload=payload, dataset_id=self.DATASET_ID_PROFILES, timeout=timeout
+            payload=payload, dataset_id=self.DATASET_ID_PROFILES_DISCOVERY, timeout=timeout
         )
 
     def profiles_sync(
         self,
-        firstName: Union[str, List[str]],
-        lastName: Optional[Union[str, List[str]]] = None,
+        first_name: Union[str, List[str]],
+        last_name: Optional[Union[str, List[str]]] = None,
         timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
@@ -202,7 +209,7 @@ class LinkedInSearchScraper:
 
         async def _run():
             async with self.engine:
-                return await self.profiles(firstName, lastName, timeout)
+                return await self.profiles(first_name, last_name, timeout)
 
         return asyncio.run(_run())
 
@@ -278,40 +285,52 @@ class LinkedInSearchScraper:
         companies = self._normalize_param(company, batch_size)
         location_radii = self._normalize_param(locationRadius, batch_size)
 
-        # Build payload - LinkedIn API requires URLs, not search parameters
-        # If keyword/location provided, build LinkedIn job search URL internally
+        # Build payload based on input type
+        # - If URL provided: use URL-based dataset (for scraping specific job pages)
+        # - If keyword/location provided: use discovery dataset (for searching jobs)
         payload = []
+        use_discovery = False
+
         for i in range(batch_size):
-            # If URL provided directly, use it
+            # If URL provided directly, use it with URL-based scraper
             if urls and i < len(urls):
                 item = {"url": urls[i]}
             else:
-                # Build LinkedIn job search URL from parameters
-                search_url = self._build_linkedin_jobs_search_url(
-                    keyword=keywords[i] if keywords and i < len(keywords) else None,
-                    location=locations[i] if locations and i < len(locations) else None,
-                    country=countries[i] if countries and i < len(countries) else None,
-                    time_range=time_ranges[i] if time_ranges and i < len(time_ranges) else None,
-                    job_type=job_types[i] if job_types and i < len(job_types) else None,
-                    experience_level=(
-                        experience_levels[i]
-                        if experience_levels and i < len(experience_levels)
-                        else None
-                    ),
-                    remote=remote,
-                    company=companies[i] if companies and i < len(companies) else None,
-                    location_radius=(
-                        location_radii[i] if location_radii and i < len(location_radii) else None
-                    ),
-                )
-                item = {"url": search_url}
+                # Use discovery dataset with keyword/location parameters
+                use_discovery = True
+                item: Dict[str, Any] = {}
+
+                if keywords and i < len(keywords):
+                    item["keyword"] = keywords[i]
+                if locations and i < len(locations):
+                    item["location"] = locations[i]
+                if countries and i < len(countries):
+                    item["country"] = countries[i]
+                if time_ranges and i < len(time_ranges):
+                    item["time_range"] = time_ranges[i]
+                if job_types and i < len(job_types):
+                    item["job_type"] = job_types[i]
+                if experience_levels and i < len(experience_levels):
+                    item["experience_level"] = experience_levels[i]
+                if remote is not None:
+                    item["remote"] = remote
+                if companies and i < len(companies):
+                    item["company"] = companies[i]
+                if location_radii and i < len(location_radii):
+                    item["location_radius"] = location_radii[i]
 
             payload.append(item)
 
-        # Always use URL-based dataset (discovery dataset doesn't support parameters)
-        dataset_id = self.DATASET_ID_JOBS
+        # Use same dataset for both URL-based and keyword-based, but with different query params
+        # For keyword search: add type=discover_new&discover_by=keyword
+        extra_params = {"type": "discover_new", "discover_by": "keyword"} if use_discovery else None
 
-        return await self._execute_search(payload=payload, dataset_id=dataset_id, timeout=timeout)
+        return await self._execute_search(
+            payload=payload,
+            dataset_id=self.DATASET_ID_JOBS,
+            timeout=timeout,
+            extra_params=extra_params,
+        )
 
     def jobs_sync(
         self,
@@ -495,6 +514,7 @@ class LinkedInSearchScraper:
         payload: List[Dict[str, Any]],
         dataset_id: str,
         timeout: int,
+        extra_params: Optional[Dict[str, str]] = None,
     ) -> ScrapeResult:
         """
         Execute search operation via trigger/poll/fetch.
@@ -503,6 +523,7 @@ class LinkedInSearchScraper:
             payload: Search parameters
             dataset_id: LinkedIn dataset ID
             timeout: Operation timeout
+            extra_params: Additional query parameters (e.g., type, discover_by)
 
         Returns:
             ScrapeResult with search results
@@ -517,6 +538,7 @@ class LinkedInSearchScraper:
             poll_timeout=timeout,
             include_errors=True,
             sdk_function=sdk_function,
+            extra_params=extra_params,
         )
 
         return result
