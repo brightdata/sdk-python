@@ -19,7 +19,6 @@ from typing import Optional, List, Dict, Any
 import re
 from urllib.parse import urlparse
 
-
 # ============================================================================
 # BASE PAYLOAD CLASSES
 # ============================================================================

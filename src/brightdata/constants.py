@@ -37,6 +37,15 @@ COST_PER_RECORD_INSTAGRAM: float = 0.002
 COST_PER_RECORD_CHATGPT: float = 0.005
 """Cost per record for ChatGPT scrapers (higher due to AI processing)."""
 
+COST_PER_RECORD_PERPLEXITY: float = 0.005
+"""Cost per record for Perplexity scrapers (higher due to AI processing)."""
+
+COST_PER_RECORD_TIKTOK: float = 0.002
+"""Cost per record for TikTok scrapers."""
+
+COST_PER_RECORD_YOUTUBE: float = 0.002
+"""Cost per record for YouTube scrapers."""
+
 # HTTP Status Codes
 HTTP_OK: int = 200
 """HTTP 200 OK - Request succeeded."""

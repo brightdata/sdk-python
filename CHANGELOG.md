@@ -1,5 +1,24 @@
 # Bright Data Python SDK Changelog
 
+## Version 2.1.2 - Web Scrapers & Notebooks
+
+### 🐛 Bug Fixes
+
+#### LinkedIn Job Search
+Fixed `client.search.linkedin.jobs()` to use the correct discovery dataset when searching by keyword/location. Previously it was incorrectly using the URL-based job scraper dataset which expected single job URLs, not search parameters.
+
+### 📓 Notebooks
+
+#### New Notebooks
+- `notebooks/web_scrapers/linkedin.ipynb` - Complete LinkedIn scraper tests for all endpoints
+- `notebooks/03_serp.ipynb` - Google Search API tests
+- `notebooks/04_web_unlocker.ipynb` - Web Unlocker HTML scraping tests
+
+#### Updated Notebooks
+- `notebooks/02_pandas_integration.ipynb` - Efficient batch scraping with `asyncio.gather()` pattern
+
+---
+
 ## Version 2.1.1 - Instagram Scrapers & Version Centralization
 
 ### ✨ New Features

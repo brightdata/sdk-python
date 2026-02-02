@@ -25,9 +25,9 @@ async def demo_list_zones():
 
     print(f"\nFound {len(zones)} zones in your account:")
     for zone in zones:
-        zone_name = zone.get('name', 'Unknown')
-        zone_type = zone.get('type', 'unknown')
-        zone_status = zone.get('status', 'unknown')
+        zone_name = zone.get("name", "Unknown")
+        zone_type = zone.get("type", "unknown")
+        zone_status = zone.get("status", "unknown")
         print(f"  - {zone_name}")
         print(f"    Type: {zone_type}")
         print(f"    Status: {zone_status}")
@@ -55,7 +55,7 @@ async def demo_auto_create_zones():
 
         # List zones to confirm
         zones = await client.list_zones()
-        zone_names = [z.get('name') for z in zones]
+        zone_names = [z.get("name") for z in zones]
 
         print(f"\nZones now in account ({len(zones)} total):")
         for name in zone_names:
@@ -86,8 +86,7 @@ async def demo_zone_manager_advanced():
 
         try:
             await zone_manager.ensure_required_zones(
-                web_unlocker_zone="my_web_unlocker",
-                serp_zone="my_serp_api"
+                web_unlocker_zone="my_web_unlocker", serp_zone="my_serp_api"
             )
             print("\n✓ Zones ensured successfully")
         except Exception as e:
@@ -156,6 +155,7 @@ async def main():
     except Exception as e:
         print(f"\n❌ Error running demos: {e}")
         import traceback
+
         traceback.print_exc()
 
 

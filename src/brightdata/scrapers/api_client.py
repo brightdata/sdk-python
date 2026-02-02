@@ -11,7 +11,7 @@ from typing import List, Dict, Any, Optional
 
 from ..core.engine import AsyncEngine
 from ..constants import HTTP_OK
-from ..exceptions import APIError
+from ..exceptions import APIError, DataNotReadyError
 
 
 class DatasetAPIClient:
@@ -130,6 +130,11 @@ class DatasetAPIClient:
                     return await response.json()
                 else:
                     return await response.text()
+            elif response.status == 202:
+                # Data not ready yet - status said "ready" but fetch says still building
+                # This is a race condition that should trigger retry
+                error_text = await response.text()
+                raise DataNotReadyError(f"Data not ready (HTTP 202): {error_text}")
             else:
                 error_text = await response.text()
                 raise APIError(

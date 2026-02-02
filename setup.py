@@ -8,10 +8,12 @@ The main configuration is in pyproject.toml following modern Python packaging st
 from setuptools import setup, find_packages
 import os
 
+
 # Read the README file
 def read_readme():
     with open("README.md", "r", encoding="utf-8") as fh:
         return fh.read()
+
 
 # Read version from src/brightdata/__init__.py (src layout)
 def read_version():
@@ -29,6 +31,7 @@ def read_version():
                 if line.startswith("__version__"):
                     return line.split('"')[1]
     return "2.0.0"
+
 
 setup(
     name="brightdata-sdk",
