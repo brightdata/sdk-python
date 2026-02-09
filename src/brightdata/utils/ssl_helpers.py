@@ -92,7 +92,7 @@ def get_ssl_error_message(error: Exception) -> str:
 
     if is_macos():
         fix_instructions = """
-        
+
 To fix this on macOS, try one of the following:
 
 1. Install/upgrade certifi:
@@ -112,7 +112,7 @@ https://github.com/brightdata/brightdata-python-sdk/blob/main/docs/troubleshooti
 """
     else:
         fix_instructions = """
-        
+
 To fix this, try:
 
 1. Install/upgrade certifi:

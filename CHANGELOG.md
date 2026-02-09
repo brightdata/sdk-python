@@ -1,5 +1,39 @@
 # Bright Data Python SDK Changelog
 
+## Version 2.2.0 - Datasets API
+
+### ✨ New Features
+
+#### Datasets API
+Access Bright Data's pre-collected datasets with filtering and export capabilities.
+
+```python
+async with BrightDataClient() as client:
+    # Filter dataset records
+    snapshot_id = await client.datasets.amazon_products.filter(
+        filter={"name": "rating", "operator": ">=", "value": 4.5},
+        records_limit=100
+    )
+    # Download results
+    data = await client.datasets.amazon_products.download(snapshot_id)
+```
+
+**8 Datasets:** LinkedIn Profiles, LinkedIn Companies, Amazon Products, Crunchbase Companies, IMDB Movies, NBA Players Stats, Goodreads Books, World Population
+
+**Export Utilities:**
+```python
+from brightdata.datasets import export_json, export_csv
+export_json(data, "results.json")
+export_csv(data, "results.csv")
+```
+
+### 📓 Notebooks
+- `notebooks/datasets/linkedin/linkedin.ipynb` - LinkedIn datasets (profiles & companies)
+- `notebooks/datasets/amazon/amazon.ipynb` - Amazon products dataset
+- `notebooks/datasets/crunchbase/crunchbase.ipynb` - Crunchbase companies dataset
+
+---
+
 ## Version 2.1.2 - Web Scrapers & Notebooks
 
 ### 🐛 Bug Fixes
