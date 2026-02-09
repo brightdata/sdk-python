@@ -4,4 +4,3 @@ include CHANGELOG.md
 include pyproject.toml
 recursive-include src *.py
 recursive-include src *.typed
-

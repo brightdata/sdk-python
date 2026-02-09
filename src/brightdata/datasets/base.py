@@ -22,7 +22,8 @@ class BaseDataset:
     """
     Base class for all dataset types.
 
-    Provides common methods: get_metadata(), filter(), get_status(), download().
+    Provides common methods: get_metadata(), get_status(), download().
+    Call the dataset directly to filter: await dataset(filter=..., records_limit=...)
     Subclasses set their own DATASET_ID and can add dataset-specific helpers.
     """
 
@@ -60,7 +61,7 @@ class BaseDataset:
             self._metadata = DatasetMetadata.from_dict(data)
         return self._metadata
 
-    async def filter(
+    async def __call__(
         self,
         filter: Dict[str, Any],
         records_limit: Optional[int] = None,
@@ -106,7 +107,7 @@ class BaseDataset:
         Check snapshot status.
 
         Args:
-            snapshot_id: Snapshot ID from filter()
+            snapshot_id: Snapshot ID from calling the dataset
 
         Returns:
             SnapshotStatus with status field: "scheduled", "building", "ready", or "failed"
@@ -130,7 +131,7 @@ class BaseDataset:
         Polls until snapshot is ready, then downloads and returns data.
 
         Args:
-            snapshot_id: Snapshot ID from filter()
+            snapshot_id: Snapshot ID from calling the dataset
             format: Response format (json, jsonl, csv)
             timeout: Max seconds to wait for snapshot to be ready
             poll_interval: Seconds between status checks

@@ -10,7 +10,7 @@ Access Bright Data's pre-collected datasets with filtering and export capabiliti
 ```python
 async with BrightDataClient() as client:
     # Filter dataset records
-    snapshot_id = await client.datasets.amazon_products.filter(
+    snapshot_id = await client.datasets.amazon_products(
         filter={"name": "rating", "operator": ">=", "value": 4.5},
         records_limit=100
     )
