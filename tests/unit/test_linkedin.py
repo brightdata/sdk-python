@@ -118,8 +118,8 @@ class TestLinkedInSearchScraper:
         search = LinkedInSearchScraper(bearer_token="test_token_123456789")
         sig = inspect.signature(search.posts)
 
-        # Required: profile_url
-        assert "profile_url" in sig.parameters
+        # Required: url (profile URL)
+        assert "url" in sig.parameters
 
         # Optional: start_date, end_date, timeout
         assert "start_date" in sig.parameters
@@ -133,11 +133,11 @@ class TestLinkedInSearchScraper:
         search = LinkedInSearchScraper(bearer_token="test_token_123456789")
         sig = inspect.signature(search.profiles)
 
-        # Required: firstName
-        assert "firstName" in sig.parameters
+        # Required: first_name
+        assert "first_name" in sig.parameters
 
-        # Optional: lastName, timeout
-        assert "lastName" in sig.parameters
+        # Optional: last_name, timeout
+        assert "last_name" in sig.parameters
         assert "timeout" in sig.parameters
 
     def test_search_jobs_signature(self):
@@ -195,11 +195,10 @@ class TestLinkedInDualNamespaces:
         assert "url" in scraper_sig.parameters
         assert "sync" not in scraper_sig.parameters  # sync parameter was removed
 
-        # Search uses platform-specific parameters
+        # Search uses url + date range parameters
         search_sig = inspect.signature(search.posts)
-        assert "profile_url" in search_sig.parameters
+        assert "url" in search_sig.parameters
         assert "start_date" in search_sig.parameters
-        assert "url" not in search_sig.parameters  # Different from scraper
 
     def test_scrape_linkedin_methods_accept_url_list(self):
         """Test scrape.linkedin methods accept url as str | list."""
@@ -289,12 +288,12 @@ class TestAPISpecCompliance:
         """Test client.search.linkedin.posts matches API spec."""
         client = BrightDataClient(token="test_token_123456789")
 
-        # API Spec: posts(profile_url, start_date, end_date)
+        # API Spec: posts(url, start_date, end_date)
         import inspect
 
         sig = inspect.signature(client.search.linkedin.posts)
 
-        assert "profile_url" in sig.parameters
+        assert "url" in sig.parameters
         assert "start_date" in sig.parameters
         assert "end_date" in sig.parameters
 
@@ -302,13 +301,13 @@ class TestAPISpecCompliance:
         """Test client.search.linkedin.profiles matches API spec."""
         client = BrightDataClient(token="test_token_123456789")
 
-        # API Spec: profiles(firstName, lastName, timeout)
+        # API Spec: profiles(first_name, last_name, timeout)
         import inspect
 
         sig = inspect.signature(client.search.linkedin.profiles)
 
-        assert "firstName" in sig.parameters
-        assert "lastName" in sig.parameters
+        assert "first_name" in sig.parameters
+        assert "last_name" in sig.parameters
         assert "timeout" in sig.parameters
 
     def test_search_jobs_api_spec(self):
@@ -393,7 +392,7 @@ class TestInterfaceExamples:
         """Test search.linkedin.posts interface."""
         client = BrightDataClient(token="test_token_123456789")
 
-        # Interface: posts(profile_url, start_date, end_date)
+        # Interface: posts(url, start_date, end_date)
         linkedin_search = client.search.linkedin
 
         assert callable(linkedin_search.posts)
@@ -401,7 +400,7 @@ class TestInterfaceExamples:
         import inspect
 
         sig = inspect.signature(linkedin_search.posts)
-        assert "profile_url" in sig.parameters
+        assert "url" in sig.parameters
         assert "start_date" in sig.parameters
         assert "end_date" in sig.parameters
 
@@ -452,15 +451,15 @@ class TestParameterArraySupport:
         assert "Union" in url_annotation or "|" in url_annotation
         assert "str" in url_annotation
 
-    def test_profile_url_accepts_array(self):
-        """Test profile_url accepts arrays."""
+    def test_url_accepts_array_in_search_posts(self):
+        """Test url accepts arrays in search posts."""
         import inspect
 
         search = LinkedInSearchScraper(bearer_token="test_token_123456789")
         sig = inspect.signature(search.posts)
 
-        # profile_url should accept str | list
-        annotation = str(sig.parameters["profile_url"].annotation)
+        # url should accept str | list
+        annotation = str(sig.parameters["url"].annotation)
         assert "Union" in annotation or "str" in annotation
 
 
@@ -504,9 +503,9 @@ class TestPhilosophicalPrinciples:
         scraper_posts_sig = inspect.signature(scraper.posts)
         assert "url" in scraper_posts_sig.parameters
 
-        # Search is for discovery parameters
+        # Search is for discovery parameters (url + date range)
         search_posts_sig = inspect.signature(search.posts)
-        assert "profile_url" in search_posts_sig.parameters
+        assert "url" in search_posts_sig.parameters
         assert "start_date" in search_posts_sig.parameters
 
     def test_consistent_timeout_defaults(self):

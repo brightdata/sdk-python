@@ -305,13 +305,13 @@ class TestScrapeVsSearchDistinction:
         jobs_sig = inspect.signature(linkedin_search.jobs)
         assert "keyword" in jobs_sig.parameters
 
-        # LinkedIn search profiles() should accept firstName (parameter-based discovery)
+        # LinkedIn search profiles() should accept first_name (parameter-based discovery)
         profiles_sig = inspect.signature(linkedin_search.profiles)
-        assert "firstName" in profiles_sig.parameters
+        assert "first_name" in profiles_sig.parameters
 
-        # LinkedIn search posts() should accept profile_url (parameter-based discovery)
+        # LinkedIn search posts() should accept url (parameter-based discovery)
         posts_sig = inspect.signature(linkedin_search.posts)
-        assert "profile_url" in posts_sig.parameters
+        assert "url" in posts_sig.parameters
 
     def test_all_platform_scrapers_have_scrape(self):
         """Test all platform scrapers have scrape() method."""
