@@ -27,6 +27,7 @@ from .api.web_unlocker import WebUnlockerService
 from .api.scrape_service import ScrapeService
 from .api.search_service import SearchService
 from .api.crawler_service import CrawlerService
+from .datasets import DatasetsClient
 from .models import ScrapeResult
 from .types import AccountInfo
 from .constants import (
@@ -131,6 +132,7 @@ class BrightDataClient:
         self._search_service: Optional[SearchService] = None
         self._crawler_service: Optional[CrawlerService] = None
         self._web_unlocker_service: Optional[WebUnlockerService] = None
+        self._datasets_client: Optional[DatasetsClient] = None
         self._zone_manager: Optional[ZoneManager] = None
         self._is_connected = False
         self._account_info: Optional[Dict[str, Any]] = None
@@ -281,6 +283,35 @@ class BrightDataClient:
         if self._crawler_service is None:
             self._crawler_service = CrawlerService(self)
         return self._crawler_service
+
+    @property
+    def datasets(self) -> DatasetsClient:
+        """
+        Access pre-collected datasets.
+
+        Provides access to Bright Data's datasets with filtering capabilities:
+        - client.datasets.list()
+        - client.datasets.linkedin_profiles.get_metadata()
+        - client.datasets.linkedin_profiles.filter(...)
+        - client.datasets.linkedin_profiles.download(snapshot_id)
+
+        Returns:
+            DatasetsClient instance for dataset operations
+
+        Example:
+            >>> # List available datasets
+            >>> datasets = await client.datasets.list()
+            >>>
+            >>> # Filter LinkedIn profiles
+            >>> snapshot_id = await client.datasets.linkedin_profiles.filter(
+            ...     filter={"name": "industry", "operator": "=", "value": "Technology"},
+            ...     records_limit=100
+            ... )
+            >>> data = await client.datasets.linkedin_profiles.download(snapshot_id)
+        """
+        if self._datasets_client is None:
+            self._datasets_client = DatasetsClient(self.engine)
+        return self._datasets_client
 
     async def test_connection(self) -> bool:
         """

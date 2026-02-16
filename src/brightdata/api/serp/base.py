@@ -3,7 +3,10 @@
 import asyncio
 import aiohttp
 import json
-from typing import Union, List, Optional
+import re
+import time
+import warnings
+from typing import Union, List, Optional, Dict, Any, Tuple
 from datetime import datetime, timezone
 
 from .url_builder import BaseURLBuilder
@@ -29,6 +32,9 @@ class BaseSERPService:
     SEARCH_ENGINE: str = ""
     ENDPOINT = "/request"
     DEFAULT_TIMEOUT = 30
+    PAGE_SIZE = 10
+    MAX_PAGES = 20
+    PAGINATION_TIMEOUT = 300
 
     def __init__(
         self,
@@ -102,6 +108,16 @@ class BaseSERPService:
         self._validate_zone(zone)
         self._validate_queries(query_list)
 
+        # Warn if pagination requested with async mode (not supported)
+        if mode == "async" and num_results > self.PAGE_SIZE and self.SEARCH_ENGINE == "google":
+            warnings.warn(
+                f"Pagination (num_results={num_results}) is not supported in async mode. "
+                f"Only first page (~{self.PAGE_SIZE} results) will be returned. "
+                f"Use mode='sync' for pagination support.",
+                UserWarning,
+                stacklevel=2,
+            )
+
         # Route based on mode
         if mode == "async":
             # Async mode: use unblocker endpoints with polling
@@ -164,6 +180,19 @@ class BaseSERPService:
         **kwargs,
     ) -> SearchResult:
         """Execute single search query with retry logic."""
+        # Route to pagination for Google when requesting more than one page
+        if num_results > self.PAGE_SIZE and self.SEARCH_ENGINE == "google":
+            return await self._search_with_pagination(
+                query=query,
+                zone=zone,
+                location=location,
+                language=language,
+                device=device,
+                num_results=num_results,
+                **kwargs,
+            )
+
+        # Single page request
         trigger_sent_at = datetime.now(timezone.utc)
 
         search_url = self.url_builder.build(
@@ -175,8 +204,49 @@ class BaseSERPService:
             **kwargs,
         )
 
-        # Use "json" format when brd_json=1 is in URL (enables Bright Data parsing)
-        # Otherwise use "raw" to get HTML response
+        raw_data, data_fetched_at, error = await self._execute_serp_request(
+            search_url=search_url,
+            zone=zone,
+            trigger_sent_at=trigger_sent_at,
+        )
+
+        if error:
+            return SearchResult(
+                success=False,
+                query={"q": query},
+                error=f"Search failed: {error}",
+                search_engine=self.SEARCH_ENGINE,
+                trigger_sent_at=trigger_sent_at,
+                data_fetched_at=data_fetched_at,
+            )
+
+        normalized_data = self.data_normalizer.normalize(raw_data)
+
+        return SearchResult(
+            success=True,
+            query={"q": query, "location": location, "language": language},
+            data=normalized_data.get("results", []),
+            total_found=normalized_data.get("total_results"),
+            search_engine=self.SEARCH_ENGINE,
+            country=location,
+            results_per_page=num_results,
+            trigger_sent_at=trigger_sent_at,
+            data_fetched_at=data_fetched_at,
+        )
+
+    async def _execute_serp_request(
+        self,
+        search_url: str,
+        zone: str,
+        trigger_sent_at: datetime,
+    ) -> Tuple[Dict[str, Any], datetime, Optional[str]]:
+        """
+        Execute a single SERP request and parse response.
+
+        Returns:
+            Tuple of (raw_data, data_fetched_at, error)
+            If error is not None, raw_data will be empty dict.
+        """
         response_format = "json" if "brd_json=1" in search_url else "raw"
 
         payload = {
@@ -199,71 +269,145 @@ class BaseSERPService:
                 data_fetched_at = datetime.now(timezone.utc)
 
                 if response.status == HTTP_OK:
-                    # Try to parse response - could be direct JSON or wrapped in status_code/body
                     text = await response.text()
                     try:
                         data = json.loads(text)
                     except json.JSONDecodeError:
-                        # Fallback to regular JSON response
                         try:
                             data = await response.json()
                         except Exception:
-                            # If all else fails, treat as raw text/HTML
                             data = {"raw_html": text}
 
                     # Handle wrapped response format (status_code/headers/body)
                     if isinstance(data, dict) and "body" in data and "status_code" in data:
-                        # This is a wrapped HTTP response - extract body
                         body = data.get("body", "")
                         if isinstance(body, str) and body.strip().startswith("<"):
-                            # Body is HTML - pass to normalizer which will handle it
                             data = {"body": body, "status_code": data.get("status_code")}
                         else:
-                            # Body might be JSON string - try to parse it
                             try:
                                 data = json.loads(body) if isinstance(body, str) else body
                             except (json.JSONDecodeError, TypeError):
                                 data = {"body": body, "status_code": data.get("status_code")}
 
-                    normalized_data = self.data_normalizer.normalize(data)
-
-                    return SearchResult(
-                        success=True,
-                        query={"q": query, "location": location, "language": language},
-                        data=normalized_data.get("results", []),
-                        total_found=normalized_data.get("total_results"),
-                        search_engine=self.SEARCH_ENGINE,
-                        country=location,
-                        results_per_page=num_results,
-                        trigger_sent_at=trigger_sent_at,
-                        data_fetched_at=data_fetched_at,
-                    )
+                    return (data, data_fetched_at, None)
                 else:
                     error_text = await response.text()
+                    return ({}, data_fetched_at, f"HTTP {response.status}: {error_text}")
+
+        try:
+            return await retry_with_backoff(_make_request, max_retries=self.max_retries)
+        except Exception as e:
+            return ({}, datetime.now(timezone.utc), f"Request error: {str(e)}")
+
+    async def _search_with_pagination(
+        self,
+        query: str,
+        zone: str,
+        location: Optional[str],
+        language: str,
+        device: str,
+        num_results: int,
+        **kwargs,
+    ) -> SearchResult:
+        """
+        Execute search with sequential pagination (Google only).
+
+        Fetches pages one at a time until num_results reached or no more results.
+        """
+        trigger_sent_at = datetime.now(timezone.utc)
+        pagination_start_time = time.time()
+
+        all_results: List[Dict[str, Any]] = []
+        pages_fetched = 0
+        current_start = 0
+        google_total_results = None
+        last_error = None
+
+        while len(all_results) < num_results and pages_fetched < self.MAX_PAGES:
+            # Check total timeout
+            elapsed = time.time() - pagination_start_time
+            if elapsed > self.PAGINATION_TIMEOUT:
+                last_error = f"Pagination timeout after {int(elapsed)}s ({pages_fetched} pages)"
+                break
+
+            # Build URL for current page
+            search_url = self.url_builder.build(
+                query=query,
+                location=location,
+                language=language,
+                device=device,
+                num_results=min(self.PAGE_SIZE, num_results - len(all_results)),
+                start=current_start,
+                **kwargs,
+            )
+
+            # Execute request
+            raw_data, data_fetched_at, error = await self._execute_serp_request(
+                search_url=search_url,
+                zone=zone,
+                trigger_sent_at=trigger_sent_at,
+            )
+
+            if error:
+                if pages_fetched == 0:
                     return SearchResult(
                         success=False,
-                        query={"q": query},
-                        error=f"Search failed (HTTP {response.status}): {error_text}",
+                        query={"q": query, "location": location, "language": language},
+                        error=f"Search failed: {error}",
                         search_engine=self.SEARCH_ENGINE,
                         trigger_sent_at=trigger_sent_at,
                         data_fetched_at=data_fetched_at,
                     )
+                last_error = f"Page {pages_fetched + 1} failed: {error}"
+                break
 
-        try:
-            result = await retry_with_backoff(
-                _make_request,
-                max_retries=self.max_retries,
-            )
-            return result
-        except Exception as e:
-            return SearchResult(
-                success=False,
-                query={"q": query},
-                error=f"Search error: {str(e)}",
-                search_engine=self.SEARCH_ENGINE,
-                trigger_sent_at=trigger_sent_at,
-                data_fetched_at=datetime.now(timezone.utc),
-            )
+            pages_fetched += 1
+
+            # Extract pagination info BEFORE normalizing
+            pagination = raw_data.get("pagination", {}) if isinstance(raw_data, dict) else {}
+
+            # Normalize data
+            normalized_data = self.data_normalizer.normalize(raw_data)
+            page_results = normalized_data.get("results", [])
+
+            if not page_results:
+                break
+
+            # Preserve Google's total from first page
+            if pages_fetched == 1:
+                google_total_results = normalized_data.get("total_results")
+
+            all_results.extend(page_results)
+
+            # Determine next page offset
+            next_page_start = pagination.get("next_page_start")
+
+            if next_page_start is None:
+                next_link = pagination.get("next_page_link", "")
+                if next_link:
+                    match = re.search(r"start=(\d+)", next_link)
+                    if match:
+                        next_page_start = int(match.group(1))
+
+            if next_page_start is None or next_page_start <= current_start:
+                break
+
+            current_start = next_page_start
+
+        final_results = all_results[:num_results]
+
+        return SearchResult(
+            success=True,
+            query={"q": query, "location": location, "language": language},
+            data=final_results,
+            total_found=google_total_results,
+            search_engine=self.SEARCH_ENGINE,
+            country=location,
+            results_per_page=self.PAGE_SIZE,
+            trigger_sent_at=trigger_sent_at,
+            data_fetched_at=datetime.now(timezone.utc),
+            error=last_error,
+        )
 
     async def _search_multiple_async(
         self,
