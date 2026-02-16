@@ -1,0 +1,83 @@
+{
+  "success": true,
+  "search_engine": "google",
+  "query": {
+    "q": "weather today",
+    "location": null,
+    "language": "en"
+  },
+  "total_found": null,
+  "results_count": 10,
+  "results": [
+    {
+      "position": 1,
+      "title": "Spain Current Weather",
+      "url": "https://www.accuweather.com/en/es/spain-weather",
+      "description": "Albacete 56\u00b0 Alicante 72\u00b0 Barcelona 66\u00b0 Bilbao 65\u00b0 C\u00f3rdoba 57\u00b0 Gij\u00f3n 65\u00b0 L'Hospitalet de Llobregat 66\u00b0 Las Palmas de Gran Canaria 66\u00b0 Logro\u00f1o 58\u00b0 Madrid 53\u00b0 ...Read more",
+      "displayed_url": "https://www.accuweather.com \u203a spain-weather"
+    },
+    {
+      "position": 2,
+      "title": "Weather forecast by locations",
+      "url": "https://www.aemet.es/en/eltiempo/prediccion/municipios",
+      "description": "Weather forecasts for 8124 locations in Spain. They must be considered as the more probable tendency of the meteorological evolution for the next 7 days.Read more",
+      "displayed_url": "https://www.aemet.es \u203a prediccion \u203a municipios"
+    },
+    {
+      "position": 3,
+      "title": "10-Day Weather Forecast for Valdeacederas, Tetu\u00e1n ...",
+      "url": "https://weather.com/weather/tenday/l/Valdeacederas+Tetu%C3%A1n+Madrid+Spain?canonicalCityId=663174d0ea8ac456fd4372d2bc0bfac8",
+      "description": "Clearing skies after some evening wind and light rain. Low 44F. Winds WSW at 20 to 30 mph. Chance of rain 40%. Humidity83%.Read more",
+      "displayed_url": "https://weather.com \u203a weather \u203a tenday \u203a Valdeacederas..."
+    },
+    {
+      "position": 4,
+      "title": "Spain weather",
+      "url": "https://weather.metoffice.gov.uk/world/spain",
+      "description": "Madrid. Cloudy. 13\u00b0 \u00b7 Barcelona. Sunny day. 20\u00b0 \u00b7 Valencia. Sunny day. 23\u00b0 \u00b7 Seville. Drizzle. 18\u00b0 \u00b7 Zaragoza. Light shower (day). 14\u00b0 \u00b7 Malaga. Sunny day. 20\u00b0 ...Read more",
+      "displayed_url": "https://weather.metoffice.gov.uk \u203a world \u203a spain"
+    },
+    {
+      "position": 5,
+      "title": "BBC Weather - Alicante",
+      "url": "https://www.bbc.com/weather/2521978",
+      "description": "Partly cloudy and light windsLight cloud and a gentle breezeSunny intervals and a gentle breezeSunny and a moderate breezeLight rain and a fresh breezeSunny ...Read more",
+      "displayed_url": "https://www.bbc.com \u203a weather"
+    },
+    {
+      "position": 6,
+      "title": "weather forecast",
+      "url": "https://en.eltiempo.es/",
+      "description": "Today's weather in Spain and the world. Weather forecast for today tomorrow and the coming days. The forecast in 200000 cities.",
+      "displayed_url": "https://en.eltiempo.es"
+    },
+    {
+      "position": 7,
+      "title": "Salt (Girona) - 7-Day weather forecast - Table",
+      "url": "https://www.aemet.es/en/eltiempo/prediccion/municipios/salt-id17155",
+      "description": "Weather forecast by locations. Salt (Girona) \u00b7 High clouds \u00b7 Cloudy intervals with light rain \u00b7 Cloudless sky \u00b7 Cloudless sky \u00b7 Cloudless sky \u00b7 Partly cloudy.Read more",
+      "displayed_url": "https://www.aemet.es \u203a municipios \u203a salt-id17155"
+    },
+    {
+      "position": 8,
+      "title": "Barcelona, Spain Hourly Weather Forecast",
+      "url": "https://www.wunderground.com/hourly/es/barcelona",
+      "description": "Partly cloudy early. Mostly clear with gusty winds developing late. Low 56F. Winds W at 25 to 35 mph. Winds could occasionally gust over 40 mph.Read more",
+      "displayed_url": "https://www.wunderground.com \u203a hourly \u203a barcelona"
+    },
+    {
+      "position": 9,
+      "title": "Fuengirola, Andalusia, Spain Weather Forecast",
+      "url": "https://www.accuweather.com/en/es/fuengirola/302104/weather-forecast/302104",
+      "description": "Hourly Weather \u00b7 1 PM 66\u00b0. rain drop 0% \u00b7 2 PM 67\u00b0. rain drop 0% \u00b7 3 PM 68\u00b0. rain drop 0% \u00b7 4 PM 69\u00b0. rain drop 0% \u00b7 5 PM 68\u00b0. rain drop 0% \u00b7 6 PM 67\u00b0. rain ...Read more",
+      "displayed_url": "https://www.accuweather.com \u203a fuengirola \u203a weather-fo..."
+    },
+    {
+      "position": 10,
+      "title": "Weather in Spain",
+      "url": "https://www.timeanddate.com/weather/spain",
+      "description": "Weather in Spain (74 Locations). A Coru\u00f1a, Tue 1:41 am, Light rain. Overcast. Cool. 59 \u00b0F. Adeje, Tue 12:41 am, Passing clouds. Cool. 61 \u00b0F.Read more",
+      "displayed_url": "https://www.timeanddate.com \u203a weather \u203a spain"
+    }
+  ]
+}

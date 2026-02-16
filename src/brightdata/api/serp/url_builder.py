@@ -33,11 +33,17 @@ class GoogleURLBuilder(BaseURLBuilder):
         language: str = "en",
         device: str = "desktop",
         num_results: int = 10,
+        start: int = 0,
         **kwargs,
     ) -> str:
         """Build Google search URL with Bright Data parsing enabled."""
         encoded_query = quote_plus(query)
         url = f"https://www.google.com/search?q={encoded_query}"
+
+        # Add pagination offset if not first page
+        if start > 0:
+            url += f"&start={start}"
+
         url += f"&num={num_results}"
 
         # Enable Bright Data SERP parsing

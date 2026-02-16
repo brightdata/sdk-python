@@ -1,6 +1,6 @@
 # Bright Data Python SDK
 
-The official Python SDK for [Bright Data](https://brightdata.com) APIs. Scrape any website, get SERP results, bypass bot detection and CAPTCHAs.
+The official Python SDK for [Bright Data](https://brightdata.com) APIs. Scrape any website, get SERP results, bypass bot detection and CAPTCHAs, and access 100+ ready-made datasets.
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -134,6 +134,55 @@ async with BrightDataClient() as client:
 - `client.scrape.linkedin` - profiles, companies, jobs, posts
 - `client.scrape.instagram` - profiles, posts, comments, reels
 - `client.scrape.facebook` - posts, comments, reels
+
+## Datasets API
+
+Access 100+ ready-made datasets from Bright Data — pre-collected, structured data from popular platforms.
+
+```python
+async with BrightDataClient() as client:
+    # Filter a dataset — returns a snapshot_id
+    snapshot_id = await client.datasets.imdb_movies(
+        filter={"name": "title", "operator": "includes", "value": "black"},
+        records_limit=5
+    )
+
+    # Download when ready (polls until snapshot is complete)
+    data = await client.datasets.imdb_movies.download(snapshot_id)
+    print(f"Got {len(data)} records")
+
+    # Quick sample: .sample() auto-discovers fields, no filter needed
+    # Works on any dataset
+    snapshot_id = await client.datasets.imdb_movies.sample(records_limit=5)
+```
+
+**Export results to file:**
+
+```python
+from brightdata.datasets import export
+
+export(data, "results.json")   # JSON
+export(data, "results.csv")    # CSV
+export(data, "results.jsonl")  # JSONL
+```
+
+**Available dataset categories:**
+- **E-commerce:** Amazon, Walmart, Shopee, Lazada, Zalando, Zara, H&M, Shein, IKEA, Sephora, and more
+- **Business intelligence:** ZoomInfo, PitchBook, Owler, Slintel, VentureRadar, Manta
+- **Jobs & HR:** Glassdoor (companies, reviews, jobs), Indeed (companies, jobs), Xing
+- **Reviews:** Google Maps, Yelp, G2, Trustpilot, TrustRadius
+- **Social media:** Pinterest (posts, profiles), Facebook Pages
+- **Real estate:** Zillow, Airbnb, and 8+ regional platforms
+- **Luxury brands:** Chanel, Dior, Prada, Balenciaga, Hermes, YSL, and more
+- **Entertainment:** IMDB, NBA, Goodreads
+
+**Discover available fields:**
+
+```python
+metadata = await client.datasets.imdb_movies.get_metadata()
+for name, field in metadata.fields.items():
+    print(f"{name}: {field.type}")
+```
 
 ## Async Usage
 

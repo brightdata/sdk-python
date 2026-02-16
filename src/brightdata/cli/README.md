@@ -195,4 +195,3 @@ brightdata scrape --help
 brightdata scrape amazon --help
 brightdata search --help
 ```
-
