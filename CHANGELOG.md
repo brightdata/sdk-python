@@ -1,5 +1,33 @@
 # Bright Data Python SDK Changelog
 
+## Version 2.2.1 - 100 Datasets API
+
+### ✨ New Features
+
+#### Expanded Datasets Coverage
+Added 92 new dataset integrations, bringing the total to **100 datasets**:
+
+- **Luxury Brands**: Loewe, Berluti, Moynat, Hermes, Delvaux, Prada, Montblanc, YSL, Dior, Balenciaga, Bottega Veneta, Celine, Chanel, Fendi
+- **E-commerce**: Amazon (Reviews, Sellers), Walmart, Shopee, Lazada, Zalando, Sephora, Zara, Mango, Massimo Dutti, Asos, Shein, Ikea, H&M, Lego, Mouser, Digikey
+- **Social Media**: Instagram (Profiles, Posts), TikTok, Pinterest (Posts, Profiles), YouTube (Profiles, Videos, Comments), Facebook Pages Posts
+- **Real Estate**: Zillow, Airbnb, Australia Real Estate, Otodom Poland, Zonaprop Argentina, Metrocuadrado, Infocasas Uruguay, Properati, Toctoc, Inmuebles24 Mexico, Yapo Chile
+- **Business Data**: Glassdoor (Companies, Reviews, Jobs), Indeed (Companies, Jobs), ZoomInfo, PitchBook, G2, Trustpilot, TrustRadius, Owler, Slintel, Manta, VentureRadar, Companies Enriched, Employees Enriched
+- **Other**: World Zipcodes, US Lawyers, Google Maps Reviews, Yelp, Xing Profiles, OLX Brazil, Webmotors Brasil, Chileautos, LinkedIn Jobs
+
+#### SERP Pagination Support
+Added sequential querying to retrieve more than 10 search results from Google:
+
+```python
+async with BrightDataClient() as client:
+    # Get up to 50 results with automatic pagination
+    results = await client.search.google(
+        query="python programming",
+        num_results=50  # Fetches multiple pages sequentially
+    )
+```
+
+---
+
 ## Version 2.2.0 - Datasets API
 
 ### ✨ New Features

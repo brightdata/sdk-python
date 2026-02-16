@@ -100,7 +100,35 @@ class BaseDataset:
             json_data=payload,
         ) as response:
             data = await response.json()
+
+        if "snapshot_id" not in data:
+            error_msg = data.get("error") or data.get("message") or str(data)
+            raise DatasetError(f"Failed to create snapshot: {error_msg}")
+
         return data["snapshot_id"]
+
+    async def sample(self, records_limit: int = 10) -> str:
+        """
+        Get a sample of records without specifying a filter.
+
+        Automatically discovers the first available field and uses
+        'is_not_null' operator to fetch any available records.
+
+        Args:
+            records_limit: Maximum number of records to return (default: 10)
+
+        Returns:
+            snapshot_id (str) - use with download() to get data
+        """
+        metadata = await self.get_metadata()
+        if not metadata.fields:
+            raise DatasetError(f"Dataset {self.DATASET_ID} has no fields")
+
+        first_field = list(metadata.fields.keys())[0]
+        return await self(
+            filter={"name": first_field, "operator": "is_not_null"},
+            records_limit=records_limit,
+        )
 
     async def get_status(self, snapshot_id: str) -> SnapshotStatus:
         """

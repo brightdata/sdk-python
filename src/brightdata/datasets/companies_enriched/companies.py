@@ -68,8 +68,7 @@ class CompaniesEnriched(BaseDataset):
         >>> data = await companies.download(snapshot_id)
     """
 
-    # TODO: Replace with actual dataset ID
-    DATASET_ID = "gd_lxxxxxxxxxxxxxx"  # Get from Bright Data console
+    DATASET_ID = "gd_m3fl0mwzmfpfn4cw4"
     NAME = "companies_enriched"
 
     def __init__(self, engine: "AsyncEngine"):
