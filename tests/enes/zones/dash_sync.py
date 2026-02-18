@@ -61,8 +61,7 @@ async def verify_dashboard_sync():
             print("\n" + "=" * 70)
             print("✅ VERIFICATION COMPLETE")
             print("=" * 70)
-            print(
-                """
+            print("""
 These zones should match exactly what you see in your dashboard at:
 https://brightdata.com/cp/zones
 
@@ -74,8 +73,7 @@ https://brightdata.com/cp/zones
    
 ✅ If they match: SDK and dashboard are in sync!
 ❌ If they don't: There may be a caching or API delay issue
-            """
-            )
+            """)
 
             return True
 

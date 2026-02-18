@@ -218,8 +218,7 @@ async def test_chatgpt():
     print("\n" + "=" * 60)
     print("SUMMARY:")
     print("-" * 40)
-    print(
-        """
+    print("""
 ChatGPT Scraper Configuration:
 - Dataset ID: gd_m7aof0k82r803d5bjm
 - Platform: chatgpt
@@ -237,8 +236,7 @@ If getting errors:
 1. Check API token is valid
 2. Verify account has ChatGPT access enabled
 3. Check account balance for ChatGPT operations
-"""
-    )
+""")
 
 
 if __name__ == "__main__":

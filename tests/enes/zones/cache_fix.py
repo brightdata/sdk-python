@@ -66,8 +66,7 @@ async def demo_caching():
             print("\n\n" + "=" * 70)
             print("📝 RECOMMENDATIONS:")
             print("=" * 70)
-            print(
-                """
+            print("""
    ✅ For listing zones after creation/deletion:
       Use: await client.list_zones()
       
@@ -79,8 +78,7 @@ async def demo_caching():
       
    ⚠️  AVOID: Using get_account_info()['zones'] without refresh
       This returns cached data that may be stale!
-            """
-            )
+            """)
             print("=" * 70)
 
             # Show some zones

@@ -107,8 +107,7 @@ async def test_serp_raw_html_issue():
     print("\n" + "=" * 60)
     print("SUMMARY:")
     print("-" * 40)
-    print(
-        """
+    print("""
 The SERP API returns raw HTML but the SDK expects parsed JSON.
 This is why all SERP searches return 0 results.
 
@@ -116,8 +115,7 @@ To fix this, either:
 1. The SERP zone needs to return parsed data (not raw HTML)
 2. The SDK needs an HTML parser (BeautifulSoup, etc.)
 3. A different Bright Data service/endpoint should be used
-"""
-    )
+""")
 
 
 if __name__ == "__main__":
