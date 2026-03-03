@@ -290,7 +290,6 @@ class TestZoneManagerEnsureZones:
         await zone_manager.ensure_required_zones(
             web_unlocker_zone="sdk_unlocker",
             serp_zone="sdk_serp",
-            browser_zone="sdk_browser",  # This is passed but NOT created (by design)
         )
 
         # Should only create unblocker + SERP zones (browser zones require manual setup)

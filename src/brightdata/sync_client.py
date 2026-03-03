@@ -8,6 +8,7 @@ import asyncio
 from typing import Optional, List, Dict, Any
 
 from .client import BrightDataClient
+from .api.browser_service import BrowserService
 from .models import ScrapeResult, SearchResult
 from .types import AccountInfo
 
@@ -34,7 +35,10 @@ class SyncBrightDataClient:
         timeout: int = 30,
         web_unlocker_zone: Optional[str] = None,
         serp_zone: Optional[str] = None,
-        browser_zone: Optional[str] = None,
+        browser_username: Optional[str] = None,
+        browser_password: Optional[str] = None,
+        browser_host: Optional[str] = None,
+        browser_port: Optional[int] = None,
         auto_create_zones: bool = True,
         validate_token: bool = False,
         rate_limit: Optional[float] = None,
@@ -48,7 +52,10 @@ class SyncBrightDataClient:
             timeout: Default request timeout in seconds
             web_unlocker_zone: Zone name for Web Unlocker API
             serp_zone: Zone name for SERP API
-            browser_zone: Zone name for Browser API
+            browser_username: Browser API username (or set BRIGHTDATA_BROWSERAPI_USERNAME env var)
+            browser_password: Browser API password (or set BRIGHTDATA_BROWSERAPI_PASSWORD env var)
+            browser_host: Browser API host (default: "brd.superproxy.io")
+            browser_port: Browser API port (default: 9222)
             auto_create_zones: Automatically create required zones if missing
             validate_token: Validate token on initialization
             rate_limit: Rate limit (requests per period)
@@ -73,7 +80,10 @@ class SyncBrightDataClient:
             timeout=timeout,
             web_unlocker_zone=web_unlocker_zone,
             serp_zone=serp_zone,
-            browser_zone=browser_zone,
+            browser_username=browser_username,
+            browser_password=browser_password,
+            browser_host=browser_host,
+            browser_port=browser_port,
             auto_create_zones=auto_create_zones,
             validate_token=False,  # Will validate during __enter__
             rate_limit=rate_limit,
@@ -84,6 +94,7 @@ class SyncBrightDataClient:
         self._scrape: Optional["SyncScrapeService"] = None
         self._search: Optional["SyncSearchService"] = None
         self._crawler: Optional["SyncCrawlerService"] = None
+        self._scraper_studio: Optional["SyncScraperStudioService"] = None
 
     def __enter__(self):
         """Initialize persistent event loop and async client."""
@@ -175,6 +186,11 @@ class SyncBrightDataClient:
     # ========================================
 
     @property
+    def browser(self) -> BrowserService:
+        """Access Browser API service (builds CDP WebSocket URLs)."""
+        return self._async_client.browser
+
+    @property
     def scrape(self) -> "SyncScrapeService":
         """Access scraping services (sync)."""
         if self._scrape is None:
@@ -194,6 +210,15 @@ class SyncBrightDataClient:
         if self._crawler is None:
             self._crawler = SyncCrawlerService(self._async_client.crawler, self._loop)
         return self._crawler
+
+    @property
+    def scraper_studio(self) -> "SyncScraperStudioService":
+        """Access Scraper Studio services (sync)."""
+        if self._scraper_studio is None:
+            self._scraper_studio = SyncScraperStudioService(
+                self._async_client.scraper_studio, self._loop
+            )
+        return self._scraper_studio
 
     @property
     def token(self) -> str:
@@ -670,3 +695,34 @@ class SyncCrawlerService:
     def scrape(self, url, **kwargs):
         """Scrape a URL."""
         return self._loop.run_until_complete(self._async.scrape(url, **kwargs))
+
+
+# ============================================================================
+# SYNC SCRAPER STUDIO SERVICE
+# ============================================================================
+
+
+class SyncScraperStudioService:
+    """Sync wrapper for ScraperStudioService."""
+
+    def __init__(self, async_service, loop):
+        self._async = async_service
+        self._loop = loop
+
+    def run(self, collector, input, timeout=180, poll_interval=10):
+        """Trigger scrape and wait for results."""
+        return self._loop.run_until_complete(
+            self._async.run(collector, input, timeout=timeout, poll_interval=poll_interval)
+        )
+
+    def trigger(self, collector, input):
+        """Trigger scrape, return job object."""
+        return self._loop.run_until_complete(self._async.trigger(collector, input))
+
+    def status(self, job_id):
+        """Check job status."""
+        return self._loop.run_until_complete(self._async.status(job_id))
+
+    def fetch(self, response_id):
+        """Fetch results."""
+        return self._loop.run_until_complete(self._async.fetch(response_id))

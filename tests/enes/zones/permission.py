@@ -24,7 +24,8 @@ async def test_permission_error_handling():
     print("🧪 TESTING PERMISSION ERROR HANDLING")
     print("=" * 70)
 
-    print("""
+    print(
+        """
 This test demonstrates the improved error handling when your API token
 lacks zone creation permissions.
 
@@ -33,7 +34,8 @@ Expected behavior:
   ✅ Direct link to fix the problem
   ✅ No silent failures
   ✅ Helpful instructions for users
-    """)
+    """
+    )
 
     if not os.environ.get("BRIGHTDATA_API_TOKEN"):
         print("\n❌ ERROR: No API token found")
@@ -74,7 +76,8 @@ Expected behavior:
         print("\n" + "=" * 70)
         print("📝 This is the IMPROVED error handling!")
         print("=" * 70)
-        print("""
+        print(
+            """
 Before: Error was unclear and could fail silently
 After:  Clear message with actionable steps to fix the issue
 
@@ -82,7 +85,8 @@ The error message should have told you:
   1. ❌ What went wrong (permission denied)
   2. 🔗 Where to fix it (https://brightdata.com/cp/setting/users)
   3. 📋 What to do (enable zone creation permission)
-        """)
+        """
+        )
         return True  # This is expected behavior
 
     except Exception as e:
@@ -101,13 +105,15 @@ if __name__ == "__main__":
         if success:
             print("✅ TEST PASSED")
             print("=" * 70)
-            print("""
+            print(
+                """
 Summary:
   • Permission errors are now caught and displayed clearly
   • Users get actionable instructions to fix the problem
   • No more silent failures
   • SDK provides helpful guidance
-            """)
+            """
+            )
         else:
             print("❌ TEST FAILED")
         print("=" * 70)

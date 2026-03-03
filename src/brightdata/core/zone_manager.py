@@ -42,20 +42,14 @@ class ZoneManager:
         self,
         web_unlocker_zone: str,
         serp_zone: Optional[str] = None,
-        browser_zone: Optional[str] = None,
         skip_verification: bool = False,
     ) -> None:
         """
         Check if required zones exist and create them if they don't.
 
-        Important: Only unblocker and SERP zones can be auto-created.
-        Browser zones require additional configuration parameters (like "start" value)
-        and must be created manually in the Bright Data dashboard.
-
         Args:
             web_unlocker_zone: Web unlocker zone name (will be created if missing)
             serp_zone: SERP zone name (optional, will be created if missing)
-            browser_zone: Browser zone name (NOT auto-created, pass None to skip)
 
         Raises:
             ZoneError: If zone creation or validation fails
@@ -79,10 +73,6 @@ class ZoneManager:
             if serp_zone and serp_zone not in zone_names:
                 zones_to_create.append((serp_zone, "serp"))
                 logger.info(f"Need to create SERP zone: {serp_zone}")
-
-            # Browser zones are intentionally NOT checked here
-            # They require additional configuration (like "start" parameter)
-            # and must be created manually in the Bright Data dashboard
 
             if not zones_to_create:
                 logger.info("All required zones already exist")

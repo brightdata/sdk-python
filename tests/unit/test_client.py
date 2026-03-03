@@ -18,7 +18,6 @@ class TestClientInitialization:
         assert client.timeout == 30  # Default timeout
         assert client.web_unlocker_zone == "sdk_unlocker"
         assert client.serp_zone == "sdk_serp"
-        assert client.browser_zone == "sdk_browser"
 
     def test_client_with_custom_config(self):
         """Test client with custom configuration."""
@@ -27,13 +26,11 @@ class TestClientInitialization:
             timeout=60,
             web_unlocker_zone="my_unlocker",
             serp_zone="my_serp",
-            browser_zone="my_browser",
         )
 
         assert client.timeout == 60
         assert client.web_unlocker_zone == "my_unlocker"
         assert client.serp_zone == "my_serp"
-        assert client.browser_zone == "my_browser"
 
     def test_client_loads_from_brightdata_api_token(self):
         """Test client loads token from BRIGHTDATA_API_TOKEN."""

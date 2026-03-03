@@ -5,8 +5,22 @@ Datasets client - main entry point for datasets API.
 from typing import List, Optional, TYPE_CHECKING
 
 from .models import DatasetInfo
-from .linkedin import LinkedInPeopleProfiles, LinkedInCompanyProfiles, LinkedInJobListings
-from .amazon import AmazonProducts, AmazonReviews, AmazonSellersInfo
+from .linkedin import (
+    LinkedInPeopleProfiles,
+    LinkedInCompanyProfiles,
+    LinkedInJobListings,
+    LinkedInPosts,
+    LinkedInProfilesJobListings,
+)
+from .amazon import (
+    AmazonProducts,
+    AmazonReviews,
+    AmazonSellersInfo,
+    AmazonBestSellers,
+    AmazonProductsSearch,
+    AmazonProductsGlobal,
+    AmazonWalmart,
+)
 from .crunchbase import CrunchbaseCompanies
 from .imdb import IMDBMovies
 from .nba import NBAPlayersStats
@@ -15,7 +29,7 @@ from .world_population import WorldPopulation
 from .companies_enriched import CompaniesEnriched
 from .employees_enriched import EmployeesEnriched
 from .glassdoor import GlassdoorCompanies, GlassdoorReviews, GlassdoorJobs
-from .google_maps import GoogleMapsReviews
+from .google_maps import GoogleMapsReviews, GoogleMapsFullInfo
 from .yelp import YelpBusinesses, YelpReviews
 from .zoominfo import ZoomInfoCompanies
 from .pitchbook import PitchBookCompanies
@@ -29,10 +43,10 @@ from .lawyers import USLawyers
 from .manta import MantaBusinesses
 from .ventureradar import VentureRadarCompanies
 from .trustradius import TrustRadiusReviews
-from .instagram import InstagramProfiles, InstagramPosts
-from .tiktok import TikTokProfiles
+from .instagram import InstagramProfiles, InstagramPosts, InstagramComments, InstagramReels
+from .tiktok import TikTokProfiles, TikTokComments, TikTokPosts, TikTokShop
 from .real_estate import AustraliaRealEstate
-from .walmart import WalmartProducts
+from .walmart import WalmartProducts, WalmartSellersInfo
 from .mediamarkt import MediamarktProducts
 from .fendi import FendiProducts
 from .zalando import ZalandoProducts
@@ -62,7 +76,7 @@ from .sleepnumber import SleepNumberProducts
 from .raymourflanigan import RaymourFlaniganProducts
 from .inmuebles24 import Inmuebles24Mexico
 from .mouser import MouserProducts
-from .zillow import ZillowProperties
+from .zillow import ZillowProperties, ZillowPriceHistory
 from .zonaprop import ZonapropArgentina
 from .metrocuadrado import MetrocuadradoProperties
 from .chileautos import ChileautosChile
@@ -87,10 +101,62 @@ from .ysl import YSLProducts
 from .world_zipcodes import WorldZipcodes
 from .pinterest import PinterestPosts, PinterestProfiles
 from .shopee import ShopeeProducts
-from .lazada import LazadaProducts
+from .lazada import LazadaProducts, LazadaReviews, LazadaProductsSearch
 from .youtube import YouTubeProfiles, YouTubeVideos, YouTubeComments
 from .digikey import DigikeyProducts
-from .facebook import FacebookPagesPosts
+from .facebook import (
+    FacebookPagesPosts,
+    FacebookComments,
+    FacebookPostsByUrl,
+    FacebookReels,
+    FacebookMarketplace,
+    FacebookCompanyReviews,
+    FacebookEvents,
+    FacebookProfiles,
+    FacebookPagesProfiles,
+    FacebookGroupPosts,
+)
+from .x_twitter import XTwitterPosts, XTwitterProfiles
+from .reddit import RedditPosts, RedditComments
+from .bluesky import BlueskyPosts, BlueskyTopProfiles
+from .snapchat import SnapchatPosts
+from .quora import QuoraPosts
+from .vimeo import VimeoVideos
+from .google_news import GoogleNews
+from .wikipedia import WikipediaArticles
+from .bbc import BBCNews
+from .cnn import CNNNews
+from .github import GithubRepositories
+from .creative_commons import CreativeCommonsImages, CreativeCommons3DModels
+from .google_play import GooglePlayStore, GooglePlayReviews
+from .apple_appstore import AppleAppStore, AppleAppStoreReviews
+from .ebay import EbayProducts
+from .etsy import EtsyProducts
+from .target import TargetProducts
+from .wayfair import WayfairProducts
+from .bestbuy import BestBuyProducts
+from .myntra import MyntraProducts
+from .ozon import OzonProducts
+from .wildberries import WildberriesProducts
+from .tokopedia import TokopediaProducts
+from .google_shopping import GoogleShoppingProducts, GoogleShoppingSearchUS
+from .mercadolivre import MercadolivreProducts
+from .naver import NaverProducts
+from .homedepot import HomeDepotUSProducts, HomeDepotCAProducts
+from .lowes import LowesProducts
+from .rona import RonaProducts
+from .kroger import KrogerProducts
+from .macys import MacysProducts
+from .costco import CostcoProducts
+from .bh import BHProducts
+from .microcenter import MicroCenterProducts
+from .autozone import AutozoneProducts
+from .zoopla import ZooplaProperties
+from .booking import BookingListingsSearch, BookingHotelListings
+from .realtor import RealtorInternationalProperties
+from .agoda import AgodaProperties
+from .carsales import CarsalesListings
+from .yahoo_finance import YahooFinanceBusinesses
 
 if TYPE_CHECKING:
     from ..core.async_engine import AsyncEngine
@@ -226,6 +292,87 @@ class DatasetsClient:
         self._youtube_comments: Optional[YouTubeComments] = None
         self._digikey_products: Optional[DigikeyProducts] = None
         self._facebook_pages_posts: Optional[FacebookPagesPosts] = None
+        # New datasets - Social Media
+        self._facebook_comments: Optional[FacebookComments] = None
+        self._facebook_posts_by_url: Optional[FacebookPostsByUrl] = None
+        self._facebook_reels: Optional[FacebookReels] = None
+        self._facebook_marketplace: Optional[FacebookMarketplace] = None
+        self._facebook_company_reviews: Optional[FacebookCompanyReviews] = None
+        self._facebook_events: Optional[FacebookEvents] = None
+        self._facebook_profiles: Optional[FacebookProfiles] = None
+        self._facebook_pages_profiles: Optional[FacebookPagesProfiles] = None
+        self._facebook_group_posts: Optional[FacebookGroupPosts] = None
+        self._tiktok_comments: Optional[TikTokComments] = None
+        self._tiktok_posts: Optional[TikTokPosts] = None
+        self._tiktok_shop: Optional[TikTokShop] = None
+        self._instagram_comments: Optional[InstagramComments] = None
+        self._instagram_reels: Optional[InstagramReels] = None
+        self._linkedin_posts: Optional[LinkedInPosts] = None
+        self._linkedin_profiles_job_listings: Optional[LinkedInProfilesJobListings] = None
+        self._x_twitter_posts: Optional[XTwitterPosts] = None
+        self._x_twitter_profiles: Optional[XTwitterProfiles] = None
+        self._reddit_posts: Optional[RedditPosts] = None
+        self._reddit_comments: Optional[RedditComments] = None
+        self._bluesky_posts: Optional[BlueskyPosts] = None
+        self._bluesky_top_profiles: Optional[BlueskyTopProfiles] = None
+        self._snapchat_posts: Optional[SnapchatPosts] = None
+        self._quora_posts: Optional[QuoraPosts] = None
+        self._vimeo_videos: Optional[VimeoVideos] = None
+        # New datasets - News/Content
+        self._google_news: Optional[GoogleNews] = None
+        self._wikipedia_articles: Optional[WikipediaArticles] = None
+        self._bbc_news: Optional[BBCNews] = None
+        self._cnn_news: Optional[CNNNews] = None
+        self._github_repositories: Optional[GithubRepositories] = None
+        self._creative_commons_images: Optional[CreativeCommonsImages] = None
+        self._creative_commons_3d_models: Optional[CreativeCommons3DModels] = None
+        # New datasets - App Stores
+        self._google_play_store: Optional[GooglePlayStore] = None
+        self._google_play_reviews: Optional[GooglePlayReviews] = None
+        self._apple_app_store: Optional[AppleAppStore] = None
+        self._apple_app_store_reviews: Optional[AppleAppStoreReviews] = None
+        # New datasets - E-commerce
+        self._amazon_best_sellers: Optional[AmazonBestSellers] = None
+        self._amazon_products_search: Optional[AmazonProductsSearch] = None
+        self._amazon_products_global: Optional[AmazonProductsGlobal] = None
+        self._amazon_walmart: Optional[AmazonWalmart] = None
+        self._walmart_sellers_info: Optional[WalmartSellersInfo] = None
+        self._ebay_products: Optional[EbayProducts] = None
+        self._etsy_products: Optional[EtsyProducts] = None
+        self._target_products: Optional[TargetProducts] = None
+        self._wayfair_products: Optional[WayfairProducts] = None
+        self._bestbuy_products: Optional[BestBuyProducts] = None
+        self._myntra_products: Optional[MyntraProducts] = None
+        self._ozon_products: Optional[OzonProducts] = None
+        self._wildberries_products: Optional[WildberriesProducts] = None
+        self._tokopedia_products: Optional[TokopediaProducts] = None
+        self._google_shopping_products: Optional[GoogleShoppingProducts] = None
+        self._google_shopping_search_us: Optional[GoogleShoppingSearchUS] = None
+        self._mercadolivre_products: Optional[MercadolivreProducts] = None
+        self._naver_products: Optional[NaverProducts] = None
+        self._lazada_reviews: Optional[LazadaReviews] = None
+        self._lazada_products_search: Optional[LazadaProductsSearch] = None
+        self._homedepot_us_products: Optional[HomeDepotUSProducts] = None
+        self._homedepot_ca_products: Optional[HomeDepotCAProducts] = None
+        self._lowes_products: Optional[LowesProducts] = None
+        self._rona_products: Optional[RonaProducts] = None
+        self._kroger_products: Optional[KrogerProducts] = None
+        self._macys_products: Optional[MacysProducts] = None
+        self._costco_products: Optional[CostcoProducts] = None
+        self._bh_products: Optional[BHProducts] = None
+        self._microcenter_products: Optional[MicroCenterProducts] = None
+        self._autozone_products: Optional[AutozoneProducts] = None
+        # New datasets - Real Estate/Travel
+        self._zillow_price_history: Optional[ZillowPriceHistory] = None
+        self._zoopla_properties: Optional[ZooplaProperties] = None
+        self._booking_listings_search: Optional[BookingListingsSearch] = None
+        self._booking_hotel_listings: Optional[BookingHotelListings] = None
+        self._realtor_international_properties: Optional[RealtorInternationalProperties] = None
+        self._agoda_properties: Optional[AgodaProperties] = None
+        self._carsales_listings: Optional[CarsalesListings] = None
+        # New datasets - Finance/Maps
+        self._yahoo_finance_businesses: Optional[YahooFinanceBusinesses] = None
+        self._google_maps_full_info: Optional[GoogleMapsFullInfo] = None
 
     async def list(self) -> List[DatasetInfo]:
         """
@@ -949,3 +1096,540 @@ class DatasetsClient:
         if self._facebook_pages_posts is None:
             self._facebook_pages_posts = FacebookPagesPosts(self._engine)
         return self._facebook_pages_posts
+
+    # --- New dataset properties - Social Media ---
+
+    @property
+    def facebook_comments(self) -> FacebookComments:
+        """Facebook Comments dataset."""
+        if self._facebook_comments is None:
+            self._facebook_comments = FacebookComments(self._engine)
+        return self._facebook_comments
+
+    @property
+    def facebook_posts_by_url(self) -> FacebookPostsByUrl:
+        """Facebook Posts by URL dataset."""
+        if self._facebook_posts_by_url is None:
+            self._facebook_posts_by_url = FacebookPostsByUrl(self._engine)
+        return self._facebook_posts_by_url
+
+    @property
+    def facebook_reels(self) -> FacebookReels:
+        """Facebook Reels dataset."""
+        if self._facebook_reels is None:
+            self._facebook_reels = FacebookReels(self._engine)
+        return self._facebook_reels
+
+    @property
+    def facebook_marketplace(self) -> FacebookMarketplace:
+        """Facebook Marketplace dataset."""
+        if self._facebook_marketplace is None:
+            self._facebook_marketplace = FacebookMarketplace(self._engine)
+        return self._facebook_marketplace
+
+    @property
+    def facebook_company_reviews(self) -> FacebookCompanyReviews:
+        """Facebook Company Reviews dataset."""
+        if self._facebook_company_reviews is None:
+            self._facebook_company_reviews = FacebookCompanyReviews(self._engine)
+        return self._facebook_company_reviews
+
+    @property
+    def facebook_events(self) -> FacebookEvents:
+        """Facebook Events dataset."""
+        if self._facebook_events is None:
+            self._facebook_events = FacebookEvents(self._engine)
+        return self._facebook_events
+
+    @property
+    def facebook_profiles(self) -> FacebookProfiles:
+        """Facebook Profiles dataset."""
+        if self._facebook_profiles is None:
+            self._facebook_profiles = FacebookProfiles(self._engine)
+        return self._facebook_profiles
+
+    @property
+    def facebook_pages_profiles(self) -> FacebookPagesProfiles:
+        """Facebook Pages and Profiles dataset."""
+        if self._facebook_pages_profiles is None:
+            self._facebook_pages_profiles = FacebookPagesProfiles(self._engine)
+        return self._facebook_pages_profiles
+
+    @property
+    def facebook_group_posts(self) -> FacebookGroupPosts:
+        """Facebook Group Posts dataset."""
+        if self._facebook_group_posts is None:
+            self._facebook_group_posts = FacebookGroupPosts(self._engine)
+        return self._facebook_group_posts
+
+    @property
+    def tiktok_comments(self) -> TikTokComments:
+        """TikTok Comments dataset."""
+        if self._tiktok_comments is None:
+            self._tiktok_comments = TikTokComments(self._engine)
+        return self._tiktok_comments
+
+    @property
+    def tiktok_posts(self) -> TikTokPosts:
+        """TikTok Posts dataset."""
+        if self._tiktok_posts is None:
+            self._tiktok_posts = TikTokPosts(self._engine)
+        return self._tiktok_posts
+
+    @property
+    def tiktok_shop(self) -> TikTokShop:
+        """TikTok Shop dataset."""
+        if self._tiktok_shop is None:
+            self._tiktok_shop = TikTokShop(self._engine)
+        return self._tiktok_shop
+
+    @property
+    def instagram_comments(self) -> InstagramComments:
+        """Instagram Comments dataset."""
+        if self._instagram_comments is None:
+            self._instagram_comments = InstagramComments(self._engine)
+        return self._instagram_comments
+
+    @property
+    def instagram_reels(self) -> InstagramReels:
+        """Instagram Reels dataset."""
+        if self._instagram_reels is None:
+            self._instagram_reels = InstagramReels(self._engine)
+        return self._instagram_reels
+
+    @property
+    def linkedin_posts(self) -> LinkedInPosts:
+        """LinkedIn Posts dataset."""
+        if self._linkedin_posts is None:
+            self._linkedin_posts = LinkedInPosts(self._engine)
+        return self._linkedin_posts
+
+    @property
+    def linkedin_profiles_job_listings(self) -> LinkedInProfilesJobListings:
+        """LinkedIn Profiles Job Listings dataset."""
+        if self._linkedin_profiles_job_listings is None:
+            self._linkedin_profiles_job_listings = LinkedInProfilesJobListings(self._engine)
+        return self._linkedin_profiles_job_listings
+
+    @property
+    def x_twitter_posts(self) -> XTwitterPosts:
+        """X (Twitter) Posts dataset."""
+        if self._x_twitter_posts is None:
+            self._x_twitter_posts = XTwitterPosts(self._engine)
+        return self._x_twitter_posts
+
+    @property
+    def x_twitter_profiles(self) -> XTwitterProfiles:
+        """X (Twitter) Profiles dataset."""
+        if self._x_twitter_profiles is None:
+            self._x_twitter_profiles = XTwitterProfiles(self._engine)
+        return self._x_twitter_profiles
+
+    @property
+    def reddit_posts(self) -> RedditPosts:
+        """Reddit Posts dataset."""
+        if self._reddit_posts is None:
+            self._reddit_posts = RedditPosts(self._engine)
+        return self._reddit_posts
+
+    @property
+    def reddit_comments(self) -> RedditComments:
+        """Reddit Comments dataset."""
+        if self._reddit_comments is None:
+            self._reddit_comments = RedditComments(self._engine)
+        return self._reddit_comments
+
+    @property
+    def bluesky_posts(self) -> BlueskyPosts:
+        """Bluesky Posts dataset."""
+        if self._bluesky_posts is None:
+            self._bluesky_posts = BlueskyPosts(self._engine)
+        return self._bluesky_posts
+
+    @property
+    def bluesky_top_profiles(self) -> BlueskyTopProfiles:
+        """Top 500 Bluesky Profiles dataset."""
+        if self._bluesky_top_profiles is None:
+            self._bluesky_top_profiles = BlueskyTopProfiles(self._engine)
+        return self._bluesky_top_profiles
+
+    @property
+    def snapchat_posts(self) -> SnapchatPosts:
+        """Snapchat Posts dataset."""
+        if self._snapchat_posts is None:
+            self._snapchat_posts = SnapchatPosts(self._engine)
+        return self._snapchat_posts
+
+    @property
+    def quora_posts(self) -> QuoraPosts:
+        """Quora Posts dataset."""
+        if self._quora_posts is None:
+            self._quora_posts = QuoraPosts(self._engine)
+        return self._quora_posts
+
+    @property
+    def vimeo_videos(self) -> VimeoVideos:
+        """Vimeo Videos dataset."""
+        if self._vimeo_videos is None:
+            self._vimeo_videos = VimeoVideos(self._engine)
+        return self._vimeo_videos
+
+    # --- New dataset properties - News/Content ---
+
+    @property
+    def google_news(self) -> GoogleNews:
+        """Google News dataset."""
+        if self._google_news is None:
+            self._google_news = GoogleNews(self._engine)
+        return self._google_news
+
+    @property
+    def wikipedia_articles(self) -> WikipediaArticles:
+        """Wikipedia Articles dataset."""
+        if self._wikipedia_articles is None:
+            self._wikipedia_articles = WikipediaArticles(self._engine)
+        return self._wikipedia_articles
+
+    @property
+    def bbc_news(self) -> BBCNews:
+        """BBC News dataset."""
+        if self._bbc_news is None:
+            self._bbc_news = BBCNews(self._engine)
+        return self._bbc_news
+
+    @property
+    def cnn_news(self) -> CNNNews:
+        """CNN News dataset."""
+        if self._cnn_news is None:
+            self._cnn_news = CNNNews(self._engine)
+        return self._cnn_news
+
+    @property
+    def github_repositories(self) -> GithubRepositories:
+        """GitHub Repositories dataset."""
+        if self._github_repositories is None:
+            self._github_repositories = GithubRepositories(self._engine)
+        return self._github_repositories
+
+    @property
+    def creative_commons_images(self) -> CreativeCommonsImages:
+        """Creative Commons Images dataset."""
+        if self._creative_commons_images is None:
+            self._creative_commons_images = CreativeCommonsImages(self._engine)
+        return self._creative_commons_images
+
+    @property
+    def creative_commons_3d_models(self) -> CreativeCommons3DModels:
+        """Creative Commons 3D Models dataset."""
+        if self._creative_commons_3d_models is None:
+            self._creative_commons_3d_models = CreativeCommons3DModels(self._engine)
+        return self._creative_commons_3d_models
+
+    # --- New dataset properties - App Stores ---
+
+    @property
+    def google_play_store(self) -> GooglePlayStore:
+        """Google Play Store dataset."""
+        if self._google_play_store is None:
+            self._google_play_store = GooglePlayStore(self._engine)
+        return self._google_play_store
+
+    @property
+    def google_play_reviews(self) -> GooglePlayReviews:
+        """Google Play Store Reviews dataset."""
+        if self._google_play_reviews is None:
+            self._google_play_reviews = GooglePlayReviews(self._engine)
+        return self._google_play_reviews
+
+    @property
+    def apple_app_store(self) -> AppleAppStore:
+        """Apple App Store dataset."""
+        if self._apple_app_store is None:
+            self._apple_app_store = AppleAppStore(self._engine)
+        return self._apple_app_store
+
+    @property
+    def apple_app_store_reviews(self) -> AppleAppStoreReviews:
+        """Apple App Store Reviews dataset."""
+        if self._apple_app_store_reviews is None:
+            self._apple_app_store_reviews = AppleAppStoreReviews(self._engine)
+        return self._apple_app_store_reviews
+
+    # --- New dataset properties - E-commerce ---
+
+    @property
+    def amazon_best_sellers(self) -> AmazonBestSellers:
+        """Amazon Best Sellers dataset."""
+        if self._amazon_best_sellers is None:
+            self._amazon_best_sellers = AmazonBestSellers(self._engine)
+        return self._amazon_best_sellers
+
+    @property
+    def amazon_products_search(self) -> AmazonProductsSearch:
+        """Amazon Products Search dataset."""
+        if self._amazon_products_search is None:
+            self._amazon_products_search = AmazonProductsSearch(self._engine)
+        return self._amazon_products_search
+
+    @property
+    def amazon_products_global(self) -> AmazonProductsGlobal:
+        """Amazon Products Global dataset."""
+        if self._amazon_products_global is None:
+            self._amazon_products_global = AmazonProductsGlobal(self._engine)
+        return self._amazon_products_global
+
+    @property
+    def amazon_walmart(self) -> AmazonWalmart:
+        """Amazon Walmart dataset."""
+        if self._amazon_walmart is None:
+            self._amazon_walmart = AmazonWalmart(self._engine)
+        return self._amazon_walmart
+
+    @property
+    def walmart_sellers_info(self) -> WalmartSellersInfo:
+        """Walmart Sellers Info dataset."""
+        if self._walmart_sellers_info is None:
+            self._walmart_sellers_info = WalmartSellersInfo(self._engine)
+        return self._walmart_sellers_info
+
+    @property
+    def ebay_products(self) -> EbayProducts:
+        """eBay Products dataset."""
+        if self._ebay_products is None:
+            self._ebay_products = EbayProducts(self._engine)
+        return self._ebay_products
+
+    @property
+    def etsy_products(self) -> EtsyProducts:
+        """Etsy Products dataset."""
+        if self._etsy_products is None:
+            self._etsy_products = EtsyProducts(self._engine)
+        return self._etsy_products
+
+    @property
+    def target_products(self) -> TargetProducts:
+        """Target Products dataset."""
+        if self._target_products is None:
+            self._target_products = TargetProducts(self._engine)
+        return self._target_products
+
+    @property
+    def wayfair_products(self) -> WayfairProducts:
+        """Wayfair Products dataset."""
+        if self._wayfair_products is None:
+            self._wayfair_products = WayfairProducts(self._engine)
+        return self._wayfair_products
+
+    @property
+    def bestbuy_products(self) -> BestBuyProducts:
+        """Best Buy Products dataset."""
+        if self._bestbuy_products is None:
+            self._bestbuy_products = BestBuyProducts(self._engine)
+        return self._bestbuy_products
+
+    @property
+    def myntra_products(self) -> MyntraProducts:
+        """Myntra Products dataset."""
+        if self._myntra_products is None:
+            self._myntra_products = MyntraProducts(self._engine)
+        return self._myntra_products
+
+    @property
+    def ozon_products(self) -> OzonProducts:
+        """Ozon.ru Products dataset."""
+        if self._ozon_products is None:
+            self._ozon_products = OzonProducts(self._engine)
+        return self._ozon_products
+
+    @property
+    def wildberries_products(self) -> WildberriesProducts:
+        """Wildberries.ru Products dataset."""
+        if self._wildberries_products is None:
+            self._wildberries_products = WildberriesProducts(self._engine)
+        return self._wildberries_products
+
+    @property
+    def tokopedia_products(self) -> TokopediaProducts:
+        """Tokopedia Products dataset."""
+        if self._tokopedia_products is None:
+            self._tokopedia_products = TokopediaProducts(self._engine)
+        return self._tokopedia_products
+
+    @property
+    def google_shopping_products(self) -> GoogleShoppingProducts:
+        """Google Shopping Products dataset."""
+        if self._google_shopping_products is None:
+            self._google_shopping_products = GoogleShoppingProducts(self._engine)
+        return self._google_shopping_products
+
+    @property
+    def google_shopping_search_us(self) -> GoogleShoppingSearchUS:
+        """Google Shopping Search US dataset."""
+        if self._google_shopping_search_us is None:
+            self._google_shopping_search_us = GoogleShoppingSearchUS(self._engine)
+        return self._google_shopping_search_us
+
+    @property
+    def mercadolivre_products(self) -> MercadolivreProducts:
+        """MercadoLivre Products dataset."""
+        if self._mercadolivre_products is None:
+            self._mercadolivre_products = MercadolivreProducts(self._engine)
+        return self._mercadolivre_products
+
+    @property
+    def naver_products(self) -> NaverProducts:
+        """Naver Products dataset."""
+        if self._naver_products is None:
+            self._naver_products = NaverProducts(self._engine)
+        return self._naver_products
+
+    @property
+    def lazada_reviews(self) -> LazadaReviews:
+        """Lazada Reviews dataset."""
+        if self._lazada_reviews is None:
+            self._lazada_reviews = LazadaReviews(self._engine)
+        return self._lazada_reviews
+
+    @property
+    def lazada_products_search(self) -> LazadaProductsSearch:
+        """Lazada Products Search dataset."""
+        if self._lazada_products_search is None:
+            self._lazada_products_search = LazadaProductsSearch(self._engine)
+        return self._lazada_products_search
+
+    @property
+    def homedepot_us_products(self) -> HomeDepotUSProducts:
+        """Home Depot US Products dataset."""
+        if self._homedepot_us_products is None:
+            self._homedepot_us_products = HomeDepotUSProducts(self._engine)
+        return self._homedepot_us_products
+
+    @property
+    def homedepot_ca_products(self) -> HomeDepotCAProducts:
+        """Home Depot Canada Products dataset."""
+        if self._homedepot_ca_products is None:
+            self._homedepot_ca_products = HomeDepotCAProducts(self._engine)
+        return self._homedepot_ca_products
+
+    @property
+    def lowes_products(self) -> LowesProducts:
+        """Lowes Products dataset."""
+        if self._lowes_products is None:
+            self._lowes_products = LowesProducts(self._engine)
+        return self._lowes_products
+
+    @property
+    def rona_products(self) -> RonaProducts:
+        """Rona.ca Products dataset."""
+        if self._rona_products is None:
+            self._rona_products = RonaProducts(self._engine)
+        return self._rona_products
+
+    @property
+    def kroger_products(self) -> KrogerProducts:
+        """Kroger Products dataset."""
+        if self._kroger_products is None:
+            self._kroger_products = KrogerProducts(self._engine)
+        return self._kroger_products
+
+    @property
+    def macys_products(self) -> MacysProducts:
+        """Macys Products dataset."""
+        if self._macys_products is None:
+            self._macys_products = MacysProducts(self._engine)
+        return self._macys_products
+
+    @property
+    def costco_products(self) -> CostcoProducts:
+        """Costco Products dataset."""
+        if self._costco_products is None:
+            self._costco_products = CostcoProducts(self._engine)
+        return self._costco_products
+
+    @property
+    def bh_products(self) -> BHProducts:
+        """B&H Products dataset."""
+        if self._bh_products is None:
+            self._bh_products = BHProducts(self._engine)
+        return self._bh_products
+
+    @property
+    def microcenter_products(self) -> MicroCenterProducts:
+        """Micro Center Products dataset."""
+        if self._microcenter_products is None:
+            self._microcenter_products = MicroCenterProducts(self._engine)
+        return self._microcenter_products
+
+    @property
+    def autozone_products(self) -> AutozoneProducts:
+        """AutoZone Products dataset."""
+        if self._autozone_products is None:
+            self._autozone_products = AutozoneProducts(self._engine)
+        return self._autozone_products
+
+    # --- New dataset properties - Real Estate/Travel ---
+
+    @property
+    def zillow_price_history(self) -> ZillowPriceHistory:
+        """Zillow Price History dataset."""
+        if self._zillow_price_history is None:
+            self._zillow_price_history = ZillowPriceHistory(self._engine)
+        return self._zillow_price_history
+
+    @property
+    def zoopla_properties(self) -> ZooplaProperties:
+        """Zoopla Properties dataset."""
+        if self._zoopla_properties is None:
+            self._zoopla_properties = ZooplaProperties(self._engine)
+        return self._zoopla_properties
+
+    @property
+    def booking_listings_search(self) -> BookingListingsSearch:
+        """Booking.com Listings Search dataset."""
+        if self._booking_listings_search is None:
+            self._booking_listings_search = BookingListingsSearch(self._engine)
+        return self._booking_listings_search
+
+    @property
+    def booking_hotel_listings(self) -> BookingHotelListings:
+        """Booking.com Hotel Listings dataset."""
+        if self._booking_hotel_listings is None:
+            self._booking_hotel_listings = BookingHotelListings(self._engine)
+        return self._booking_hotel_listings
+
+    @property
+    def realtor_international_properties(self) -> RealtorInternationalProperties:
+        """Realtor International Properties dataset."""
+        if self._realtor_international_properties is None:
+            self._realtor_international_properties = RealtorInternationalProperties(self._engine)
+        return self._realtor_international_properties
+
+    @property
+    def agoda_properties(self) -> AgodaProperties:
+        """Agoda Properties dataset."""
+        if self._agoda_properties is None:
+            self._agoda_properties = AgodaProperties(self._engine)
+        return self._agoda_properties
+
+    @property
+    def carsales_listings(self) -> CarsalesListings:
+        """Carsales Car Listings dataset."""
+        if self._carsales_listings is None:
+            self._carsales_listings = CarsalesListings(self._engine)
+        return self._carsales_listings
+
+    # --- New dataset properties - Finance/Maps ---
+
+    @property
+    def yahoo_finance_businesses(self) -> YahooFinanceBusinesses:
+        """Yahoo Finance Businesses dataset."""
+        if self._yahoo_finance_businesses is None:
+            self._yahoo_finance_businesses = YahooFinanceBusinesses(self._engine)
+        return self._yahoo_finance_businesses
+
+    @property
+    def google_maps_full_info(self) -> GoogleMapsFullInfo:
+        """Google Maps Full Info dataset."""
+        if self._google_maps_full_info is None:
+            self._google_maps_full_info = GoogleMapsFullInfo(self._engine)
+        return self._google_maps_full_info
