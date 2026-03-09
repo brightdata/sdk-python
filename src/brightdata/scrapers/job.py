@@ -206,9 +206,9 @@ class ScrapeJob:
                 data=data,
                 platform=self.platform_name,
                 cost=estimated_cost,
-                timing_start=start_time,
-                timing_end=end_time,
-                metadata={"snapshot_id": self.snapshot_id},
+                snapshot_id=self.snapshot_id,
+                trigger_sent_at=start_time,
+                data_fetched_at=end_time,
             )
 
         except Exception as e:
@@ -216,7 +216,7 @@ class ScrapeJob:
                 success=False,
                 error=str(e),
                 platform=self.platform_name,
-                timing_start=start_time,
-                timing_end=datetime.now(timezone.utc),
-                metadata={"snapshot_id": self.snapshot_id},
+                snapshot_id=self.snapshot_id,
+                trigger_sent_at=start_time,
+                data_fetched_at=datetime.now(timezone.utc),
             )

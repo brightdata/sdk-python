@@ -12,7 +12,7 @@ Follows the same pattern as DatasetAPIClient and AsyncUnblockerClient.
 from typing import Dict, List, Any
 
 from ..core.engine import AsyncEngine
-from ..constants import HTTP_OK, HTTP_ACCEPTED
+from http import HTTPStatus
 from ..exceptions import APIError, DataNotReadyError
 
 
@@ -63,7 +63,7 @@ class ScraperStudioAPIClient:
         params = {"collector": collector}
 
         async with self.engine.post_to_url(url, json_data=input, params=params) as response:
-            if response.status in (HTTP_OK, HTTP_ACCEPTED):
+            if response.status in (HTTPStatus.OK, HTTPStatus.ACCEPTED):
                 data = await response.json()
                 response_id = data.get("response_id")
                 if not response_id:
@@ -97,7 +97,7 @@ class ScraperStudioAPIClient:
         params = {"response_id": response_id}
 
         async with self.engine.get_from_url(url, params=params) as response:
-            if response.status == HTTP_OK:
+            if response.status == HTTPStatus.OK:
                 return await response.json()
             elif response.status == 202:
                 raise DataNotReadyError(f"Data not ready for response_id={response_id}")
@@ -127,7 +127,7 @@ class ScraperStudioAPIClient:
         url = f"{BASE_URL}/dca/log/{job_id}"
 
         async with self.engine.get_from_url(url) as response:
-            if response.status == HTTP_OK:
+            if response.status == HTTPStatus.OK:
                 return await response.json()
             else:
                 error_text = await response.text()

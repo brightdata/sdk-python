@@ -5,10 +5,13 @@ Provides sync interface using persistent event loop for optimal performance.
 """
 
 import asyncio
+import logging
 from typing import Optional, List, Dict, Any
 
+logger = logging.getLogger(__name__)
+
 from .client import BrightDataClient
-from .api.browser_service import BrowserService
+from .browser.service import BrowserService
 from .models import ScrapeResult, SearchResult
 from .types import AccountInfo
 
@@ -48,7 +51,7 @@ class SyncBrightDataClient:
         Initialize sync client.
 
         Args:
-            token: Bright Data API token (or set BRIGHT_DATA_API_TOKEN env var)
+            token: Bright Data API token (or set BRIGHTDATA_API_TOKEN env var)
             timeout: Default request timeout in seconds
             web_unlocker_zone: Zone name for Web Unlocker API
             serp_zone: Zone name for SERP API
@@ -61,19 +64,18 @@ class SyncBrightDataClient:
             rate_limit: Rate limit (requests per period)
             rate_period: Rate limit period in seconds
         """
-        # Check if we're inside an async context - FIXED logic
+        # Check if we're inside an async context
+        loop_running = True
         try:
             asyncio.get_running_loop()
-            # If we get here, there IS a running loop - this is an error
+        except RuntimeError:
+            loop_running = False
+
+        if loop_running:
             raise RuntimeError(
-                "SyncBrightDataClient cannot be used inside async context. "
+                "SyncBrightDataClient cannot be used inside an async context. "
                 "Use BrightDataClient with async/await instead."
             )
-        except RuntimeError as e:
-            # Only pass if it's the "no running event loop" error
-            if "no running event loop" not in str(e).lower():
-                raise  # Re-raise our custom error or other RuntimeErrors
-            # No running loop - correct for sync usage, continue
 
         self._async_client = BrightDataClient(
             token=token,
@@ -138,14 +140,13 @@ class SyncBrightDataClient:
             if pending:
                 self._loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
         except Exception:
-            # Ignore errors during cleanup
-            pass
+            logger.debug("Error during SyncBrightDataClient cleanup", exc_info=True)
         finally:
             # Close the loop
             try:
                 self._loop.close()
             except Exception:
-                pass
+                logger.debug("Error closing event loop", exc_info=True)
             self._loop = None
 
     def _run(self, coro):

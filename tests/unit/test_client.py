@@ -1,230 +1,423 @@
-"""Unit tests for BrightDataClient."""
+"""Tests for client.py — BrightDataClient init, services, context manager, API methods."""
 
-import os
 import pytest
-from unittest.mock import patch
-from brightdata import BrightDataClient
-from brightdata.exceptions import ValidationError
+from unittest.mock import AsyncMock, MagicMock, patch
+
+from brightdata.client import BrightDataClient
+from brightdata.exceptions import ValidationError, AuthenticationError, APIError
+from brightdata.scrapers.service import ScrapeService
+from brightdata.serp.service import SearchService
+from brightdata.crawler.service import CrawlerService
+from brightdata.datasets import DatasetsClient
+
+from tests.conftest import MockResponse, MockContextManager
 
 
-class TestClientInitialization:
-    """Test client initialization and configuration."""
+# ---------------------------------------------------------------------------
+# Token loading
+# ---------------------------------------------------------------------------
 
-    def test_client_with_explicit_token(self):
-        """Test client initialization with explicit token."""
-        client = BrightDataClient(token="test_token_123456789")
 
-        assert client.token == "test_token_123456789"
-        assert client.timeout == 30  # Default timeout
-        assert client.web_unlocker_zone == "sdk_unlocker"
-        assert client.serp_zone == "sdk_serp"
+class TestTokenLoading:
+    def test_accepts_explicit_token(self):
+        c = BrightDataClient(token="tok_1234567890")
+        assert c.token == "tok_1234567890"
 
-    def test_client_with_custom_config(self):
-        """Test client with custom configuration."""
-        client = BrightDataClient(
-            token="custom_token_123456789",
-            timeout=60,
+    def test_strips_whitespace(self):
+        c = BrightDataClient(token="  tok_1234567890  ")
+        assert c.token == "tok_1234567890"
+
+    @patch.dict("os.environ", {"BRIGHTDATA_API_TOKEN": "env_token_12345"})
+    def test_reads_from_env(self):
+        c = BrightDataClient()
+        assert c.token == "env_token_12345"
+
+    def test_raises_without_token(self):
+        with patch.dict("os.environ", {}, clear=True):
+            with pytest.raises(ValidationError, match="API token required"):
+                BrightDataClient()
+
+    def test_rejects_short_token(self):
+        with pytest.raises(ValidationError, match="at least 10 characters"):
+            BrightDataClient(token="short")
+
+    def test_rejects_non_string_token(self):
+        with pytest.raises(ValidationError):
+            BrightDataClient(token=12345678901)  # type: ignore
+
+    def test_explicit_token_takes_precedence(self):
+        with patch.dict("os.environ", {"BRIGHTDATA_API_TOKEN": "env_token_12345"}):
+            c = BrightDataClient(token="explicit_token_12345")
+            assert c.token == "explicit_token_12345"
+
+
+# ---------------------------------------------------------------------------
+# Init configuration
+# ---------------------------------------------------------------------------
+
+
+class TestInitConfig:
+    def test_default_timeout(self):
+        c = BrightDataClient(token="tok_1234567890")
+        assert c.timeout == 30
+
+    def test_custom_timeout(self):
+        c = BrightDataClient(token="tok_1234567890", timeout=120)
+        assert c.timeout == 120
+
+    def test_default_zone_names(self):
+        c = BrightDataClient(token="tok_1234567890")
+        assert c.web_unlocker_zone == "sdk_unlocker"
+        assert c.serp_zone == "sdk_serp"
+
+    def test_custom_zone_names(self):
+        c = BrightDataClient(
+            token="tok_1234567890",
             web_unlocker_zone="my_unlocker",
             serp_zone="my_serp",
         )
+        assert c.web_unlocker_zone == "my_unlocker"
+        assert c.serp_zone == "my_serp"
 
-        assert client.timeout == 60
-        assert client.web_unlocker_zone == "my_unlocker"
-        assert client.serp_zone == "my_serp"
+    def test_creates_engine(self):
+        c = BrightDataClient(token="tok_1234567890")
+        assert c.engine is not None
+        assert c.engine.bearer_token == "tok_1234567890"
 
-    def test_client_loads_from_brightdata_api_token(self):
-        """Test client loads token from BRIGHTDATA_API_TOKEN."""
-        with patch.dict(os.environ, {"BRIGHTDATA_API_TOKEN": "env_token_123456789"}):
-            client = BrightDataClient()
-            assert client.token == "env_token_123456789"
-
-    def test_client_prioritizes_explicit_token_over_env(self):
-        """Test explicit token takes precedence over environment."""
-        with patch.dict(os.environ, {"BRIGHTDATA_API_TOKEN": "env_token_123456789"}):
-            client = BrightDataClient(token="explicit_token_123456789")
-            assert client.token == "explicit_token_123456789"
-
-    def test_client_raises_error_without_token(self):
-        """Test client raises ValidationError when no token provided."""
-        with patch.dict(os.environ, {}, clear=True):
-            with pytest.raises(ValidationError) as exc_info:
-                BrightDataClient()
-
-            assert "API token required" in str(exc_info.value)
-            assert "BRIGHTDATA_API_TOKEN" in str(exc_info.value)
-
-    def test_client_raises_error_for_invalid_token_format(self):
-        """Test client raises ValidationError for invalid token format."""
-        with pytest.raises(ValidationError) as exc_info:
-            BrightDataClient(token="short")
-
-        assert "Invalid token format" in str(exc_info.value)
-
-    def test_client_raises_error_for_non_string_token(self):
-        """Test client raises ValidationError for non-string token."""
-        with pytest.raises(ValidationError) as exc_info:
-            BrightDataClient(token=12345)
-
-        assert "Invalid token format" in str(exc_info.value)
-
-
-class TestClientTokenManagement:
-    """Test token management and validation."""
-
-    def test_token_is_stripped(self):
-        """Test token whitespace is stripped."""
-        client = BrightDataClient(token="  token_with_spaces_123  ")
-        assert client.token == "token_with_spaces_123"
-
-    def test_env_token_is_stripped(self):
-        """Test environment token whitespace is stripped."""
-        with patch.dict(os.environ, {"BRIGHTDATA_API_TOKEN": "  env_token_123456789  "}):
-            client = BrightDataClient()
-            assert client.token == "env_token_123456789"
-
-
-class TestClientServiceProperties:
-    """Test hierarchical service access properties."""
-
-    def test_scrape_service_property(self):
-        """Test scrape service property returns ScrapeService."""
-        client = BrightDataClient(token="test_token_123456789")
-
-        scrape_service = client.scrape
-        assert scrape_service is not None
-
-        # All scrapers should now work
-        assert scrape_service.amazon is not None
-        assert scrape_service.linkedin is not None
-        assert scrape_service.chatgpt is not None
-
-    def test_scrape_service_is_cached(self):
-        """Test scrape service is cached (returns same instance)."""
-        client = BrightDataClient(token="test_token_123456789")
-
-        service1 = client.scrape
-        service2 = client.scrape
-        assert service1 is service2
-
-    def test_search_service_property(self):
-        """Test search service property returns SearchService."""
-        client = BrightDataClient(token="test_token_123456789")
-
-        search_service = client.search
-        assert search_service is not None
-
-        # All search methods should exist and be callable (async-first API)
-        assert callable(search_service.google)
-        assert callable(search_service.bing)
-        assert callable(search_service.yandex)
-
-    def test_crawler_service_property(self):
-        """Test crawler service property returns CrawlerService."""
-        client = BrightDataClient(token="test_token_123456789")
-
-        crawler_service = client.crawler
-        assert crawler_service is not None
-        assert hasattr(crawler_service, "discover")
-        assert hasattr(crawler_service, "sitemap")
-
-
-class TestClientBackwardCompatibility:
-    """Test backward compatibility with old API."""
-
-    def test_scrape_url_method_exists(self):
-        """Test scrape_url method exists for backward compatibility."""
-        client = BrightDataClient(token="test_token_123456789")
-        assert hasattr(client, "scrape_url")
-
-
-class TestClientRepr:
-    """Test client string representation."""
-
-    def test_repr_shows_token_preview(self):
-        """Test __repr__ shows token preview."""
-        client = BrightDataClient(token="1234567890abcdefghij")
-        repr_str = repr(client)
-
-        assert "BrightDataClient" in repr_str
-        assert "1234567890" in repr_str  # First 10 chars
-        assert "fghij" in repr_str  # Last 5 chars
-        assert "abcde" not in repr_str  # Middle should not be shown
-
-    def test_repr_shows_status(self):
-        """Test __repr__ shows connection status."""
-        client = BrightDataClient(token="test_token_123456789")
-        repr_str = repr(client)
-
-        assert "status" in repr_str.lower()
-
-
-class TestClientConfiguration:
-    """Test client configuration options."""
+    def test_services_none_before_access(self):
+        c = BrightDataClient(token="tok_1234567890")
+        assert c._scrape_service is None
+        assert c._search_service is None
+        assert c._crawler_service is None
+        assert c._datasets_client is None
 
     def test_auto_create_zones_default_true(self):
-        """Test auto_create_zones defaults to True."""
-        client = BrightDataClient(token="test_token_123456789")
-        assert client.auto_create_zones is True
+        c = BrightDataClient(token="tok_1234567890")
+        assert c.auto_create_zones is True
 
-    def test_auto_create_zones_can_be_enabled(self):
-        """Test auto_create_zones can be enabled."""
-        client = BrightDataClient(token="test_token_123456789", auto_create_zones=True)
-        assert client.auto_create_zones is True
-
-    def test_zones_ensured_flag_starts_false(self):
-        """Test _zones_ensured flag starts as False."""
-        client = BrightDataClient(token="test_token_123456789")
-        assert client._zones_ensured is False
-
-    def test_zone_manager_starts_as_none(self):
-        """Test zone manager starts as None."""
-        client = BrightDataClient(token="test_token_123456789")
-        assert client._zone_manager is None
-
-    def test_default_timeout_is_30(self):
-        """Test default timeout is 30 seconds."""
-        client = BrightDataClient(token="test_token_123456789")
-        assert client.timeout == 30
-
-    def test_custom_timeout_is_respected(self):
-        """Test custom timeout is respected."""
-        client = BrightDataClient(token="test_token_123456789", timeout=120)
-        assert client.timeout == 120
+    def test_auto_create_zones_can_disable(self):
+        c = BrightDataClient(token="tok_1234567890", auto_create_zones=False)
+        assert c.auto_create_zones is False
 
 
-class TestClientErrorMessages:
-    """Test client error messages are clear and helpful."""
-
-    def test_missing_token_error_is_helpful(self):
-        """Test missing token error provides helpful guidance."""
-        with patch.dict(os.environ, {}, clear=True):
-            with pytest.raises(ValidationError) as exc_info:
-                BrightDataClient()
-
-            error_msg = str(exc_info.value)
-            assert "API token required" in error_msg
-            assert "BrightDataClient(token=" in error_msg
-            assert "BRIGHTDATA_API_TOKEN" in error_msg
-            assert "https://brightdata.com" in error_msg
-
-    def test_invalid_token_format_error_is_clear(self):
-        """Test invalid token format error is clear."""
-        with pytest.raises(ValidationError) as exc_info:
-            BrightDataClient(token="bad")
-
-        error_msg = str(exc_info.value)
-        assert "Invalid token format" in error_msg
-        assert "at least 10 characters" in error_msg
+# ---------------------------------------------------------------------------
+# Service properties (lazy init)
+# ---------------------------------------------------------------------------
 
 
-class TestClientContextManager:
-    """Test client context manager support."""
+class TestServiceProperties:
+    def test_scrape_returns_scrape_service(self):
+        c = BrightDataClient(token="tok_1234567890")
+        s = c.scrape
+        assert isinstance(s, ScrapeService)
 
-    def test_client_supports_async_context_manager(self):
-        """Test client supports async context manager protocol."""
-        client = BrightDataClient(token="test_token_123456789")
+    def test_scrape_returns_same_instance(self):
+        c = BrightDataClient(token="tok_1234567890")
+        assert c.scrape is c.scrape
 
-        assert hasattr(client, "__aenter__")
-        assert hasattr(client, "__aexit__")
-        assert callable(client.__aenter__)
-        assert callable(client.__aexit__)
+    def test_search_returns_search_service(self):
+        c = BrightDataClient(token="tok_1234567890")
+        s = c.search
+        assert isinstance(s, SearchService)
+
+    def test_search_returns_same_instance(self):
+        c = BrightDataClient(token="tok_1234567890")
+        assert c.search is c.search
+
+    def test_crawler_returns_crawler_service(self):
+        c = BrightDataClient(token="tok_1234567890")
+        s = c.crawler
+        assert isinstance(s, CrawlerService)
+
+    def test_crawler_returns_same_instance(self):
+        c = BrightDataClient(token="tok_1234567890")
+        assert c.crawler is c.crawler
+
+    def test_datasets_returns_datasets_client(self):
+        c = BrightDataClient(token="tok_1234567890")
+        d = c.datasets
+        assert isinstance(d, DatasetsClient)
+
+    def test_datasets_returns_same_instance(self):
+        c = BrightDataClient(token="tok_1234567890")
+        assert c.datasets is c.datasets
+
+
+# ---------------------------------------------------------------------------
+# Browser property
+# ---------------------------------------------------------------------------
+
+
+class TestBrowserProperty:
+    def test_raises_without_credentials(self):
+        with patch.dict("os.environ", {}, clear=False):
+            # Ensure env vars are not set
+            import os
+
+            os.environ.pop("BRIGHTDATA_BROWSERAPI_USERNAME", None)
+            os.environ.pop("BRIGHTDATA_BROWSERAPI_PASSWORD", None)
+
+            c = BrightDataClient(token="tok_1234567890")
+            with pytest.raises(ValidationError, match="Browser API credentials"):
+                _ = c.browser
+
+    def test_accepts_explicit_credentials(self):
+        c = BrightDataClient(
+            token="tok_1234567890",
+            browser_username="brd-user",
+            browser_password="pass123",
+        )
+        b = c.browser
+        assert b is not None
+
+    @patch.dict(
+        "os.environ",
+        {
+            "BRIGHTDATA_BROWSERAPI_USERNAME": "env-user",
+            "BRIGHTDATA_BROWSERAPI_PASSWORD": "env-pass",
+        },
+    )
+    def test_reads_credentials_from_env(self):
+        c = BrightDataClient(token="tok_1234567890")
+        b = c.browser
+        assert b is not None
+
+    def test_returns_same_instance(self):
+        c = BrightDataClient(
+            token="tok_1234567890",
+            browser_username="brd-user",
+            browser_password="pass123",
+        )
+        assert c.browser is c.browser
+
+
+# ---------------------------------------------------------------------------
+# _ensure_initialized
+# ---------------------------------------------------------------------------
+
+
+class TestEnsureInitialized:
+    def test_raises_if_no_session(self):
+        c = BrightDataClient(token="tok_1234567890")
+        with pytest.raises(RuntimeError, match="not initialized"):
+            c._ensure_initialized()
+
+
+# ---------------------------------------------------------------------------
+# Context manager
+# ---------------------------------------------------------------------------
+
+
+class TestContextManager:
+    @pytest.mark.asyncio
+    async def test_aenter_creates_session(self):
+        c = BrightDataClient(token="tok_1234567890", auto_create_zones=False)
+        async with c:
+            assert c.engine._session is not None
+
+    @pytest.mark.asyncio
+    async def test_aexit_closes_session(self):
+        c = BrightDataClient(token="tok_1234567890", auto_create_zones=False)
+        async with c:
+            session = c.engine._session
+        assert c.engine._session is None
+        assert session.closed
+
+    @pytest.mark.asyncio
+    async def test_returns_self(self):
+        c = BrightDataClient(token="tok_1234567890", auto_create_zones=False)
+        async with c as client:
+            assert client is c
+
+    @pytest.mark.asyncio
+    async def test_validate_token_on_enter_success(self):
+        c = BrightDataClient(
+            token="tok_1234567890",
+            validate_token=True,
+            auto_create_zones=False,
+        )
+        with patch.object(c, "test_connection", new_callable=AsyncMock, return_value=True):
+            with patch.object(c, "_ensure_zones", new_callable=AsyncMock):
+                async with c:
+                    pass  # should not raise
+
+    @pytest.mark.asyncio
+    async def test_validate_token_on_enter_failure(self):
+        c = BrightDataClient(
+            token="tok_1234567890",
+            validate_token=True,
+            auto_create_zones=False,
+        )
+        with patch.object(c, "test_connection", new_callable=AsyncMock, return_value=False):
+            with pytest.raises(AuthenticationError, match="Token validation failed"):
+                async with c:
+                    pass
+
+
+# ---------------------------------------------------------------------------
+# test_connection
+# ---------------------------------------------------------------------------
+
+
+class TestTestConnection:
+    @pytest.mark.asyncio
+    async def test_returns_true_on_200(self):
+        c = BrightDataClient(token="tok_1234567890", auto_create_zones=False)
+        async with c:
+            c.engine.get_from_url = MagicMock(
+                return_value=MockContextManager(MockResponse(200, json_data=[]))
+            )
+            result = await c.test_connection()
+            assert result is True
+            assert c._is_connected is True
+
+    @pytest.mark.asyncio
+    async def test_returns_false_on_401(self):
+        c = BrightDataClient(token="tok_1234567890", auto_create_zones=False)
+        async with c:
+            c.engine.get_from_url = MagicMock(return_value=MockContextManager(MockResponse(401)))
+            result = await c.test_connection()
+            assert result is False
+            assert c._is_connected is False
+
+    @pytest.mark.asyncio
+    async def test_returns_false_on_exception(self):
+        c = BrightDataClient(token="tok_1234567890", auto_create_zones=False)
+        async with c:
+            c.engine.get_from_url = MagicMock(side_effect=OSError("Network down"))
+            result = await c.test_connection()
+            assert result is False
+
+
+# ---------------------------------------------------------------------------
+# get_account_info
+# ---------------------------------------------------------------------------
+
+
+class TestGetAccountInfo:
+    @pytest.mark.asyncio
+    async def test_returns_account_info(self):
+        c = BrightDataClient(token="tok_1234567890", auto_create_zones=False)
+        async with c:
+            zones = [{"name": "zone1"}, {"name": "zone2"}]
+            c.engine.get_from_url = MagicMock(
+                return_value=MockContextManager(MockResponse(200, json_data=zones))
+            )
+            info = await c.get_account_info()
+
+            assert info["zone_count"] == 2
+            assert info["token_valid"] is True
+            assert len(info["zones"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_caches_result(self):
+        c = BrightDataClient(token="tok_1234567890", auto_create_zones=False)
+        async with c:
+            c.engine.get_from_url = MagicMock(
+                return_value=MockContextManager(MockResponse(200, json_data=[{"name": "z"}]))
+            )
+            info1 = await c.get_account_info()
+            info2 = await c.get_account_info()
+
+            assert info1 is info2
+            # Should only call API once
+            c.engine.get_from_url.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_refresh_bypasses_cache(self):
+        c = BrightDataClient(token="tok_1234567890", auto_create_zones=False)
+        async with c:
+            c.engine.get_from_url = MagicMock(
+                return_value=MockContextManager(MockResponse(200, json_data=[]))
+            )
+            await c.get_account_info()
+            await c.get_account_info(refresh=True)
+
+            assert c.engine.get_from_url.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_401_raises_auth_error(self):
+        c = BrightDataClient(token="tok_1234567890", auto_create_zones=False)
+        async with c:
+            c.engine.get_from_url = MagicMock(
+                return_value=MockContextManager(MockResponse(401, text_data="Unauthorized"))
+            )
+            with pytest.raises(AuthenticationError, match="Invalid token"):
+                await c.get_account_info()
+
+    @pytest.mark.asyncio
+    async def test_500_raises_api_error(self):
+        c = BrightDataClient(token="tok_1234567890", auto_create_zones=False)
+        async with c:
+            c.engine.get_from_url = MagicMock(
+                return_value=MockContextManager(MockResponse(500, text_data="Server Error"))
+            )
+            with pytest.raises(APIError, match="Failed to get account info"):
+                await c.get_account_info()
+
+    @pytest.mark.asyncio
+    async def test_empty_zones_warns(self):
+        c = BrightDataClient(token="tok_1234567890", auto_create_zones=False)
+        async with c:
+            c.engine.get_from_url = MagicMock(
+                return_value=MockContextManager(MockResponse(200, json_data=[]))
+            )
+            with pytest.warns(UserWarning, match="No active zones"):
+                await c.get_account_info()
+
+
+# ---------------------------------------------------------------------------
+# list_zones / delete_zone
+# ---------------------------------------------------------------------------
+
+
+class TestZoneOperations:
+    @pytest.mark.asyncio
+    async def test_list_zones_delegates_to_zone_manager(self):
+        c = BrightDataClient(token="tok_1234567890", auto_create_zones=False)
+        async with c:
+            c._zone_manager = AsyncMock()
+            c._zone_manager.list_zones = AsyncMock(return_value=[{"name": "z1"}])
+
+            zones = await c.list_zones()
+
+            assert zones == [{"name": "z1"}]
+
+    @pytest.mark.asyncio
+    async def test_list_zones_creates_zone_manager(self):
+        c = BrightDataClient(token="tok_1234567890", auto_create_zones=False)
+        async with c:
+            # Mock engine to avoid real HTTP
+            c.engine.get = MagicMock(
+                return_value=MockContextManager(MockResponse(200, json_data=[]))
+            )
+            zones = await c.list_zones()
+            assert c._zone_manager is not None
+
+    @pytest.mark.asyncio
+    async def test_delete_zone_delegates(self):
+        c = BrightDataClient(token="tok_1234567890", auto_create_zones=False)
+        async with c:
+            c._zone_manager = AsyncMock()
+            c._zone_manager.delete_zone = AsyncMock()
+
+            await c.delete_zone("test_zone")
+
+            c._zone_manager.delete_zone.assert_called_once_with("test_zone")
+
+
+# ---------------------------------------------------------------------------
+# __repr__
+# ---------------------------------------------------------------------------
+
+
+class TestRepr:
+    def test_includes_token_preview(self):
+        c = BrightDataClient(token="tok_1234567890_abcde")
+        r = repr(c)
+        assert "tok_12345" in r
+        assert "abcde" in r
+
+    def test_shows_not_tested_by_default(self):
+        c = BrightDataClient(token="tok_1234567890")
+        assert "Not tested" in repr(c)

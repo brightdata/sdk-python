@@ -10,7 +10,7 @@ Handles all HTTP communication with Bright Data's Datasets API v3:
 from typing import List, Dict, Any, Optional
 
 from ..core.engine import AsyncEngine
-from ..constants import HTTP_OK
+from http import HTTPStatus
 from ..exceptions import APIError, DataNotReadyError
 
 
@@ -78,7 +78,7 @@ class DatasetAPIClient:
         async with self.engine.post_to_url(
             self.TRIGGER_URL, json_data=payload, params=params
         ) as response:
-            if response.status == HTTP_OK:
+            if response.status == HTTPStatus.OK:
                 data = await response.json()
                 return data.get("snapshot_id")
             else:
@@ -101,7 +101,7 @@ class DatasetAPIClient:
         url = f"{self.STATUS_URL}/{snapshot_id}"
 
         async with self.engine.get_from_url(url) as response:
-            if response.status == HTTP_OK:
+            if response.status == HTTPStatus.OK:
                 data = await response.json()
                 return data.get("status", "unknown")
             else:
@@ -125,7 +125,7 @@ class DatasetAPIClient:
         params = {"format": format}
 
         async with self.engine.get_from_url(url, params=params) as response:
-            if response.status == HTTP_OK:
+            if response.status == HTTPStatus.OK:
                 if format == "json":
                     return await response.json()
                 else:

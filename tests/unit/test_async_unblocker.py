@@ -1,190 +1,174 @@
-"""Unit tests for AsyncUnblockerClient."""
+"""Tests for web_unlocker/async_client.py — Trigger, status, and fetch operations."""
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from brightdata.api.async_unblocker import AsyncUnblockerClient
+
+from brightdata.web_unlocker.async_client import AsyncUnblockerClient
 from brightdata.exceptions import APIError
 
-
-class MockAsyncContextManager:
-    """Helper to mock async context managers."""
-
-    def __init__(self, return_value):
-        self.return_value = return_value
-
-    async def __aenter__(self):
-        return self.return_value
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        pass
+from tests.conftest import MockContextManager
 
 
-class TestAsyncUnblockerClient:
-    """Test AsyncUnblockerClient functionality."""
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.engine = MagicMock()
-        self.engine.BASE_URL = "https://api.brightdata.com"
-        self.client = AsyncUnblockerClient(self.engine)
 
+@pytest.fixture
+def engine():
+    eng = MagicMock()
+    eng.BASE_URL = "https://api.brightdata.com"
+    return eng
+
+
+@pytest.fixture
+def client(engine):
+    return AsyncUnblockerClient(engine)
+
+
+# ---------------------------------------------------------------------------
+# Trigger
+# ---------------------------------------------------------------------------
+
+
+class TestTrigger:
     @pytest.mark.asyncio
-    async def test_trigger_success(self):
-        """Test successful trigger returns response_id from header."""
-        # Mock response with x-response-id header
+    async def test_returns_response_id(self, client, engine):
         response = MagicMock()
         response.headers.get.return_value = "test_response_id_123"
+        engine.post_to_url = MagicMock(return_value=MockContextManager(response))
 
-        # Mock post_to_url to return async context manager
-        self.engine.post_to_url = MagicMock(return_value=MockAsyncContextManager(response))
+        response_id = await client.trigger(zone="test_zone", url="https://example.com")
 
-        # Trigger request
-        response_id = await self.client.trigger(zone="test_zone", url="https://example.com")
-
-        # Verify response_id returned
         assert response_id == "test_response_id_123"
-
-        # Verify correct endpoint called
-        self.engine.post_to_url.assert_called_once()
-        call_args = self.engine.post_to_url.call_args
+        engine.post_to_url.assert_called_once()
+        call_args = engine.post_to_url.call_args
         assert call_args[0][0] == "https://api.brightdata.com/unblocker/req"
         assert call_args[1]["params"] == {"zone": "test_zone"}
         assert call_args[1]["json_data"]["url"] == "https://example.com"
 
     @pytest.mark.asyncio
-    async def test_trigger_with_additional_params(self):
-        """Test trigger passes additional parameters correctly."""
+    async def test_passes_additional_params(self, client, engine):
         response = MagicMock()
         response.headers.get.return_value = "response_id_456"
+        engine.post_to_url = MagicMock(return_value=MockContextManager(response))
 
-        self.engine.post_to_url = MagicMock(return_value=MockAsyncContextManager(response))
-
-        # Trigger with additional params
-        response_id = await self.client.trigger(
+        response_id = await client.trigger(
             zone="my_zone", url="https://google.com/search?q=test", format="raw", country="US"
         )
 
         assert response_id == "response_id_456"
-
-        # Verify params merged into payload
-        call_args = self.engine.post_to_url.call_args
-        payload = call_args[1]["json_data"]
+        payload = engine.post_to_url.call_args[1]["json_data"]
         assert payload["url"] == "https://google.com/search?q=test"
         assert payload["format"] == "raw"
         assert payload["country"] == "US"
 
     @pytest.mark.asyncio
-    async def test_trigger_no_response_id(self):
-        """Test trigger returns None when no response_id header."""
+    async def test_returns_none_when_no_response_id(self, client, engine):
         response = MagicMock()
-        response.headers.get.return_value = None  # No x-response-id
+        response.headers.get.return_value = None
+        engine.post_to_url = MagicMock(return_value=MockContextManager(response))
 
-        self.engine.post_to_url = MagicMock(return_value=MockAsyncContextManager(response))
-
-        response_id = await self.client.trigger(zone="test_zone", url="https://example.com")
-
+        response_id = await client.trigger(zone="test_zone", url="https://example.com")
         assert response_id is None
 
+
+# ---------------------------------------------------------------------------
+# Get Status
+# ---------------------------------------------------------------------------
+
+
+class TestGetStatus:
     @pytest.mark.asyncio
-    async def test_get_status_ready(self):
-        """Test get_status returns 'ready' for HTTP 200."""
+    async def test_200_returns_ready(self, client, engine):
         response = MagicMock()
         response.status = 200
+        engine.get_from_url = MagicMock(return_value=MockContextManager(response))
 
-        self.engine.get_from_url = MagicMock(return_value=MockAsyncContextManager(response))
-
-        status = await self.client.get_status(zone="test_zone", response_id="abc123")
+        status = await client.get_status(zone="test_zone", response_id="abc123")
 
         assert status == "ready"
-
-        # Verify correct endpoint and params
-        call_args = self.engine.get_from_url.call_args
+        call_args = engine.get_from_url.call_args
         assert call_args[0][0] == "https://api.brightdata.com/unblocker/get_result"
         assert call_args[1]["params"]["zone"] == "test_zone"
         assert call_args[1]["params"]["response_id"] == "abc123"
 
     @pytest.mark.asyncio
-    async def test_get_status_pending(self):
-        """Test get_status returns 'pending' for HTTP 202."""
+    async def test_202_returns_pending(self, client, engine):
         response = MagicMock()
         response.status = 202
+        engine.get_from_url = MagicMock(return_value=MockContextManager(response))
 
-        self.engine.get_from_url = MagicMock(return_value=MockAsyncContextManager(response))
-
-        status = await self.client.get_status(zone="test_zone", response_id="xyz789")
-
+        status = await client.get_status(zone="test_zone", response_id="xyz789")
         assert status == "pending"
 
     @pytest.mark.asyncio
-    async def test_get_status_error(self):
-        """Test get_status returns 'error' for non-200/202 status."""
-        # Test various error codes
+    async def test_error_codes_return_error(self, client, engine):
         for error_code in [400, 404, 500, 503]:
             response = MagicMock()
             response.status = error_code
+            engine.get_from_url = MagicMock(return_value=MockContextManager(response))
 
-            self.engine.get_from_url = MagicMock(return_value=MockAsyncContextManager(response))
-
-            status = await self.client.get_status(zone="test_zone", response_id="err123")
-
+            status = await client.get_status(zone="test_zone", response_id="err123")
             assert status == "error", f"Expected 'error' for HTTP {error_code}"
 
-    @pytest.mark.asyncio
-    async def test_fetch_result_success(self):
-        """Test fetch_result returns parsed JSON for HTTP 200."""
-        expected_data = {"general": {"search_engine": "google"}, "organic": [{"title": "Result 1"}]}
 
+# ---------------------------------------------------------------------------
+# Fetch Result
+# ---------------------------------------------------------------------------
+
+
+class TestFetchResult:
+    @pytest.mark.asyncio
+    async def test_200_returns_json(self, client, engine):
+        expected_data = {"general": {"search_engine": "google"}, "organic": [{"title": "Result 1"}]}
         response = MagicMock()
         response.status = 200
         response.json = AsyncMock(return_value=expected_data)
+        engine.get_from_url = MagicMock(return_value=MockContextManager(response))
 
-        self.engine.get_from_url = MagicMock(return_value=MockAsyncContextManager(response))
-
-        data = await self.client.fetch_result(zone="test_zone", response_id="fetch123")
+        data = await client.fetch_result(zone="test_zone", response_id="fetch123")
 
         assert data == expected_data
         response.json.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_fetch_result_not_ready(self):
-        """Test fetch_result raises APIError for HTTP 202 (pending)."""
+    async def test_202_raises_api_error(self, client, engine):
         response = MagicMock()
         response.status = 202
-
-        self.engine.get_from_url = MagicMock(return_value=MockAsyncContextManager(response))
+        engine.get_from_url = MagicMock(return_value=MockContextManager(response))
 
         with pytest.raises(APIError) as exc_info:
-            await self.client.fetch_result(zone="test_zone", response_id="pending123")
+            await client.fetch_result(zone="test_zone", response_id="pending123")
 
         assert "not ready yet" in str(exc_info.value).lower()
         assert "202" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_fetch_result_error(self):
-        """Test fetch_result raises APIError for error status codes."""
+    async def test_500_raises_api_error(self, client, engine):
         response = MagicMock()
         response.status = 500
         response.text = AsyncMock(return_value="Internal Server Error")
-
-        self.engine.get_from_url = MagicMock(return_value=MockAsyncContextManager(response))
+        engine.get_from_url = MagicMock(return_value=MockContextManager(response))
 
         with pytest.raises(APIError) as exc_info:
-            await self.client.fetch_result(zone="test_zone", response_id="error123")
+            await client.fetch_result(zone="test_zone", response_id="error123")
 
-        error_msg = str(exc_info.value)
-        assert "500" in error_msg
-        assert "Internal Server Error" in error_msg
+        assert "500" in str(exc_info.value)
+        assert "Internal Server Error" in str(exc_info.value)
 
-    @pytest.mark.asyncio
-    async def test_endpoint_constants(self):
-        """Test that endpoint constants are correct."""
-        assert self.client.TRIGGER_ENDPOINT == "/unblocker/req"
-        assert self.client.FETCH_ENDPOINT == "/unblocker/get_result"
 
-    @pytest.mark.asyncio
-    async def test_client_initialization(self):
-        """Test client initializes with AsyncEngine."""
+# ---------------------------------------------------------------------------
+# Constants and init
+# ---------------------------------------------------------------------------
+
+
+class TestClientSetup:
+    def test_endpoint_constants(self, client):
+        assert client.TRIGGER_ENDPOINT == "/unblocker/req"
+        assert client.FETCH_ENDPOINT == "/unblocker/get_result"
+
+    def test_stores_engine_reference(self):
         engine = MagicMock()
-        client = AsyncUnblockerClient(engine)
-
-        assert client.engine is engine
+        c = AsyncUnblockerClient(engine)
+        assert c.engine is engine

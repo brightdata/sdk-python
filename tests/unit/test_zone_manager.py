@@ -1,121 +1,97 @@
-"""Unit tests for ZoneManager."""
+"""Tests for core/zone_manager.py — Zone CRUD and ensure operations."""
 
 import pytest
-from unittest.mock import MagicMock
+
 from brightdata.core.zone_manager import ZoneManager
 from brightdata.exceptions.errors import ZoneError, AuthenticationError
 
-
-class MockResponse:
-    """Mock aiohttp response for testing."""
-
-    def __init__(self, status: int, json_data=None, text_data=""):
-        self.status = status
-        self._json_data = json_data
-        self._text_data = text_data
-
-    async def json(self):
-        return self._json_data
-
-    async def text(self):
-        return self._text_data
-
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        pass
+from tests.conftest import MockResponse, MockContextManager
 
 
-@pytest.fixture
-def mock_engine():
-    """Create a mock engine for testing."""
-    engine = MagicMock()
-    return engine
+# ---------------------------------------------------------------------------
+# List Zones
+# ---------------------------------------------------------------------------
 
 
-class TestZoneManagerListZones:
-    """Tests for listing zones."""
-
+class TestListZones:
     @pytest.mark.asyncio
-    async def test_list_zones_success(self, mock_engine):
-        """Test successful zone listing."""
+    async def test_returns_zones_list(self, mock_engine):
         zones_data = [{"name": "zone1", "type": "unblocker"}, {"name": "zone2", "type": "serp"}]
-        mock_engine.get.return_value = MockResponse(200, json_data=zones_data)
+        mock_engine.get.return_value = MockContextManager(MockResponse(200, json_data=zones_data))
 
-        zone_manager = ZoneManager(mock_engine)
-        zones = await zone_manager.list_zones()
+        zm = ZoneManager(mock_engine)
+        zones = await zm.list_zones()
 
         assert zones == zones_data
         mock_engine.get.assert_called_once_with("/zone/get_active_zones")
 
     @pytest.mark.asyncio
-    async def test_list_zones_empty(self, mock_engine):
-        """Test listing zones when none exist."""
-        mock_engine.get.return_value = MockResponse(200, json_data=[])
+    async def test_returns_empty_list_when_none(self, mock_engine):
+        mock_engine.get.return_value = MockContextManager(MockResponse(200, json_data=[]))
 
-        zone_manager = ZoneManager(mock_engine)
-        zones = await zone_manager.list_zones()
-
-        assert zones == []
-
-    @pytest.mark.asyncio
-    async def test_list_zones_null_response(self, mock_engine):
-        """Test listing zones when API returns null."""
-        mock_engine.get.return_value = MockResponse(200, json_data=None)
-
-        zone_manager = ZoneManager(mock_engine)
-        zones = await zone_manager.list_zones()
+        zm = ZoneManager(mock_engine)
+        zones = await zm.list_zones()
 
         assert zones == []
 
     @pytest.mark.asyncio
-    async def test_list_zones_auth_error_401(self, mock_engine):
-        """Test listing zones with 401 authentication error."""
-        mock_engine.get.return_value = MockResponse(401, text_data="Invalid token")
+    async def test_returns_empty_list_on_null_response(self, mock_engine):
+        mock_engine.get.return_value = MockContextManager(MockResponse(200, json_data=None))
 
-        zone_manager = ZoneManager(mock_engine)
+        zm = ZoneManager(mock_engine)
+        zones = await zm.list_zones()
+
+        assert zones == []
+
+    @pytest.mark.asyncio
+    async def test_401_raises_authentication_error(self, mock_engine):
+        mock_engine.get.return_value = MockContextManager(
+            MockResponse(401, text_data="Invalid token")
+        )
+
+        zm = ZoneManager(mock_engine)
         with pytest.raises(AuthenticationError) as exc_info:
-            await zone_manager.list_zones()
+            await zm.list_zones()
 
         assert "401" in str(exc_info.value)
         assert "Invalid token" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_list_zones_auth_error_403(self, mock_engine):
-        """Test listing zones with 403 forbidden error."""
-        mock_engine.get.return_value = MockResponse(403, text_data="Forbidden")
+    async def test_403_raises_authentication_error(self, mock_engine):
+        mock_engine.get.return_value = MockContextManager(MockResponse(403, text_data="Forbidden"))
 
-        zone_manager = ZoneManager(mock_engine)
+        zm = ZoneManager(mock_engine)
         with pytest.raises(AuthenticationError) as exc_info:
-            await zone_manager.list_zones()
+            await zm.list_zones()
 
         assert "403" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_list_zones_api_error(self, mock_engine):
-        """Test listing zones with general API error."""
-        mock_engine.get.return_value = MockResponse(500, text_data="Internal server error")
+    async def test_500_raises_zone_error(self, mock_engine):
+        mock_engine.get.return_value = MockContextManager(
+            MockResponse(500, text_data="Internal server error")
+        )
 
-        zone_manager = ZoneManager(mock_engine)
+        zm = ZoneManager(mock_engine)
         with pytest.raises(ZoneError) as exc_info:
-            await zone_manager.list_zones()
+            await zm.list_zones()
 
         assert "500" in str(exc_info.value)
 
 
-class TestZoneManagerCreateZone:
-    """Tests for zone creation."""
+# ---------------------------------------------------------------------------
+# Create Zone
+# ---------------------------------------------------------------------------
 
+
+class TestCreateZone:
     @pytest.mark.asyncio
-    async def test_create_unblocker_zone_success(self, mock_engine):
-        """Test creating an unblocker zone successfully."""
-        mock_engine.post.return_value = MockResponse(201)
+    async def test_creates_unblocker_zone(self, mock_engine):
+        mock_engine.post.return_value = MockContextManager(MockResponse(201))
 
-        zone_manager = ZoneManager(mock_engine)
-        await zone_manager._create_zone("test_unblocker", "unblocker")
+        zm = ZoneManager(mock_engine)
+        await zm._create_zone("test_unblocker", "unblocker")
 
-        # Verify the POST was called with correct payload
         mock_engine.post.assert_called_once()
         call_args = mock_engine.post.call_args
         assert call_args[0][0] == "/zone"
@@ -125,238 +101,218 @@ class TestZoneManagerCreateZone:
         assert payload["plan"]["type"] == "unblocker"
 
     @pytest.mark.asyncio
-    async def test_create_serp_zone_success(self, mock_engine):
-        """Test creating a SERP zone successfully."""
-        mock_engine.post.return_value = MockResponse(200)
+    async def test_creates_serp_zone(self, mock_engine):
+        mock_engine.post.return_value = MockContextManager(MockResponse(200))
 
-        zone_manager = ZoneManager(mock_engine)
-        await zone_manager._create_zone("test_serp", "serp")
+        zm = ZoneManager(mock_engine)
+        await zm._create_zone("test_serp", "serp")
 
-        # Verify the POST was called with correct payload
-        call_args = mock_engine.post.call_args
-        payload = call_args[1]["json_data"]
+        payload = mock_engine.post.call_args[1]["json_data"]
         assert payload["zone"]["name"] == "test_serp"
         assert payload["zone"]["type"] == "serp"
         assert payload["plan"]["type"] == "unblocker"
         assert payload["plan"]["serp"] is True
 
     @pytest.mark.asyncio
-    async def test_create_browser_zone_success(self, mock_engine):
-        """Test creating a browser zone successfully."""
-        mock_engine.post.return_value = MockResponse(201)
+    async def test_creates_browser_zone(self, mock_engine):
+        mock_engine.post.return_value = MockContextManager(MockResponse(201))
 
-        zone_manager = ZoneManager(mock_engine)
-        await zone_manager._create_zone("test_browser", "browser")
+        zm = ZoneManager(mock_engine)
+        await zm._create_zone("test_browser", "browser")
 
-        call_args = mock_engine.post.call_args
-        payload = call_args[1]["json_data"]
+        payload = mock_engine.post.call_args[1]["json_data"]
         assert payload["zone"]["name"] == "test_browser"
         assert payload["zone"]["type"] == "browser"
         assert payload["plan"]["type"] == "browser"
 
     @pytest.mark.asyncio
-    async def test_create_zone_already_exists_409(self, mock_engine):
-        """Test creating a zone that already exists (409)."""
-        mock_engine.post.return_value = MockResponse(409, text_data="Conflict")
+    async def test_409_conflict_does_not_raise(self, mock_engine):
+        mock_engine.post.return_value = MockContextManager(MockResponse(409, text_data="Conflict"))
 
-        zone_manager = ZoneManager(mock_engine)
-        # Should not raise an exception
-        await zone_manager._create_zone("existing_zone", "unblocker")
+        zm = ZoneManager(mock_engine)
+        await zm._create_zone("existing_zone", "unblocker")  # should not raise
 
     @pytest.mark.asyncio
-    async def test_create_zone_already_exists_message(self, mock_engine):
-        """Test creating a zone with duplicate message in response."""
-        mock_engine.post.return_value = MockResponse(400, text_data="Zone already exists")
+    async def test_already_exists_message_does_not_raise(self, mock_engine):
+        mock_engine.post.return_value = MockContextManager(
+            MockResponse(400, text_data="Zone already exists")
+        )
 
-        zone_manager = ZoneManager(mock_engine)
-        # Should not raise an exception
-        await zone_manager._create_zone("existing_zone", "unblocker")
-
-    @pytest.mark.asyncio
-    async def test_create_zone_duplicate_message(self, mock_engine):
-        """Test creating a zone with duplicate name error."""
-        mock_engine.post.return_value = MockResponse(400, text_data="Duplicate zone name")
-
-        zone_manager = ZoneManager(mock_engine)
-        # Should not raise an exception
-        await zone_manager._create_zone("duplicate_zone", "unblocker")
+        zm = ZoneManager(mock_engine)
+        await zm._create_zone("existing_zone", "unblocker")  # should not raise
 
     @pytest.mark.asyncio
-    async def test_create_zone_auth_error_401(self, mock_engine):
-        """Test zone creation with authentication error."""
-        mock_engine.post.return_value = MockResponse(401, text_data="Unauthorized")
+    async def test_duplicate_name_message_does_not_raise(self, mock_engine):
+        mock_engine.post.return_value = MockContextManager(
+            MockResponse(400, text_data="Duplicate zone name")
+        )
 
-        zone_manager = ZoneManager(mock_engine)
+        zm = ZoneManager(mock_engine)
+        await zm._create_zone("duplicate_zone", "unblocker")  # should not raise
+
+    @pytest.mark.asyncio
+    async def test_401_raises_authentication_error(self, mock_engine):
+        mock_engine.post.return_value = MockContextManager(
+            MockResponse(401, text_data="Unauthorized")
+        )
+
+        zm = ZoneManager(mock_engine)
         with pytest.raises(AuthenticationError) as exc_info:
-            await zone_manager._create_zone("test_zone", "unblocker")
+            await zm._create_zone("test_zone", "unblocker")
 
         assert "401" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_create_zone_auth_error_403(self, mock_engine):
-        """Test zone creation with forbidden error."""
-        mock_engine.post.return_value = MockResponse(403, text_data="Forbidden")
+    async def test_403_raises_authentication_error(self, mock_engine):
+        mock_engine.post.return_value = MockContextManager(MockResponse(403, text_data="Forbidden"))
 
-        zone_manager = ZoneManager(mock_engine)
+        zm = ZoneManager(mock_engine)
         with pytest.raises(AuthenticationError) as exc_info:
-            await zone_manager._create_zone("test_zone", "unblocker")
+            await zm._create_zone("test_zone", "unblocker")
 
         assert "403" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_create_zone_bad_request(self, mock_engine):
-        """Test zone creation with bad request error."""
-        mock_engine.post.return_value = MockResponse(400, text_data="Invalid zone configuration")
+    async def test_400_bad_request_raises_zone_error(self, mock_engine):
+        mock_engine.post.return_value = MockContextManager(
+            MockResponse(400, text_data="Invalid zone configuration")
+        )
 
-        zone_manager = ZoneManager(mock_engine)
+        zm = ZoneManager(mock_engine)
         with pytest.raises(ZoneError) as exc_info:
-            await zone_manager._create_zone("test_zone", "unblocker")
+            await zm._create_zone("test_zone", "unblocker")
 
         assert "400" in str(exc_info.value)
         assert "Invalid zone configuration" in str(exc_info.value)
 
 
-class TestZoneManagerEnsureZones:
-    """Tests for ensuring zones exist."""
+# ---------------------------------------------------------------------------
+# Ensure Required Zones
+# ---------------------------------------------------------------------------
 
+
+class TestEnsureRequiredZones:
     @pytest.mark.asyncio
-    async def test_ensure_zones_all_exist(self, mock_engine):
-        """Test ensuring zones when all already exist."""
+    async def test_skips_creation_when_all_exist(self, mock_engine):
         zones_data = [
             {"name": "sdk_unlocker", "type": "unblocker"},
             {"name": "sdk_serp", "type": "serp"},
         ]
-        mock_engine.get.return_value = MockResponse(200, json_data=zones_data)
+        mock_engine.get.return_value = MockContextManager(MockResponse(200, json_data=zones_data))
 
-        zone_manager = ZoneManager(mock_engine)
-        await zone_manager.ensure_required_zones(
-            web_unlocker_zone="sdk_unlocker", serp_zone="sdk_serp"
-        )
+        zm = ZoneManager(mock_engine)
+        await zm.ensure_required_zones(web_unlocker_zone="sdk_unlocker", serp_zone="sdk_serp")
 
-        # Should only call GET to list zones, not POST to create
         mock_engine.get.assert_called()
         mock_engine.post.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_ensure_zones_create_missing(self, mock_engine):
-        """Test ensuring zones when some need to be created."""
-        # First call: existing zones (empty)
-        # After creation: zones exist
+    async def test_creates_missing_zones(self, mock_engine):
         mock_engine.get.side_effect = [
-            MockResponse(200, json_data=[]),  # Initial list
-            MockResponse(
-                200,
-                json_data=[  # Verification list
-                    {"name": "sdk_unlocker", "type": "unblocker"},
-                    {"name": "sdk_serp", "type": "serp"},
-                ],
+            MockContextManager(MockResponse(200, json_data=[])),
+            MockContextManager(
+                MockResponse(
+                    200,
+                    json_data=[
+                        {"name": "sdk_unlocker", "type": "unblocker"},
+                        {"name": "sdk_serp", "type": "serp"},
+                    ],
+                )
             ),
         ]
-        mock_engine.post.return_value = MockResponse(201)
+        mock_engine.post.return_value = MockContextManager(MockResponse(201))
 
-        zone_manager = ZoneManager(mock_engine)
-        await zone_manager.ensure_required_zones(
-            web_unlocker_zone="sdk_unlocker", serp_zone="sdk_serp"
-        )
+        zm = ZoneManager(mock_engine)
+        await zm.ensure_required_zones(web_unlocker_zone="sdk_unlocker", serp_zone="sdk_serp")
 
-        # Should create both zones
         assert mock_engine.post.call_count == 2
 
     @pytest.mark.asyncio
-    async def test_ensure_zones_only_web_unlocker(self, mock_engine):
-        """Test ensuring only web unlocker zone."""
+    async def test_creates_only_web_unlocker(self, mock_engine):
         mock_engine.get.side_effect = [
-            MockResponse(200, json_data=[]),
-            MockResponse(200, json_data=[{"name": "sdk_unlocker"}]),
+            MockContextManager(MockResponse(200, json_data=[])),
+            MockContextManager(MockResponse(200, json_data=[{"name": "sdk_unlocker"}])),
         ]
-        mock_engine.post.return_value = MockResponse(201)
+        mock_engine.post.return_value = MockContextManager(MockResponse(201))
 
-        zone_manager = ZoneManager(mock_engine)
-        await zone_manager.ensure_required_zones(web_unlocker_zone="sdk_unlocker")
+        zm = ZoneManager(mock_engine)
+        await zm.ensure_required_zones(web_unlocker_zone="sdk_unlocker")
 
-        # Should only create web unlocker zone
         assert mock_engine.post.call_count == 1
 
     @pytest.mark.asyncio
-    async def test_ensure_zones_with_browser(self, mock_engine):
-        """Test ensuring unblocker and SERP zones (browser zones NOT auto-created)."""
+    async def test_creates_unblocker_and_serp(self, mock_engine):
         mock_engine.get.side_effect = [
-            MockResponse(200, json_data=[]),
-            MockResponse(200, json_data=[{"name": "sdk_unlocker"}, {"name": "sdk_serp"}]),
+            MockContextManager(MockResponse(200, json_data=[])),
+            MockContextManager(
+                MockResponse(
+                    200,
+                    json_data=[
+                        {"name": "sdk_unlocker"},
+                        {"name": "sdk_serp"},
+                    ],
+                )
+            ),
         ]
-        mock_engine.post.return_value = MockResponse(201)
+        mock_engine.post.return_value = MockContextManager(MockResponse(201))
 
-        zone_manager = ZoneManager(mock_engine)
-        await zone_manager.ensure_required_zones(
-            web_unlocker_zone="sdk_unlocker",
-            serp_zone="sdk_serp",
-        )
+        zm = ZoneManager(mock_engine)
+        await zm.ensure_required_zones(web_unlocker_zone="sdk_unlocker", serp_zone="sdk_serp")
 
-        # Should only create unblocker + SERP zones (browser zones require manual setup)
         assert mock_engine.post.call_count == 2
 
     @pytest.mark.asyncio
-    async def test_ensure_zones_verification_fails(self, mock_engine, caplog):
-        """Test zone creation when verification fails (logs warning but doesn't raise)."""
-        # Zones never appear in verification (max_attempts = 5, so need 6 total responses)
+    async def test_verification_failure_logs_warning(self, mock_engine, caplog):
         mock_engine.get.side_effect = [
-            MockResponse(200, json_data=[]),  # Initial list
-            MockResponse(200, json_data=[]),  # Verification attempt 1
-            MockResponse(200, json_data=[]),  # Verification attempt 2
-            MockResponse(200, json_data=[]),  # Verification attempt 3
-            MockResponse(200, json_data=[]),  # Verification attempt 4
-            MockResponse(200, json_data=[]),  # Verification attempt 5 (final)
+            MockContextManager(MockResponse(200, json_data=[])),  # initial list
+            MockContextManager(MockResponse(200, json_data=[])),  # verify 1
+            MockContextManager(MockResponse(200, json_data=[])),  # verify 2
+            MockContextManager(MockResponse(200, json_data=[])),  # verify 3
+            MockContextManager(MockResponse(200, json_data=[])),  # verify 4
+            MockContextManager(MockResponse(200, json_data=[])),  # verify 5
         ]
-        mock_engine.post.return_value = MockResponse(201)
+        mock_engine.post.return_value = MockContextManager(MockResponse(201))
 
-        zone_manager = ZoneManager(mock_engine)
-        # Verification failure should log warning but NOT raise exception
-        await zone_manager.ensure_required_zones(web_unlocker_zone="sdk_unlocker")
+        zm = ZoneManager(mock_engine)
+        await zm.ensure_required_zones(web_unlocker_zone="sdk_unlocker")
 
-        # Should have logged warning about verification failure
-        assert any("Zone verification failed" in record.message for record in caplog.records)
+        assert any("Zone verification failed" in r.message for r in caplog.records)
+
+
+# ---------------------------------------------------------------------------
+# Integration-style
+# ---------------------------------------------------------------------------
 
 
 class TestZoneManagerIntegration:
-    """Integration-style tests for ZoneManager."""
-
     @pytest.mark.asyncio
-    async def test_full_workflow_no_zones_to_create(self, mock_engine):
-        """Test full workflow when zones already exist."""
+    async def test_full_workflow_no_creation_needed(self, mock_engine):
         zones_data = [{"name": "my_zone", "type": "unblocker", "status": "active"}]
-        mock_engine.get.return_value = MockResponse(200, json_data=zones_data)
+        mock_engine.get.return_value = MockContextManager(MockResponse(200, json_data=zones_data))
 
-        zone_manager = ZoneManager(mock_engine)
+        zm = ZoneManager(mock_engine)
 
-        # List zones
-        zones = await zone_manager.list_zones()
+        zones = await zm.list_zones()
         assert len(zones) == 1
         assert zones[0]["name"] == "my_zone"
 
-        # Ensure zones (should not create any)
-        await zone_manager.ensure_required_zones(web_unlocker_zone="my_zone")
+        await zm.ensure_required_zones(web_unlocker_zone="my_zone")
         mock_engine.post.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_full_workflow_create_zones(self, mock_engine):
-        """Test full workflow creating new zones."""
+    async def test_full_workflow_creates_then_lists(self, mock_engine):
         zones_after = [{"name": "new_zone", "type": "unblocker"}]
         mock_engine.get.side_effect = [
-            MockResponse(200, json_data=[]),  # Initial list (empty)
-            MockResponse(200, json_data=zones_after),  # After creation (verification)
-            MockResponse(200, json_data=zones_after),  # List zones again
+            MockContextManager(MockResponse(200, json_data=[])),
+            MockContextManager(MockResponse(200, json_data=zones_after)),
+            MockContextManager(MockResponse(200, json_data=zones_after)),
         ]
-        mock_engine.post.return_value = MockResponse(201)
+        mock_engine.post.return_value = MockContextManager(MockResponse(201))
 
-        zone_manager = ZoneManager(mock_engine)
-
-        # Ensure zones (should create)
-        await zone_manager.ensure_required_zones(web_unlocker_zone="new_zone")
-
-        # Verify zone was created
+        zm = ZoneManager(mock_engine)
+        await zm.ensure_required_zones(web_unlocker_zone="new_zone")
         assert mock_engine.post.call_count == 1
 
-        # List zones again
-        zones = await zone_manager.list_zones()
+        zones = await zm.list_zones()
         assert len(zones) == 1
         assert zones[0]["name"] == "new_zone"

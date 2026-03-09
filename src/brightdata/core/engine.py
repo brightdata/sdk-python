@@ -6,8 +6,8 @@ import ssl
 import warnings
 from typing import Optional, Dict, Any
 from .. import __version__
-from ..exceptions import AuthenticationError, NetworkError, TimeoutError, SSLError
-from ..constants import HTTP_UNAUTHORIZED, HTTP_FORBIDDEN
+from ..exceptions import AuthenticationError, NetworkError, SSLError
+from http import HTTPStatus
 from ..utils.ssl_helpers import is_ssl_certificate_error, get_ssl_error_message
 
 # Rate limiting support
@@ -383,16 +383,24 @@ class AsyncEngine:
                         timeout=self._timeout,
                     )
                     # Check status codes that should raise exceptions
-                    if self._response.status == HTTP_UNAUTHORIZED:
+                    if self._response.status == HTTPStatus.UNAUTHORIZED:
                         text = await self._response.text()
                         await self._response.release()
-                        raise AuthenticationError(f"Unauthorized ({HTTP_UNAUTHORIZED}): {text}")
-                    elif self._response.status == HTTP_FORBIDDEN:
+                        raise AuthenticationError(
+                            f"Unauthorized ({HTTPStatus.UNAUTHORIZED}): {text}"
+                        )
+                    elif self._response.status == HTTPStatus.FORBIDDEN:
                         text = await self._response.text()
                         await self._response.release()
-                        raise AuthenticationError(f"Forbidden ({HTTP_FORBIDDEN}): {text}")
+                        raise AuthenticationError(f"Forbidden ({HTTPStatus.FORBIDDEN}): {text}")
 
                     return self._response
+                except asyncio.TimeoutError as e:
+                    # Must be caught before OSError — on Python 3.11+,
+                    # TimeoutError is a subclass of OSError
+                    raise TimeoutError(
+                        f"Request timeout after {self._timeout.total} seconds"
+                    ) from e
                 except (aiohttp.ClientError, ssl.SSLError, OSError) as e:
                     # Check for SSL certificate errors first
                     # aiohttp wraps SSL errors in ClientConnectorError or ClientSSLError
@@ -402,10 +410,6 @@ class AsyncEngine:
                         raise SSLError(error_message) from e
                     # Other network errors
                     raise NetworkError(f"Network error: {str(e)}") from e
-                except asyncio.TimeoutError as e:
-                    raise TimeoutError(
-                        f"Request timeout after {self._timeout.total} seconds"
-                    ) from e
 
             async def __aexit__(self, exc_type, exc_val, exc_tb):
                 if self._response:

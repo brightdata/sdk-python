@@ -1,1 +1,0 @@
-"""Interface definitions (typing.Protocol)."""

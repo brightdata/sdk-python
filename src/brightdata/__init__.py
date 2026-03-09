@@ -66,7 +66,6 @@ from .exceptions import (
     ValidationError,
     AuthenticationError,
     APIError,
-    TimeoutError,
     ZoneError,
     NetworkError,
     SSLError,
@@ -76,9 +75,9 @@ from .exceptions import (
 from .scraper_studio.models import ScraperStudioJob, JobStatus
 
 # Export services for advanced usage
-from .api.web_unlocker import WebUnlockerService
-from .api.scraper_studio_service import ScraperStudioService
-from .api.browser_service import BrowserService
+from .web_unlocker.service import WebUnlockerService
+from .scraper_studio.service import ScraperStudioService
+from .browser.service import BrowserService
 from .core.zone_manager import ZoneManager
 
 __all__ = [
@@ -125,7 +124,6 @@ __all__ = [
     "ValidationError",
     "AuthenticationError",
     "APIError",
-    "TimeoutError",
     "ZoneError",
     "NetworkError",
     "SSLError",

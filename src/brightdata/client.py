@@ -23,20 +23,16 @@ except ImportError:
 
 from .core.engine import AsyncEngine
 from .core.zone_manager import ZoneManager
-from .api.web_unlocker import WebUnlockerService
-from .api.scrape_service import ScrapeService
-from .api.search_service import SearchService
-from .api.crawler_service import CrawlerService
-from .api.scraper_studio_service import ScraperStudioService
-from .api.browser_service import BrowserService
+from .web_unlocker.service import WebUnlockerService
+from .scrapers.service import ScrapeService
+from .serp.service import SearchService
+from .crawler.service import CrawlerService
+from .scraper_studio.service import ScraperStudioService
+from .browser.service import BrowserService
 from .datasets import DatasetsClient
 from .models import ScrapeResult
 from .types import AccountInfo
-from .constants import (
-    HTTP_OK,
-    HTTP_UNAUTHORIZED,
-    HTTP_FORBIDDEN,
-)
+from http import HTTPStatus
 from .exceptions import ValidationError, AuthenticationError, APIError
 
 
@@ -420,7 +416,7 @@ class BrightDataClient:
             async with self.engine.get_from_url(
                 f"{self.engine.BASE_URL}/zone/get_active_zones"
             ) as response:
-                if response.status == HTTP_OK:
+                if response.status == HTTPStatus.OK:
                     self._is_connected = True
                     return True
                 else:
@@ -475,7 +471,7 @@ class BrightDataClient:
             async with self.engine.get_from_url(
                 f"{self.engine.BASE_URL}/zone/get_active_zones"
             ) as zones_response:
-                if zones_response.status == HTTP_OK:
+                if zones_response.status == HTTPStatus.OK:
                     zones = await zones_response.json()
                     zones = zones or []
 
@@ -501,7 +497,7 @@ class BrightDataClient:
                     self._account_info = account_info
                     return account_info
 
-                elif zones_response.status in (HTTP_UNAUTHORIZED, HTTP_FORBIDDEN):
+                elif zones_response.status in (HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN):
                     error_text = await zones_response.text()
                     raise AuthenticationError(
                         f"Invalid token (HTTP {zones_response.status}): {error_text}"

@@ -7,16 +7,8 @@ import asyncio
 import logging
 import aiohttp
 from typing import List, Dict, Any, Optional, Tuple
+from http import HTTPStatus
 from ..exceptions.errors import ZoneError, APIError, AuthenticationError
-from ..constants import (
-    HTTP_OK,
-    HTTP_CREATED,
-    HTTP_BAD_REQUEST,
-    HTTP_UNAUTHORIZED,
-    HTTP_FORBIDDEN,
-    HTTP_CONFLICT,
-    HTTP_INTERNAL_SERVER_ERROR,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -141,10 +133,10 @@ class ZoneManager:
         for attempt in range(max_retries):
             try:
                 async with self.engine.get("/zone/get_active_zones") as response:
-                    if response.status == HTTP_OK:
+                    if response.status == HTTPStatus.OK:
                         zones = await response.json()
                         return zones or []
-                    elif response.status in (HTTP_UNAUTHORIZED, HTTP_FORBIDDEN):
+                    elif response.status in (HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN):
                         error_text = await response.text()
                         raise AuthenticationError(
                             f"Authentication failed ({response.status}): {error_text}"
@@ -153,7 +145,7 @@ class ZoneManager:
                         error_text = await response.text()
                         if (
                             attempt < max_retries - 1
-                            and response.status >= HTTP_INTERNAL_SERVER_ERROR
+                            and response.status >= HTTPStatus.INTERNAL_SERVER_ERROR
                         ):
                             logger.warning(
                                 f"Zone list request failed (attempt {attempt + 1}/{max_retries}): "
@@ -201,10 +193,10 @@ class ZoneManager:
         for attempt in range(max_retries):
             try:
                 async with self.engine.post("/zone", json_data=payload) as response:
-                    if response.status in (HTTP_OK, HTTP_CREATED):
+                    if response.status in (HTTPStatus.OK, HTTPStatus.CREATED):
                         logger.info(f"Zone creation successful: {zone_name}")
                         return
-                    elif response.status == HTTP_CONFLICT:
+                    elif response.status == HTTPStatus.CONFLICT:
                         # Zone already exists - this is fine
                         logger.info(f"Zone {zone_name} already exists - this is expected")
                         return
@@ -220,7 +212,7 @@ class ZoneManager:
                             return
 
                         # Handle authentication/permission errors
-                        if response.status in (HTTP_UNAUTHORIZED, HTTP_FORBIDDEN):
+                        if response.status in (HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN):
                             # Check for specific permission error
                             if (
                                 "permission" in error_text.lower()
@@ -254,15 +246,15 @@ class ZoneManager:
                                 )
 
                         # Handle bad request
-                        if response.status == HTTP_BAD_REQUEST:
+                        if response.status == HTTPStatus.BAD_REQUEST:
                             raise ZoneError(
-                                f"Bad request ({HTTP_BAD_REQUEST}) creating zone '{zone_name}': {error_text}"
+                                f"Bad request ({HTTPStatus.BAD_REQUEST}) creating zone '{zone_name}': {error_text}"
                             )
 
                         # Retry on server errors
                         if (
                             attempt < max_retries - 1
-                            and response.status >= HTTP_INTERNAL_SERVER_ERROR
+                            and response.status >= HTTPStatus.INTERNAL_SERVER_ERROR
                         ):
                             logger.warning(
                                 f"Zone creation failed (attempt {attempt + 1}/{max_retries}): "
@@ -398,15 +390,15 @@ class ZoneManager:
                 payload = {"zone": zone_name}
 
                 async with self.engine.delete("/zone", json_data=payload) as response:
-                    if response.status == HTTP_OK:
+                    if response.status == HTTPStatus.OK:
                         logger.info(f"Zone '{zone_name}' successfully deleted")
                         return
-                    elif response.status in (HTTP_UNAUTHORIZED, HTTP_FORBIDDEN):
+                    elif response.status in (HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN):
                         error_text = await response.text()
                         raise AuthenticationError(
                             f"Authentication failed ({response.status}) deleting zone '{zone_name}': {error_text}"
                         )
-                    elif response.status == HTTP_BAD_REQUEST:
+                    elif response.status == HTTPStatus.BAD_REQUEST:
                         error_text = await response.text()
                         # Check if zone doesn't exist
                         if (
@@ -417,7 +409,7 @@ class ZoneManager:
                                 f"Zone '{zone_name}' does not exist or has already been deleted"
                             )
                         raise ZoneError(
-                            f"Bad request ({HTTP_BAD_REQUEST}) deleting zone '{zone_name}': {error_text}"
+                            f"Bad request ({HTTPStatus.BAD_REQUEST}) deleting zone '{zone_name}': {error_text}"
                         )
                     else:
                         error_text = await response.text()
@@ -425,7 +417,7 @@ class ZoneManager:
                         # Retry on server errors
                         if (
                             attempt < max_retries - 1
-                            and response.status >= HTTP_INTERNAL_SERVER_ERROR
+                            and response.status >= HTTPStatus.INTERNAL_SERVER_ERROR
                         ):
                             logger.warning(
                                 f"Zone deletion failed (attempt {attempt + 1}/{max_retries}): "
