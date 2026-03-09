@@ -2,7 +2,7 @@
 
 import asyncio
 from typing import Callable, Awaitable, TypeVar, Optional, List, Type
-from ..exceptions import APIError, NetworkError, TimeoutError
+from ..exceptions import APIError, NetworkError
 
 T = TypeVar("T")
 

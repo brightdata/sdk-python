@@ -46,24 +46,9 @@ COST_PER_RECORD_TIKTOK: float = 0.002
 COST_PER_RECORD_YOUTUBE: float = 0.002
 """Cost per record for YouTube scrapers."""
 
-# HTTP Status Codes
-HTTP_OK: int = 200
-"""HTTP 200 OK - Request succeeded."""
+# Scraper Studio defaults
+SCRAPER_STUDIO_DEFAULT_TIMEOUT: int = 180
+"""Default timeout in seconds for Scraper Studio run() operations."""
 
-HTTP_CREATED: int = 201
-"""HTTP 201 Created - Resource created successfully."""
-
-HTTP_BAD_REQUEST: int = 400
-"""HTTP 400 Bad Request - Invalid request parameters."""
-
-HTTP_UNAUTHORIZED: int = 401
-"""HTTP 401 Unauthorized - Authentication required or failed."""
-
-HTTP_FORBIDDEN: int = 403
-"""HTTP 403 Forbidden - Access denied."""
-
-HTTP_CONFLICT: int = 409
-"""HTTP 409 Conflict - Resource conflict (e.g., duplicate)."""
-
-HTTP_INTERNAL_SERVER_ERROR: int = 500
-"""HTTP 500 Internal Server Error - Server error."""
+SCRAPER_STUDIO_POLL_INTERVAL: int = 10
+"""Default interval in seconds between poll attempts for Scraper Studio."""

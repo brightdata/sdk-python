@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional
 from ..base import BaseDataset
 
 if TYPE_CHECKING:
-    from ...core.async_engine import AsyncEngine
+    from ...core.engine import AsyncEngine
 
 
 # Field categories for organization

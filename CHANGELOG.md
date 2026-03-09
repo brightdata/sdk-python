@@ -1,5 +1,15 @@
 # Bright Data Python SDK Changelog
 
+## Version 2.3.0 - Browser API, Scraper Studio, 175 Datasets
+
+- **Browser API**: Connect to cloud Chrome via CDP WebSocket. SDK builds the `wss://` URL, you connect with Playwright/Puppeteer (`client.browser.get_connect_url()`)
+- **Scraper Studio**: Trigger and fetch results from custom scrapers built in Bright Data's IDE (`client.scraper_studio.run()`)
+- **75 more datasets**: Agoda, AutoZone, BBC, Best Buy, Bluesky, Booking, Costco, eBay, Etsy, GitHub, Google News/Play/Shopping, Home Depot, Kroger, Lowe's, Macy's, Microcenter, Ozon, Quora, Realtor, Reddit, Snapchat, TikTok Shop, Tokopedia, Vimeo, Wayfair, Wikipedia, Wildberries, X/Twitter, Yahoo Finance, Zoopla, and more — **175 total**
+- **Codebase cleanup**: Removed dead code and legacy abstractions — collapsed `datasets/client.py` from 1635 to 285 lines, fixed `ScrapeJob.to_result()` crash bug, cleaned up unused protocols, redundant config layers, and stale API modules
+- **Test suite rewrite**: Rebuilt test suite from scratch with 365 unit tests, shared fixtures via `conftest.py`, behavioral coverage focus — key modules now at 87–98% coverage (client, scrapers, SERP, sync client, job lifecycle)
+
+---
+
 ## Version 2.2.1 - 100 Datasets API
 
 ### ✨ New Features

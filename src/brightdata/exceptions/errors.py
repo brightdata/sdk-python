@@ -45,12 +45,6 @@ class DataNotReadyError(BrightDataError):
     pass
 
 
-class TimeoutError(BrightDataError):
-    """Operation timed out."""
-
-    pass
-
-
 class ZoneError(BrightDataError):
     """Zone operation failed."""
 

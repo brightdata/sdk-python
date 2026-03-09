@@ -1,1 +1,0 @@
-"""Benchmark: Batch operations performance."""

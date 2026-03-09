@@ -27,20 +27,3 @@ def extract_root_domain(url: str) -> Optional[str]:
         return netloc if netloc else None
     except Exception:
         return None
-
-
-def is_valid_url(url: str) -> bool:
-    """
-    Check if URL is valid.
-
-    Args:
-        url: URL string to check.
-
-    Returns:
-        True if URL is valid, False otherwise.
-    """
-    try:
-        result = urlparse(url)
-        return bool(result.scheme and result.netloc)
-    except Exception:
-        return False

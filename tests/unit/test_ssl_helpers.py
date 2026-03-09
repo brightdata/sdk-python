@@ -1,226 +1,178 @@
-"""Unit tests for SSL error handling utilities."""
+"""Tests for utils/ssl_helpers.py — SSL error detection and messages."""
 
 import ssl
 from unittest.mock import Mock, patch
+
 from brightdata.utils.ssl_helpers import is_macos, is_ssl_certificate_error, get_ssl_error_message
 
 
-class TestPlatformDetection:
-    """Test platform detection utilities."""
+# ---------------------------------------------------------------------------
+# Platform detection
+# ---------------------------------------------------------------------------
 
-    def test_is_macos_returns_boolean(self):
-        """Test is_macos returns a boolean."""
-        result = is_macos()
-        assert isinstance(result, bool)
+
+class TestPlatformDetection:
+    def test_returns_boolean(self):
+        assert isinstance(is_macos(), bool)
 
     @patch("sys.platform", "darwin")
-    def test_is_macos_true_on_darwin(self):
-        """Test is_macos returns True on darwin platform."""
-        result = is_macos()
-        assert result is True
+    def test_true_on_darwin(self):
+        assert is_macos() is True
 
     @patch("sys.platform", "linux")
-    def test_is_macos_false_on_linux(self):
-        """Test is_macos returns False on linux."""
-        result = is_macos()
-        assert result is False
+    def test_false_on_linux(self):
+        assert is_macos() is False
 
     @patch("sys.platform", "win32")
-    def test_is_macos_false_on_windows(self):
-        """Test is_macos returns False on Windows."""
-        result = is_macos()
-        assert result is False
+    def test_false_on_windows(self):
+        assert is_macos() is False
+
+
+# ---------------------------------------------------------------------------
+# SSL certificate error detection
+# ---------------------------------------------------------------------------
 
 
 class TestSSLCertificateErrorDetection:
-    """Test SSL certificate error detection."""
+    def test_ssl_error_detected(self):
+        assert is_ssl_certificate_error(ssl.SSLError("certificate verify failed")) is True
 
-    def test_ssl_error_is_detected(self):
-        """Test SSL errors are detected."""
-        error = ssl.SSLError("certificate verify failed")
-        assert is_ssl_certificate_error(error) is True
+    def test_oserror_with_ssl_keywords_detected(self):
+        assert is_ssl_certificate_error(OSError("SSL certificate verification failed")) is True
 
-    def test_oserror_with_ssl_keywords_is_detected(self):
-        """Test OSError with SSL keywords is detected."""
-        error = OSError("SSL certificate verification failed")
-        assert is_ssl_certificate_error(error) is True
+    def test_oserror_with_certificate_keyword_detected(self):
+        assert is_ssl_certificate_error(OSError("unable to get local issuer certificate")) is True
 
-    def test_oserror_with_certificate_keyword_is_detected(self):
-        """Test OSError with 'certificate' keyword is detected."""
-        error = OSError("unable to get local issuer certificate")
-        assert is_ssl_certificate_error(error) is True
+    def test_generic_exception_with_ssl_message_detected(self):
+        assert is_ssl_certificate_error(Exception("[SSL: CERTIFICATE_VERIFY_FAILED]")) is True
 
-    def test_generic_exception_with_ssl_message_is_detected(self):
-        """Test generic exception with SSL message is detected."""
-        error = Exception("[SSL: CERTIFICATE_VERIFY_FAILED]")
-        assert is_ssl_certificate_error(error) is True
+    def test_certificate_verify_failed_detected(self):
+        assert is_ssl_certificate_error(Exception("certificate verify failed")) is True
 
-    def test_exception_with_certificate_verify_failed(self):
-        """Test exception with 'certificate verify failed' is detected."""
-        error = Exception("certificate verify failed")
-        assert is_ssl_certificate_error(error) is True
+    def test_non_ssl_error_not_detected(self):
+        assert is_ssl_certificate_error(ValueError("Invalid value")) is False
 
-    def test_non_ssl_error_is_not_detected(self):
-        """Test non-SSL errors are not detected."""
-        error = ValueError("Invalid value")
-        assert is_ssl_certificate_error(error) is False
+    def test_connection_error_without_ssl_not_detected(self):
+        assert is_ssl_certificate_error(ConnectionError("Connection refused")) is False
 
-    def test_connection_error_without_ssl_is_not_detected(self):
-        """Test connection errors without SSL keywords are not detected."""
-        error = ConnectionError("Connection refused")
-        assert is_ssl_certificate_error(error) is False
+    def test_timeout_error_not_detected(self):
+        assert is_ssl_certificate_error(TimeoutError("Operation timed out")) is False
 
-    def test_timeout_error_is_not_detected(self):
-        """Test timeout errors are not detected as SSL errors."""
-        error = TimeoutError("Operation timed out")
-        assert is_ssl_certificate_error(error) is False
+
+# ---------------------------------------------------------------------------
+# SSL error messages
+# ---------------------------------------------------------------------------
 
 
 class TestSSLErrorMessage:
-    """Test SSL error message generation."""
-
     @patch("brightdata.utils.ssl_helpers.is_macos", return_value=True)
-    def test_macos_error_message_includes_platform_specific_fixes(self, mock_is_macos):
-        """Test macOS error message includes platform-specific fixes."""
-        error = ssl.SSLError("certificate verify failed")
-        message = get_ssl_error_message(error)
+    def test_macos_includes_platform_specific_fixes(self, _):
+        message = get_ssl_error_message(ssl.SSLError("certificate verify failed"))
 
-        # Should include base message
         assert "SSL certificate verification failed" in message
         assert "macOS" in message
-
-        # Should include macOS-specific fixes
         assert "Install Certificates.command" in message
         assert "Homebrew" in message
         assert "certifi" in message
         assert "SSL_CERT_FILE" in message
 
     @patch("brightdata.utils.ssl_helpers.is_macos", return_value=False)
-    def test_non_macos_error_message_excludes_macos_specific_fixes(self, mock_is_macos):
-        """Test non-macOS error message excludes macOS-specific fixes."""
-        error = ssl.SSLError("certificate verify failed")
-        message = get_ssl_error_message(error)
+    def test_non_macos_excludes_macos_fixes(self, _):
+        message = get_ssl_error_message(ssl.SSLError("certificate verify failed"))
 
-        # Should include base message
         assert "SSL certificate verification failed" in message
-
-        # Should NOT include macOS-specific fixes
         assert "Install Certificates.command" not in message
         assert "Homebrew" not in message
-
-        # Should include generic fixes
         assert "certifi" in message
         assert "SSL_CERT_FILE" in message
 
-    def test_error_message_includes_original_error(self):
-        """Test error message includes original error."""
-        error = ssl.SSLError("specific error details")
-        message = get_ssl_error_message(error)
-
+    def test_includes_original_error(self):
+        message = get_ssl_error_message(ssl.SSLError("specific error details"))
         assert "Original error:" in message
         assert "specific error details" in message
 
-    def test_error_message_includes_fix_instructions(self):
-        """Test error message includes fix instructions."""
-        error = ssl.SSLError("certificate verify failed")
-        message = get_ssl_error_message(error)
-
-        # Should include pip install command
+    def test_includes_fix_instructions(self):
+        message = get_ssl_error_message(ssl.SSLError("certificate verify failed"))
         assert "pip install" in message
         assert "certifi" in message
-
-        # Should include SSL_CERT_FILE command
         assert "export SSL_CERT_FILE" in message
         assert "python -m certifi" in message
 
-    def test_error_message_includes_documentation_link(self):
-        """Test error message includes documentation link."""
-        error = ssl.SSLError("certificate verify failed")
-        message = get_ssl_error_message(error)
-
-        # Should include link to troubleshooting docs
+    def test_includes_documentation_link(self):
+        message = get_ssl_error_message(ssl.SSLError("certificate verify failed"))
         assert "docs/troubleshooting" in message or "troubleshooting.md" in message
 
 
-class TestSSLErrorMessageFormats:
-    """Test SSL error message handles different error formats."""
+# ---------------------------------------------------------------------------
+# Different error formats
+# ---------------------------------------------------------------------------
 
-    def test_ssl_error_with_detailed_message(self):
-        """Test handling of SSL error with detailed message."""
+
+class TestSSLErrorFormats:
+    def test_detailed_ssl_error(self):
         error = ssl.SSLError(
-            "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate"
+            "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: "
+            "unable to get local issuer certificate"
         )
         message = get_ssl_error_message(error)
-
         assert message is not None
-        assert len(message) > 0
         assert "SSL certificate verification failed" in message
 
     def test_oserror_with_ssl_context(self):
-        """Test handling of OSError with SSL context."""
-        error = OSError(1, "SSL: certificate verify failed")
-        message = get_ssl_error_message(error)
-
+        message = get_ssl_error_message(OSError(1, "SSL: certificate verify failed"))
         assert message is not None
         assert len(message) > 0
 
     def test_generic_exception_with_ssl_message(self):
-        """Test handling of generic exception with SSL message."""
-        error = Exception("SSL certificate problem: unable to get local issuer certificate")
-        message = get_ssl_error_message(error)
-
+        message = get_ssl_error_message(
+            Exception("SSL certificate problem: unable to get local issuer certificate")
+        )
         assert message is not None
         assert len(message) > 0
 
 
-class TestSSLErrorDetectionEdgeCases:
-    """Test SSL error detection edge cases."""
+# ---------------------------------------------------------------------------
+# Edge cases
+# ---------------------------------------------------------------------------
 
+
+class TestSSLEdgeCases:
     def test_empty_error_message(self):
-        """Test handling of error with empty message."""
-        error = Exception("")
-        assert is_ssl_certificate_error(error) is False
+        assert is_ssl_certificate_error(Exception("")) is False
 
-    def test_none_error_message(self):
-        """Test handling of error with None message."""
+    def test_none_error_message_does_not_crash(self):
         error = Mock()
         error.__str__ = Mock(return_value=None)
-        # Should not crash - handle None return gracefully
         try:
             result = is_ssl_certificate_error(error)
             assert isinstance(result, bool)
         except (TypeError, AttributeError):
-            # If __str__ returns None, we should handle it gracefully
-            # This is acceptable behavior - function should not crash
-            assert True
+            pass  # acceptable — function should not crash
 
-    def test_ssl_keyword_case_insensitive(self):
-        """Test SSL keyword detection is case-insensitive."""
-        error1 = Exception("SSL CERTIFICATE VERIFY FAILED")
-        error2 = Exception("ssl certificate verify failed")
-        error3 = Exception("Ssl Certificate Verify Failed")
+    def test_case_insensitive_detection(self):
+        assert is_ssl_certificate_error(Exception("SSL CERTIFICATE VERIFY FAILED")) is True
+        assert is_ssl_certificate_error(Exception("ssl certificate verify failed")) is True
+        assert is_ssl_certificate_error(Exception("Ssl Certificate Verify Failed")) is True
 
-        assert is_ssl_certificate_error(error1) is True
-        assert is_ssl_certificate_error(error2) is True
-        assert is_ssl_certificate_error(error3) is True
+    def test_partial_keyword_match(self):
+        assert is_ssl_certificate_error(Exception("invalid certificate")) is True
 
-    def test_partial_ssl_keyword_match(self):
-        """Test partial SSL keyword matches are detected."""
-        # "certificate" keyword alone should match
-        error = Exception("invalid certificate")
-        assert is_ssl_certificate_error(error) is True
-
-    def test_ssl_error_in_middle_of_message(self):
-        """Test SSL keywords in middle of message are detected."""
-        error = Exception("Connection failed due to SSL certificate verification error")
-        assert is_ssl_certificate_error(error) is True
+    def test_keyword_in_middle_of_message(self):
+        assert (
+            is_ssl_certificate_error(
+                Exception("Connection failed due to SSL certificate verification error")
+            )
+            is True
+        )
 
 
-class TestSSLHelperIntegration:
-    """Test SSL helper integration scenarios."""
+# ---------------------------------------------------------------------------
+# Integration
+# ---------------------------------------------------------------------------
 
-    def test_can_identify_and_format_common_ssl_errors(self):
-        """Test can identify and format common SSL error scenarios."""
+
+class TestSSLIntegration:
+    def test_common_ssl_errors_identified_and_formatted(self):
         common_errors = [
             ssl.SSLError("certificate verify failed"),
             Exception("[SSL: CERTIFICATE_VERIFY_FAILED]"),
@@ -229,16 +181,12 @@ class TestSSLHelperIntegration:
         ]
 
         for error in common_errors:
-            # Should be identified as SSL error
             assert is_ssl_certificate_error(error) is True
-
-            # Should generate helpful message
             message = get_ssl_error_message(error)
-            assert len(message) > 100  # Should be substantial
+            assert len(message) > 100
             assert "certifi" in message.lower()
 
-    def test_non_ssl_errors_dont_trigger_ssl_handling(self):
-        """Test non-SSL errors don't trigger SSL handling."""
+    def test_non_ssl_errors_not_flagged(self):
         non_ssl_errors = [
             ValueError("Invalid parameter"),
             KeyError("missing_key"),

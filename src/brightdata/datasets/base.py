@@ -9,7 +9,7 @@ from typing import Dict, List, Any, Optional, Literal, TYPE_CHECKING
 from .models import DatasetMetadata, SnapshotStatus
 
 if TYPE_CHECKING:
-    from ..core.async_engine import AsyncEngine
+    from ..core.engine import AsyncEngine
 
 
 class DatasetError(Exception):
