@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Dict, Any
 from ..base import BaseDataset
 
 if TYPE_CHECKING:
-    from ...core.async_engine import AsyncEngine
+    from ...core.engine import AsyncEngine
 
 
 class AmazonProducts(BaseDataset):

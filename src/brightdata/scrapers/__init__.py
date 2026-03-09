@@ -60,6 +60,16 @@ try:
 except ImportError:
     YouTubeSearchScraper = None
 
+try:
+    from .digikey.scraper import DigiKeyScraper
+except ImportError:
+    DigiKeyScraper = None
+
+try:
+    from .reddit.scraper import RedditScraper
+except ImportError:
+    RedditScraper = None
+
 
 __all__ = [
     "BaseWebScraper",
@@ -79,4 +89,6 @@ __all__ = [
     "TikTokSearchScraper",
     "YouTubeScraper",
     "YouTubeSearchScraper",
+    "DigiKeyScraper",
+    "RedditScraper",
 ]

@@ -107,23 +107,6 @@ def validate_timeout(timeout: int) -> None:
         raise ValidationError(f"Timeout must be positive, got {timeout}")
 
 
-def validate_max_workers(max_workers: int) -> None:
-    """
-    Validate max_workers value.
-
-    Args:
-        max_workers: Maximum number of workers.
-
-    Raises:
-        ValidationError: If max_workers is invalid.
-    """
-    if not isinstance(max_workers, int):
-        raise ValidationError("max_workers must be an integer")
-
-    if max_workers <= 0:
-        raise ValidationError(f"max_workers must be positive, got {max_workers}")
-
-
 def validate_response_format(response_format: str) -> None:
     """
     Validate response format.

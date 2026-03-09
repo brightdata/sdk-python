@@ -10,8 +10,22 @@ from .models import DatasetInfo, DatasetField, DatasetMetadata, SnapshotStatus
 from .utils import export, export_json, export_jsonl, export_csv
 
 # Platform-specific datasets
-from .linkedin import LinkedInPeopleProfiles, LinkedInCompanyProfiles, LinkedInJobListings
-from .amazon import AmazonProducts, AmazonReviews, AmazonSellersInfo
+from .linkedin import (
+    LinkedInPeopleProfiles,
+    LinkedInCompanyProfiles,
+    LinkedInJobListings,
+    LinkedInPosts,
+    LinkedInProfilesJobListings,
+)
+from .amazon import (
+    AmazonProducts,
+    AmazonReviews,
+    AmazonSellersInfo,
+    AmazonBestSellers,
+    AmazonProductsSearch,
+    AmazonProductsGlobal,
+    AmazonWalmart,
+)
 from .crunchbase import CrunchbaseCompanies
 from .imdb import IMDBMovies
 from .nba import NBAPlayersStats
@@ -20,7 +34,7 @@ from .world_population import WorldPopulation
 from .companies_enriched import CompaniesEnriched
 from .employees_enriched import EmployeesEnriched
 from .glassdoor import GlassdoorCompanies, GlassdoorReviews, GlassdoorJobs
-from .google_maps import GoogleMapsReviews
+from .google_maps import GoogleMapsReviews, GoogleMapsFullInfo
 from .yelp import YelpBusinesses, YelpReviews
 from .zoominfo import ZoomInfoCompanies
 from .pitchbook import PitchBookCompanies
@@ -34,10 +48,10 @@ from .lawyers import USLawyers
 from .manta import MantaBusinesses
 from .ventureradar import VentureRadarCompanies
 from .trustradius import TrustRadiusReviews
-from .instagram import InstagramProfiles, InstagramPosts
-from .tiktok import TikTokProfiles
+from .instagram import InstagramProfiles, InstagramPosts, InstagramComments, InstagramReels
+from .tiktok import TikTokProfiles, TikTokComments, TikTokPosts, TikTokShop
 from .real_estate import AustraliaRealEstate
-from .walmart import WalmartProducts
+from .walmart import WalmartProducts, WalmartSellersInfo
 from .mediamarkt import MediamarktProducts
 from .fendi import FendiProducts
 from .zalando import ZalandoProducts
@@ -67,7 +81,7 @@ from .sleepnumber import SleepNumberProducts
 from .raymourflanigan import RaymourFlaniganProducts
 from .inmuebles24 import Inmuebles24Mexico
 from .mouser import MouserProducts
-from .zillow import ZillowProperties
+from .zillow import ZillowProperties, ZillowPriceHistory
 from .zonaprop import ZonapropArgentina
 from .metrocuadrado import MetrocuadradoProperties
 from .chileautos import ChileautosChile
@@ -92,10 +106,62 @@ from .ysl import YSLProducts
 from .world_zipcodes import WorldZipcodes
 from .pinterest import PinterestPosts, PinterestProfiles
 from .shopee import ShopeeProducts
-from .lazada import LazadaProducts
+from .lazada import LazadaProducts, LazadaReviews, LazadaProductsSearch
 from .youtube import YouTubeProfiles, YouTubeVideos, YouTubeComments
 from .digikey import DigikeyProducts
-from .facebook import FacebookPagesPosts
+from .facebook import (
+    FacebookPagesPosts,
+    FacebookComments,
+    FacebookPostsByUrl,
+    FacebookReels,
+    FacebookMarketplace,
+    FacebookCompanyReviews,
+    FacebookEvents,
+    FacebookProfiles,
+    FacebookPagesProfiles,
+    FacebookGroupPosts,
+)
+from .x_twitter import XTwitterPosts, XTwitterProfiles
+from .reddit import RedditPosts, RedditComments
+from .bluesky import BlueskyPosts, BlueskyTopProfiles
+from .snapchat import SnapchatPosts
+from .quora import QuoraPosts
+from .vimeo import VimeoVideos
+from .google_news import GoogleNews
+from .wikipedia import WikipediaArticles
+from .bbc import BBCNews
+from .cnn import CNNNews
+from .github import GithubRepositories
+from .creative_commons import CreativeCommonsImages, CreativeCommons3DModels
+from .google_play import GooglePlayStore, GooglePlayReviews
+from .apple_appstore import AppleAppStore, AppleAppStoreReviews
+from .ebay import EbayProducts
+from .etsy import EtsyProducts
+from .target import TargetProducts
+from .wayfair import WayfairProducts
+from .bestbuy import BestBuyProducts
+from .myntra import MyntraProducts
+from .ozon import OzonProducts
+from .wildberries import WildberriesProducts
+from .tokopedia import TokopediaProducts
+from .google_shopping import GoogleShoppingProducts, GoogleShoppingSearchUS
+from .mercadolivre import MercadolivreProducts
+from .naver import NaverProducts
+from .homedepot import HomeDepotUSProducts, HomeDepotCAProducts
+from .lowes import LowesProducts
+from .rona import RonaProducts
+from .kroger import KrogerProducts
+from .macys import MacysProducts
+from .costco import CostcoProducts
+from .bh import BHProducts
+from .microcenter import MicroCenterProducts
+from .autozone import AutozoneProducts
+from .zoopla import ZooplaProperties
+from .booking import BookingListingsSearch, BookingHotelListings
+from .realtor import RealtorInternationalProperties
+from .agoda import AgodaProperties
+from .carsales import CarsalesListings
+from .yahoo_finance import YahooFinanceBusinesses
 
 __all__ = [
     # Client
@@ -299,4 +365,128 @@ __all__ = [
     "DigikeyProducts",
     # Facebook
     "FacebookPagesPosts",
+    "FacebookComments",
+    "FacebookPostsByUrl",
+    "FacebookReels",
+    "FacebookMarketplace",
+    "FacebookCompanyReviews",
+    "FacebookEvents",
+    "FacebookProfiles",
+    "FacebookPagesProfiles",
+    "FacebookGroupPosts",
+    # LinkedIn (additional)
+    "LinkedInPosts",
+    "LinkedInProfilesJobListings",
+    # Amazon (additional)
+    "AmazonBestSellers",
+    "AmazonProductsSearch",
+    "AmazonProductsGlobal",
+    "AmazonWalmart",
+    # Instagram (additional)
+    "InstagramComments",
+    "InstagramReels",
+    # TikTok (additional)
+    "TikTokComments",
+    "TikTokPosts",
+    "TikTokShop",
+    # Google Maps (additional)
+    "GoogleMapsFullInfo",
+    # Walmart (additional)
+    "WalmartSellersInfo",
+    # Zillow (additional)
+    "ZillowPriceHistory",
+    # Lazada (additional)
+    "LazadaReviews",
+    "LazadaProductsSearch",
+    # X / Twitter
+    "XTwitterPosts",
+    "XTwitterProfiles",
+    # Reddit
+    "RedditPosts",
+    "RedditComments",
+    # Bluesky
+    "BlueskyPosts",
+    "BlueskyTopProfiles",
+    # Snapchat
+    "SnapchatPosts",
+    # Quora
+    "QuoraPosts",
+    # Vimeo
+    "VimeoVideos",
+    # Google News
+    "GoogleNews",
+    # Wikipedia
+    "WikipediaArticles",
+    # BBC
+    "BBCNews",
+    # CNN
+    "CNNNews",
+    # GitHub
+    "GithubRepositories",
+    # Creative Commons
+    "CreativeCommonsImages",
+    "CreativeCommons3DModels",
+    # Google Play
+    "GooglePlayStore",
+    "GooglePlayReviews",
+    # Apple App Store
+    "AppleAppStore",
+    "AppleAppStoreReviews",
+    # eBay
+    "EbayProducts",
+    # Etsy
+    "EtsyProducts",
+    # Target
+    "TargetProducts",
+    # Wayfair
+    "WayfairProducts",
+    # Best Buy
+    "BestBuyProducts",
+    # Myntra
+    "MyntraProducts",
+    # Ozon
+    "OzonProducts",
+    # Wildberries
+    "WildberriesProducts",
+    # Tokopedia
+    "TokopediaProducts",
+    # Google Shopping
+    "GoogleShoppingProducts",
+    "GoogleShoppingSearchUS",
+    # Mercado Livre
+    "MercadolivreProducts",
+    # Naver
+    "NaverProducts",
+    # Home Depot
+    "HomeDepotUSProducts",
+    "HomeDepotCAProducts",
+    # Lowe's
+    "LowesProducts",
+    # Rona
+    "RonaProducts",
+    # Kroger
+    "KrogerProducts",
+    # Macy's
+    "MacysProducts",
+    # Costco
+    "CostcoProducts",
+    # B&H
+    "BHProducts",
+    # Micro Center
+    "MicroCenterProducts",
+    # Autozone
+    "AutozoneProducts",
+    # Zoopla
+    "ZooplaProperties",
+    # Booking
+    "BookingListingsSearch",
+    "BookingHotelListings",
+    # Realtor
+    "RealtorInternationalProperties",
+    # Agoda
+    "AgodaProperties",
+    # Carsales
+    "CarsalesListings",
+    # Yahoo Finance
+    "YahooFinanceBusinesses",
 ]

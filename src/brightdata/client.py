@@ -23,18 +23,16 @@ except ImportError:
 
 from .core.engine import AsyncEngine
 from .core.zone_manager import ZoneManager
-from .api.web_unlocker import WebUnlockerService
-from .api.scrape_service import ScrapeService
-from .api.search_service import SearchService
-from .api.crawler_service import CrawlerService
+from .web_unlocker.service import WebUnlockerService
+from .scrapers.service import ScrapeService
+from .serp.service import SearchService
+from .crawler.service import CrawlerService
+from .scraper_studio.service import ScraperStudioService
+from .browser.service import BrowserService
 from .datasets import DatasetsClient
 from .models import ScrapeResult
 from .types import AccountInfo
-from .constants import (
-    HTTP_OK,
-    HTTP_UNAUTHORIZED,
-    HTTP_FORBIDDEN,
-)
+from http import HTTPStatus
 from .exceptions import ValidationError, AuthenticationError, APIError
 
 
@@ -67,7 +65,6 @@ class BrightDataClient:
     DEFAULT_TIMEOUT = 30
     DEFAULT_WEB_UNLOCKER_ZONE = "sdk_unlocker"
     DEFAULT_SERP_ZONE = "sdk_serp"
-    DEFAULT_BROWSER_ZONE = "sdk_browser"
 
     # Environment variable name for API token
     TOKEN_ENV_VAR = "BRIGHTDATA_API_TOKEN"
@@ -78,7 +75,10 @@ class BrightDataClient:
         timeout: int = DEFAULT_TIMEOUT,
         web_unlocker_zone: Optional[str] = None,
         serp_zone: Optional[str] = None,
-        browser_zone: Optional[str] = None,
+        browser_username: Optional[str] = None,
+        browser_password: Optional[str] = None,
+        browser_host: Optional[str] = None,
+        browser_port: Optional[int] = None,
         auto_create_zones: bool = True,
         validate_token: bool = False,
         rate_limit: Optional[float] = None,
@@ -96,7 +96,11 @@ class BrightDataClient:
             timeout: Default timeout in seconds for all requests (default: 30)
             web_unlocker_zone: Zone name for web unlocker (default: "sdk_unlocker")
             serp_zone: Zone name for SERP API (default: "sdk_serp")
-            browser_zone: Zone name for browser API (default: "sdk_browser")
+            browser_username: Browser API username (or set BRIGHTDATA_BROWSERAPI_USERNAME env var).
+                              Find at: https://brightdata.com/cp/zones
+            browser_password: Browser API password (or set BRIGHTDATA_BROWSERAPI_PASSWORD env var)
+            browser_host: Browser API host (default: "brd.superproxy.io")
+            browser_port: Browser API port (default: 9222)
             auto_create_zones: Automatically create zones if they don't exist (default: True)
             validate_token: Validate token by testing connection on init (default: False)
             rate_limit: Maximum requests per rate_period (default: 10). Set to None to disable.
@@ -121,7 +125,10 @@ class BrightDataClient:
         self.timeout = timeout
         self.web_unlocker_zone = web_unlocker_zone or self.DEFAULT_WEB_UNLOCKER_ZONE
         self.serp_zone = serp_zone or self.DEFAULT_SERP_ZONE
-        self.browser_zone = browser_zone or self.DEFAULT_BROWSER_ZONE
+        self._browser_username = browser_username
+        self._browser_password = browser_password
+        self._browser_host = browser_host
+        self._browser_port = browser_port
         self.auto_create_zones = auto_create_zones
 
         self.engine = AsyncEngine(
@@ -133,6 +140,8 @@ class BrightDataClient:
         self._crawler_service: Optional[CrawlerService] = None
         self._web_unlocker_service: Optional[WebUnlockerService] = None
         self._datasets_client: Optional[DatasetsClient] = None
+        self._scraper_studio_service: Optional[ScraperStudioService] = None
+        self._browser_service: Optional[BrowserService] = None
         self._zone_manager: Optional[ZoneManager] = None
         self._is_connected = False
         self._account_info: Optional[Dict[str, Any]] = None
@@ -208,12 +217,9 @@ class BrightDataClient:
         if self._zone_manager is None:
             self._zone_manager = ZoneManager(self.engine)
 
-        # Don't pass browser_zone to auto-creation because browser zones
-        # require additional configuration and cannot be auto-created
         await self._zone_manager.ensure_required_zones(
             web_unlocker_zone=self.web_unlocker_zone,
             serp_zone=self.serp_zone,
-            browser_zone=None,  # Never auto-create browser zones
         )
         self._zones_ensured = True
 
@@ -313,6 +319,73 @@ class BrightDataClient:
             self._datasets_client = DatasetsClient(self.engine)
         return self._datasets_client
 
+    @property
+    def scraper_studio(self) -> ScraperStudioService:
+        """
+        Access Scraper Studio services.
+
+        Trigger and fetch results from user-created custom scrapers
+        (built via Bright Data's AI Agent, IDE, or templates).
+
+        Returns:
+            ScraperStudioService instance
+
+        Example:
+            >>> data = await client.scraper_studio.run(
+            ...     collector="c_abc123",
+            ...     input={"url": "https://example.com/page"},
+            ... )
+        """
+        if self._scraper_studio_service is None:
+            self._scraper_studio_service = ScraperStudioService(self)
+        return self._scraper_studio_service
+
+    @property
+    def browser(self) -> BrowserService:
+        """
+        Access Browser API service.
+
+        Builds CDP WebSocket URLs for connecting to Bright Data's cloud browsers
+        with Playwright, Puppeteer, or Selenium.
+
+        Credentials are resolved in order:
+        1. ``browser_username`` / ``browser_password`` passed to the client
+        2. ``BRIGHTDATA_BROWSERAPI_USERNAME`` / ``BRIGHTDATA_BROWSERAPI_PASSWORD`` env vars
+
+        Returns:
+            BrowserService instance
+
+        Raises:
+            ValidationError: If no browser credentials are available
+
+        Example:
+            >>> client = BrightDataClient(
+            ...     browser_username="brd-customer-hl_1cdf8003-zone-scraping_browser1",
+            ...     browser_password="f05i50grymt3",
+            ... )
+            >>> url = client.browser.get_connect_url()
+            >>> # Connect with Playwright:
+            >>> browser = await pw.chromium.connect_over_cdp(url)
+        """
+        if self._browser_service is None:
+            username = self._browser_username or os.getenv("BRIGHTDATA_BROWSERAPI_USERNAME")
+            password = self._browser_password or os.getenv("BRIGHTDATA_BROWSERAPI_PASSWORD")
+            if not username or not password:
+                raise ValidationError(
+                    "Browser API credentials not provided. "
+                    "Pass browser_username and browser_password to the client, or set "
+                    "BRIGHTDATA_BROWSERAPI_USERNAME and BRIGHTDATA_BROWSERAPI_PASSWORD "
+                    "environment variables. "
+                    "Find credentials at: https://brightdata.com/cp/zones"
+                )
+            self._browser_service = BrowserService(
+                username=username,
+                password=password,
+                host=self._browser_host or BrowserService.DEFAULT_HOST,
+                port=self._browser_port or BrowserService.DEFAULT_PORT,
+            )
+        return self._browser_service
+
     async def test_connection(self) -> bool:
         """
         Test API connection and token validity.
@@ -343,7 +416,7 @@ class BrightDataClient:
             async with self.engine.get_from_url(
                 f"{self.engine.BASE_URL}/zone/get_active_zones"
             ) as response:
-                if response.status == HTTP_OK:
+                if response.status == HTTPStatus.OK:
                     self._is_connected = True
                     return True
                 else:
@@ -398,7 +471,7 @@ class BrightDataClient:
             async with self.engine.get_from_url(
                 f"{self.engine.BASE_URL}/zone/get_active_zones"
             ) as zones_response:
-                if zones_response.status == HTTP_OK:
+                if zones_response.status == HTTPStatus.OK:
                     zones = await zones_response.json()
                     zones = zones or []
 
@@ -424,7 +497,7 @@ class BrightDataClient:
                     self._account_info = account_info
                     return account_info
 
-                elif zones_response.status in (HTTP_UNAUTHORIZED, HTTP_FORBIDDEN):
+                elif zones_response.status in (HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN):
                     error_text = await zones_response.text()
                     raise AuthenticationError(
                         f"Invalid token (HTTP {zones_response.status}): {error_text}"
