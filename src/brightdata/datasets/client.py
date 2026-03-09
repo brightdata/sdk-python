@@ -113,7 +113,6 @@ _DATASET_REGISTRY = {
     "walmart_sellers_info": (".walmart", "WalmartSellersInfo"),
     "ebay_products": (".ebay", "EbayProducts"),
     "etsy_products": (".etsy", "EtsyProducts"),
-    "target_products": (".target", "TargetProducts"),
     "bestbuy_products": (".bestbuy", "BestBuyProducts"),
     "costco_products": (".costco", "CostcoProducts"),
     "macys_products": (".macys", "MacysProducts"),
