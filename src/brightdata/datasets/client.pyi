@@ -176,7 +176,6 @@ from .shopee import ShopeeProducts
 from .sleepnumber import SleepNumberProducts
 from .slintel import SlintelCompanies
 from .snapchat import SnapchatPosts
-from .target import TargetProducts
 from .tiktok import (
     TikTokComments,
     TikTokPosts,
@@ -948,11 +947,6 @@ class DatasetsClient:
     @property
     def etsy_products(self) -> EtsyProducts:
         """Etsy Products dataset."""
-        ...
-
-    @property
-    def target_products(self) -> TargetProducts:
-        """Target Products dataset."""
         ...
 
     @property

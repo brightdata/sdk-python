@@ -137,7 +137,6 @@ from .google_play import GooglePlayStore, GooglePlayReviews
 from .apple_appstore import AppleAppStore, AppleAppStoreReviews
 from .ebay import EbayProducts
 from .etsy import EtsyProducts
-from .target import TargetProducts
 from .wayfair import WayfairProducts
 from .bestbuy import BestBuyProducts
 from .myntra import MyntraProducts
@@ -437,7 +436,7 @@ __all__ = [
     # Etsy
     "EtsyProducts",
     # Target
-    "TargetProducts",
+    # "TargetProducts",
     # Wayfair
     "WayfairProducts",
     # Best Buy
