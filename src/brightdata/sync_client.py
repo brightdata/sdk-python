@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 from .client import BrightDataClient
 from .browser.service import BrowserService
 from .models import ScrapeResult, SearchResult
+from .discover.models import DiscoverResult, DiscoverJob
 from .types import AccountInfo
 
 
@@ -46,6 +47,8 @@ class SyncBrightDataClient:
         validate_token: bool = False,
         rate_limit: Optional[float] = None,
         rate_period: float = 1.0,
+        ssl_verify: bool = True,
+        ssl_ca_cert: Optional[str] = None,
     ):
         """
         Initialize sync client.
@@ -63,6 +66,10 @@ class SyncBrightDataClient:
             validate_token: Validate token on initialization
             rate_limit: Rate limit (requests per period)
             rate_period: Rate limit period in seconds
+            ssl_verify: Whether to verify SSL certificates (default: True).
+                       Set to False for sandbox/proxy environments.
+            ssl_ca_cert: Path to a custom CA certificate bundle file.
+                        Use when behind a corporate proxy with its own CA.
         """
         # Check if we're inside an async context
         loop_running = True
@@ -90,6 +97,8 @@ class SyncBrightDataClient:
             validate_token=False,  # Will validate during __enter__
             rate_limit=rate_limit,
             rate_period=rate_period,
+            ssl_verify=ssl_verify,
+            ssl_ca_cert=ssl_ca_cert,
         )
         self._validate_token = validate_token
         self._loop: Optional[asyncio.AbstractEventLoop] = None
@@ -181,6 +190,14 @@ class SyncBrightDataClient:
     def scrape_url(self, url, **kwargs):
         """Scrape URL using Web Unlocker."""
         return self._run(self._async_client.scrape_url(url, **kwargs))
+
+    def discover(self, query: str, **kwargs) -> DiscoverResult:
+        """Search the web with AI-powered relevance ranking."""
+        return self._run(self._async_client.discover(query, **kwargs))
+
+    def discover_trigger(self, query: str, **kwargs) -> DiscoverJob:
+        """Trigger a discover search, return job for manual polling."""
+        return self._run(self._async_client.discover_trigger(query, **kwargs))
 
     # ========================================
     # Service Properties
@@ -279,6 +296,12 @@ class SyncScrapeService:
         if self._chatgpt is None:
             self._chatgpt = SyncChatGPTScraper(self._async.chatgpt, self._loop)
         return self._chatgpt
+
+    @property
+    def pinterest(self) -> "SyncPinterestScraper":
+        if not hasattr(self, "_pinterest") or self._pinterest is None:
+            self._pinterest = SyncPinterestScraper(self._async.pinterest, self._loop)
+        return self._pinterest
 
 
 class SyncAmazonScraper:
@@ -618,9 +641,16 @@ class SyncSearchService:
         return self._instagram
 
     @property
-    def chatGPT(self) -> "SyncChatGPTSearchService":
+    def chatgpt(self) -> "SyncChatGPTSearchService":
         """ChatGPT search service."""
-        return SyncChatGPTSearchService(self._async.chatGPT, self._loop)
+        return SyncChatGPTSearchService(self._async.chatgpt, self._loop)
+
+    @property
+    def pinterest(self) -> "SyncPinterestSearchScraper":
+        """Pinterest search service."""
+        if not hasattr(self, "_pinterest") or self._pinterest is None:
+            self._pinterest = SyncPinterestSearchScraper(self._async.pinterest, self._loop)
+        return self._pinterest
 
 
 class SyncAmazonSearchScraper:
@@ -672,9 +702,40 @@ class SyncChatGPTSearchService:
         self._async = async_service
         self._loop = loop
 
-    def chatGPT(self, prompt, **kwargs):
+    def prompt(self, prompt, **kwargs):
         """Send prompt(s) to ChatGPT via search service."""
-        return self._loop.run_until_complete(self._async.chatGPT(prompt, **kwargs))
+        return self._loop.run_until_complete(self._async.prompt(prompt, **kwargs))
+
+
+class SyncPinterestScraper:
+    """Sync wrapper for PinterestScraper."""
+
+    def __init__(self, async_scraper, loop):
+        self._async = async_scraper
+        self._loop = loop
+
+    def posts(self, url, **kwargs):
+        return self._loop.run_until_complete(self._async.posts(url, **kwargs))
+
+    def profiles(self, url, **kwargs):
+        return self._loop.run_until_complete(self._async.profiles(url, **kwargs))
+
+
+class SyncPinterestSearchScraper:
+    """Sync wrapper for PinterestSearchScraper."""
+
+    def __init__(self, async_scraper, loop):
+        self._async = async_scraper
+        self._loop = loop
+
+    def posts_by_keyword(self, keyword, **kwargs):
+        return self._loop.run_until_complete(self._async.posts_by_keyword(keyword, **kwargs))
+
+    def posts_by_profile(self, url, **kwargs):
+        return self._loop.run_until_complete(self._async.posts_by_profile(url, **kwargs))
+
+    def profiles(self, keyword, **kwargs):
+        return self._loop.run_until_complete(self._async.profiles(keyword, **kwargs))
 
 
 # ============================================================================

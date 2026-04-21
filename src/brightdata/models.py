@@ -344,3 +344,6 @@ class CrawlResult(BaseResult):
 
 
 Result = Union[BaseResult, ScrapeResult, SearchResult, CrawlResult]
+
+# DiscoverResult is defined in discover/models.py to avoid circular imports
+# It extends BaseResult with query, intent, and relevance-scored results
