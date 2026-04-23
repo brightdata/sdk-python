@@ -29,6 +29,8 @@ from .serp.service import SearchService
 from .crawler.service import CrawlerService
 from .scraper_studio.service import ScraperStudioService
 from .browser.service import BrowserService
+from .discover.service import DiscoverService
+from .discover.models import DiscoverResult, DiscoverJob
 from .datasets import DatasetsClient
 from .models import ScrapeResult
 from .types import AccountInfo
@@ -83,6 +85,8 @@ class BrightDataClient:
         validate_token: bool = False,
         rate_limit: Optional[float] = None,
         rate_period: float = 1.0,
+        ssl_verify: bool = True,
+        ssl_ca_cert: Optional[str] = None,
     ):
         """
         Initialize Bright Data client.
@@ -105,6 +109,10 @@ class BrightDataClient:
             validate_token: Validate token by testing connection on init (default: False)
             rate_limit: Maximum requests per rate_period (default: 10). Set to None to disable.
             rate_period: Time period in seconds for rate limit (default: 1.0)
+            ssl_verify: Whether to verify SSL certificates (default: True).
+                       Set to False for sandbox/proxy environments.
+            ssl_ca_cert: Path to a custom CA certificate bundle file.
+                        Use when behind a corporate proxy with its own CA.
 
         Raises:
             ValidationError: If token is not provided and not found in environment
@@ -132,7 +140,12 @@ class BrightDataClient:
         self.auto_create_zones = auto_create_zones
 
         self.engine = AsyncEngine(
-            self.token, timeout=timeout, rate_limit=rate_limit, rate_period=rate_period
+            self.token,
+            timeout=timeout,
+            rate_limit=rate_limit,
+            rate_period=rate_period,
+            ssl_verify=ssl_verify,
+            ssl_ca_cert=ssl_ca_cert,
         )
 
         self._scrape_service: Optional[ScrapeService] = None
@@ -142,6 +155,7 @@ class BrightDataClient:
         self._datasets_client: Optional[DatasetsClient] = None
         self._scraper_studio_service: Optional[ScraperStudioService] = None
         self._browser_service: Optional[BrowserService] = None
+        self._discover_service: Optional[DiscoverService] = None
         self._zone_manager: Optional[ZoneManager] = None
         self._is_connected = False
         self._account_info: Optional[Dict[str, Any]] = None
@@ -609,6 +623,127 @@ class BrightDataClient:
             mode=mode,
             poll_interval=poll_interval,
             poll_timeout=poll_timeout,
+        )
+
+    async def discover(
+        self,
+        query: str,
+        intent: Optional[str] = None,
+        include_content: bool = False,
+        country: Optional[str] = None,
+        city: Optional[str] = None,
+        language: Optional[str] = None,
+        filter_keywords: Optional[List[str]] = None,
+        num_results: Optional[int] = None,
+        format: str = "json",
+        timeout: int = 60,
+        poll_interval: int = 2,
+    ) -> DiscoverResult:
+        """
+        Search the web with AI-powered relevance ranking.
+
+        Triggers a search, polls until complete, and returns ranked results.
+        Uses the Discover API which adds AI relevance ranking via `intent`
+        and optional full-page content extraction.
+
+        Args:
+            query: Search query string.
+            intent: Why you're searching — guides AI relevance ranking.
+            include_content: If True, returns page content as markdown.
+            country: Country code for localized results (e.g., "us").
+            city: City for localized results (e.g., "new york").
+            language: Language code for localized results.
+            filter_keywords: Filter results by keywords (e.g., ["sustainability"]).
+            num_results: Number of results to return.
+            format: Response format (default: "json").
+            timeout: Max seconds to wait for results (default: 60).
+            poll_interval: Seconds between status checks (default: 2).
+
+        Returns:
+            DiscoverResult with AI-ranked search results.
+
+        Example:
+            >>> async with BrightDataClient() as client:
+            ...     result = await client.discover(
+            ...         query="artificial intelligence trends 2026",
+            ...         intent="latest AI technology developments",
+            ...     )
+            ...     for item in result.data:
+            ...         print(f"[{item['relevance_score']:.2f}] {item['title']}")
+        """
+        self._ensure_initialized()
+        if self._discover_service is None:
+            self._discover_service = DiscoverService(self.engine)
+
+        return await self._discover_service.search(
+            query=query,
+            intent=intent,
+            include_content=include_content,
+            country=country,
+            city=city,
+            language=language,
+            filter_keywords=filter_keywords,
+            num_results=num_results,
+            format=format,
+            timeout=timeout,
+            poll_interval=poll_interval,
+        )
+
+    async def discover_trigger(
+        self,
+        query: str,
+        intent: Optional[str] = None,
+        include_content: bool = False,
+        country: Optional[str] = None,
+        city: Optional[str] = None,
+        language: Optional[str] = None,
+        filter_keywords: Optional[List[str]] = None,
+        num_results: Optional[int] = None,
+        format: str = "json",
+    ) -> DiscoverJob:
+        """
+        Trigger a discover search and return a job for manual polling.
+
+        Use this when you want to do other work while waiting for results.
+
+        Args:
+            query: Search query string.
+            intent: Why you're searching — guides AI relevance ranking.
+            include_content: If True, returns page content as markdown.
+            country: Country code for localized results.
+            city: City for localized results.
+            language: Language code for localized results.
+            filter_keywords: Filter results by keywords.
+            num_results: Number of results to return.
+            format: Response format (default: "json").
+
+        Returns:
+            DiscoverJob for manual polling and fetching.
+
+        Example:
+            >>> async with BrightDataClient() as client:
+            ...     job = await client.discover_trigger(
+            ...         query="market research SaaS pricing",
+            ...         intent="competitor pricing strategies",
+            ...     )
+            ...     # Do other work...
+            ...     await job.wait(timeout=60)
+            ...     data = await job.fetch()
+        """
+        self._ensure_initialized()
+        if self._discover_service is None:
+            self._discover_service = DiscoverService(self.engine)
+
+        return await self._discover_service.trigger(
+            query=query,
+            intent=intent,
+            include_content=include_content,
+            country=country,
+            city=city,
+            language=language,
+            filter_keywords=filter_keywords,
+            num_results=num_results,
+            format=format,
         )
 
     async def __aenter__(self):

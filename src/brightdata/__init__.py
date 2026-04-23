@@ -26,6 +26,9 @@ from .models import (
 # Export job model for manual trigger/poll/fetch
 from .scrapers.job import ScrapeJob
 
+# Export Discover API models
+from .discover.models import DiscoverResult, DiscoverJob
+
 # Export payload models (dataclasses)
 from .payloads import (
     # Base
@@ -131,6 +134,9 @@ __all__ = [
     "ScraperStudioJob",
     "JobStatus",
     "ScraperStudioService",
+    # Discover API
+    "DiscoverResult",
+    "DiscoverJob",
     # Services
     "WebUnlockerService",
     "BrowserService",

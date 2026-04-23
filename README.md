@@ -135,6 +135,31 @@ async with BrightDataClient() as client:
 - `client.scrape.instagram` - profiles, posts, comments, reels
 - `client.scrape.facebook` - posts, comments, reels
 
+### Browser API
+
+Cloud-hosted Chrome instances accessible via the Chrome DevTools Protocol (CDP). The SDK builds the connection URL — you drive the browser with Playwright, Puppeteer, or Selenium.
+
+```python
+from brightdata import BrightDataClient
+from playwright.async_api import async_playwright
+
+client = BrightDataClient(
+    browser_username="brd-customer-<id>-zone-<zone>",
+    browser_password="<password>",
+)
+
+url = client.browser.get_connect_url(country="us")  # country is optional
+
+async with async_playwright() as pw:
+    browser = await pw.chromium.connect_over_cdp(url)
+    page = await browser.new_page()
+    await page.goto("https://example.com")
+    html = await page.content()
+    await browser.close()
+```
+
+**When to use:** sites that require full browser automation — JS rendering, login flows, interactive clicks. For plain HTML fetches, prefer `client.scrape_url()`.
+
 ## Datasets API
 
 Access 100+ ready-made datasets from Bright Data — pre-collected, structured data from popular platforms.

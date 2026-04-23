@@ -50,6 +50,8 @@ class AsyncEngine:
         timeout: int = 30,
         rate_limit: Optional[float] = None,
         rate_period: float = 1.0,
+        ssl_verify: bool = True,
+        ssl_ca_cert: Optional[str] = None,
     ):
         """
         Initialize async engine.
@@ -60,10 +62,16 @@ class AsyncEngine:
             rate_limit: Maximum requests per rate_period (default: 10).
                        Set to None to disable rate limiting.
             rate_period: Time period in seconds for rate limit (default: 1.0).
+            ssl_verify: Whether to verify SSL certificates (default: True).
+                       Set to False for sandbox/proxy environments.
+            ssl_ca_cert: Path to a custom CA certificate bundle file.
+                        Use when behind a corporate proxy with its own CA.
         """
         self.bearer_token = bearer_token
         self.timeout = aiohttp.ClientTimeout(total=timeout)
         self._session: Optional[aiohttp.ClientSession] = None
+        self._ssl_verify = ssl_verify
+        self._ssl_ca_cert = ssl_ca_cert
 
         # Store rate limit config (create limiter per event loop in __aenter__)
         if rate_limit is None:
@@ -80,15 +88,24 @@ class AsyncEngine:
         if self._session is not None:
             return self
 
+        # Build SSL context
+        if not self._ssl_verify:
+            ssl_context = False  # Disable SSL verification entirely
+        elif self._ssl_ca_cert:
+            ssl_context = ssl.create_default_context(cafile=self._ssl_ca_cert)
+        else:
+            ssl_context = None  # Use default SSL verification
+
         # Create connector with force_close=True to ensure proper cleanup
         # This helps prevent "Unclosed connector" warnings
         connector = aiohttp.TCPConnector(
-            limit=100, limit_per_host=30, force_close=True  # Force close connections on exit
+            limit=100, limit_per_host=30, force_close=True, ssl=ssl_context
         )
 
         # Create session with the connector
         self._session = aiohttp.ClientSession(
             connector=connector,
+            trust_env=True,
             timeout=self.timeout,
             headers={
                 "Authorization": f"Bearer {self.bearer_token}",
