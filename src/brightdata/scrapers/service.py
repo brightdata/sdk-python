@@ -31,6 +31,7 @@ class ScrapeService:
         self._youtube = None
         self._digikey = None
         self._reddit = None
+        self._pinterest = None
 
     @property
     def amazon(self):
@@ -350,3 +351,30 @@ class ScrapeService:
                 bearer_token=self._client.token, engine=self._client.engine
             )
         return self._reddit
+
+    @property
+    def pinterest(self):
+        """
+        Access Pinterest scraper.
+
+        Returns:
+            PinterestScraper instance for Pinterest data extraction
+
+        Example:
+            >>> # Collect post data
+            >>> result = await client.scrape.pinterest.posts(
+            ...     url="https://www.pinterest.com/pin/3166662230556591/"
+            ... )
+            >>>
+            >>> # Collect profile data
+            >>> result = await client.scrape.pinterest.profiles(
+            ...     url="https://www.pinterest.com/boredpanda/"
+            ... )
+        """
+        if self._pinterest is None:
+            from .pinterest import PinterestScraper
+
+            self._pinterest = PinterestScraper(
+                bearer_token=self._client.token, engine=self._client.engine
+            )
+        return self._pinterest

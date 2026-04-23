@@ -54,6 +54,7 @@ class SearchService:
         self._instagram_search: Optional["InstagramSearchScraper"] = None
         self._tiktok_search: Optional["TikTokSearchScraper"] = None
         self._youtube_search: Optional["YouTubeSearchScraper"] = None
+        self._pinterest_search = None
 
     async def google(
         self,
@@ -233,7 +234,7 @@ class SearchService:
         return self._linkedin_search
 
     @property
-    def chatGPT(self):
+    def chatgpt(self):
         """
         Access ChatGPT search service for prompt-based discovery.
 
@@ -242,14 +243,14 @@ class SearchService:
 
         Example:
             >>> # Single prompt
-            >>> result = client.search.chatGPT(
+            >>> result = await client.search.chatgpt.prompt(
             ...     prompt="Explain Python async programming",
             ...     country="us",
             ...     webSearch=True
             ... )
             >>>
             >>> # Batch prompts
-            >>> result = client.search.chatGPT(
+            >>> result = await client.search.chatgpt.prompt(
             ...     prompt=["What is Python?", "What is JavaScript?"],
             ...     country=["us", "us"],
             ...     webSearch=[False, True]
@@ -370,3 +371,37 @@ class SearchService:
                 bearer_token=self._client.token, engine=self._client.engine
             )
         return self._youtube_search
+
+    @property
+    def pinterest(self):
+        """
+        Access Pinterest search service for discovery operations.
+
+        Returns:
+            PinterestSearchScraper for discovering posts and profiles
+
+        Example:
+            >>> # Discover posts by keyword
+            >>> result = await client.search.pinterest.posts_by_keyword(
+            ...     keyword="spaghetti recipes",
+            ...     videos_only=True
+            ... )
+            >>>
+            >>> # Discover posts from profile
+            >>> result = await client.search.pinterest.posts_by_profile(
+            ...     url="https://www.pinterest.com/grandmapowpow/",
+            ...     num_of_posts=20
+            ... )
+            >>>
+            >>> # Discover profiles by keyword
+            >>> result = await client.search.pinterest.profiles(
+            ...     keyword="mtv"
+            ... )
+        """
+        if self._pinterest_search is None:
+            from ..scrapers.pinterest.search import PinterestSearchScraper
+
+            self._pinterest_search = PinterestSearchScraper(
+                bearer_token=self._client.token, engine=self._client.engine
+            )
+        return self._pinterest_search

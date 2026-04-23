@@ -2,8 +2,8 @@
 ChatGPT Search Service - Prompt-based discovery.
 
 API Specification:
-- client.search.chatGPT(prompt, country, secondaryPrompt, webSearch, timeout) - async
-- client.search.chatGPT_sync(prompt, country, secondaryPrompt, webSearch, timeout) - sync
+- client.search.chatgpt.prompt(prompt, country, secondaryPrompt, webSearch, timeout) - async
+- client.search.chatgpt.prompt_sync(prompt, country, secondaryPrompt, webSearch, timeout) - sync
 
 All parameters accept str | array<str> or bool | array<bool>
 Uses standard async workflow (trigger/poll/fetch).
@@ -32,7 +32,7 @@ class ChatGPTSearchService:
         >>> search = ChatGPTSearchService(bearer_token="token")
         >>>
         >>> # Async
-        >>> result = await search.chatGPT(
+        >>> result = await search.prompt(
         ...     prompt="Explain Python async programming",
         ...     country="us",
         ...     webSearch=True,
@@ -40,7 +40,7 @@ class ChatGPTSearchService:
         ... )
         >>>
         >>> # Sync
-        >>> result = search.chatGPT_sync(
+        >>> result = search.prompt_sync(
         ...     prompt="Explain Python async programming",
         ...     country="us",
         ...     webSearch=True,
@@ -72,7 +72,7 @@ class ChatGPTSearchService:
     # CHATGPT PROMPT DISCOVERY
     # ============================================================================
 
-    async def chatGPT(
+    async def prompt(
         self,
         prompt: Union[str, List[str]],
         country: Optional[Union[str, List[str]]] = None,
@@ -96,7 +96,7 @@ class ChatGPTSearchService:
             ScrapeResult with ChatGPT response(s)
 
         Example:
-            >>> result = await search.chatGPT(
+            >>> result = await search.prompt(
             ...     prompt="What is Python?",
             ...     country="us",
             ...     webSearch=True,
@@ -104,7 +104,7 @@ class ChatGPTSearchService:
             ... )
             >>>
             >>> # Batch prompts
-            >>> result = await search.chatGPT(
+            >>> result = await search.prompt(
             ...     prompt=["What is Python?", "What is JavaScript?"],
             ...     country=["us", "us"],
             ...     webSearch=[False, False]
@@ -150,7 +150,7 @@ class ChatGPTSearchService:
 
         return result
 
-    def chatGPT_sync(
+    def prompt_sync(
         self,
         prompt: Union[str, List[str]],
         country: Optional[Union[str, List[str]]] = None,
@@ -161,10 +161,10 @@ class ChatGPTSearchService:
         """
         Send prompt(s) to ChatGPT (sync wrapper).
 
-        See chatGPT() for full documentation.
+        See prompt() for full documentation.
 
         Example:
-            >>> result = search.chatGPT_sync(
+            >>> result = search.prompt_sync(
             ...     prompt="Explain async programming",
             ...     webSearch=True
             ... )
@@ -172,7 +172,7 @@ class ChatGPTSearchService:
 
         async def _run():
             async with self.engine:
-                return await self.chatGPT(
+                return await self.prompt(
                     prompt=prompt,
                     country=country,
                     secondaryPrompt=secondaryPrompt,
