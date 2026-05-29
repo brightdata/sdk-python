@@ -11,6 +11,7 @@ class BingSERPService(BaseSERPService):
     """Bing Search Engine Results Page service."""
 
     SEARCH_ENGINE = "bing"
+    DATA_FORMAT = "parsed_bing"  # Opt into Bright Data's server-side Bing parser
 
     def __init__(
         self,

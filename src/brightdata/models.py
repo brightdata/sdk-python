@@ -250,6 +250,10 @@ class SearchResult(BaseResult):
     country: Optional[str] = None
     page: Optional[int] = None
     results_per_page: Optional[int] = None
+    # Populated when the underlying API returns raw HTML instead of (or
+    # alongside) structured results — e.g. Yandex, which has no parser, or
+    # Google/Bing when the zone is misconfigured.
+    raw_html: Optional[str] = None
 
     def __post_init__(self) -> None:
         """Validate SearchResult-specific fields."""

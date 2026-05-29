@@ -78,12 +78,26 @@ async with BrightDataClient() as client:
 
 ### Search Engines (SERP)
 
+Search across Google, Bing, and Yandex. Google and Bing return parsed organic results (title/url/description/position); Yandex has no upstream parser and returns raw HTML.
+
 ```python
 async with BrightDataClient() as client:
+    # Google — parsed results
     result = await client.search.google(query="python scraping", num_results=10)
     for item in result.data:
-        print(item)
+        print(item["title"], item["url"])
+
+    # Bing — parsed results (same shape as Google)
+    result = await client.search.bing(query="python scraping", num_results=10)
+    for item in result.data:
+        print(item["title"], item["url"])
+
+    # Yandex — raw HTML only (parse it yourself with BeautifulSoup etc.)
+    result = await client.search.yandex(query="python scraping", num_results=10)
+    print(f"{len(result.raw_html)} chars of HTML")
 ```
+
+Batch queries: pass a list of strings instead of a single string — each query runs concurrently and you get back a `List[SearchResult]`.
 
 #### SERP Async Mode
 
@@ -130,10 +144,17 @@ async with BrightDataClient() as client:
 ```
 
 **Available scrapers:**
-- `client.scrape.amazon` - products, reviews, sellers
-- `client.scrape.linkedin` - profiles, companies, jobs, posts
-- `client.scrape.instagram` - profiles, posts, comments, reels
-- `client.scrape.facebook` - posts, comments, reels
+- `client.scrape.amazon` — products, reviews, sellers
+- `client.scrape.linkedin` — profiles, companies, jobs, posts
+- `client.scrape.instagram` — profiles, posts, comments, reels
+- `client.scrape.facebook` — posts, comments, reels, pages, marketplace, events
+- `client.scrape.tiktok` — profiles, posts by keyword/profile/url
+- `client.scrape.youtube` — videos, channels, comments
+- `client.scrape.reddit` — posts, comments, posts by keyword
+- `client.scrape.pinterest` — posts, profiles, posts by keyword/profile
+- `client.scrape.chatgpt` — send prompts, retrieve responses
+- `client.scrape.perplexity` — queries with AI-ranked results
+- `client.scrape.digikey` — electronic component products
 
 ### Browser API
 
@@ -159,6 +180,47 @@ async with async_playwright() as pw:
 ```
 
 **When to use:** sites that require full browser automation — JS rendering, login flows, interactive clicks. For plain HTML fetches, prefer `client.scrape_url()`.
+
+### Discover API
+
+AI-ranked web search. Unlike SERP (which returns engine-ordered results), Discover takes a `query` plus an `intent` phrase and re-ranks by relevance. Optionally extracts full page content as markdown.
+
+```python
+async with BrightDataClient() as client:
+    result = await client.discover(
+        query="artificial intelligence trends 2026",
+        intent="latest AI technology developments",
+        country="us",
+        num_results=10,
+    )
+    for item in result.data:
+        print(f"[{item['relevance_score']:.2f}] {item['title']}  {item['url']}")
+```
+
+For long-running discoveries, trigger and poll separately:
+
+```python
+job = await client.discover_trigger(query="...", intent="...")
+result = await job.wait_and_fetch(timeout=60)
+```
+
+**When to use Discover vs SERP:** Discover when you want *entity-level* relevance ranking driven by a natural-language intent (e.g. "find sustainability-focused AI companies"). SERP when you want raw search engine results.
+
+### Scraper Studio
+
+Run custom collectors built in [Bright Data's Scraper Studio](https://brightdata.com/cp/scrapers). One call triggers the job, polls until ready, and returns the records:
+
+```python
+async with BrightDataClient() as client:
+    data = await client.scraper_studio.run(
+        collector="c_abc123",                       # your collector ID
+        input={"url": "https://example.com"},       # collector-specific input
+        timeout=180,
+    )
+    print(f"Got {len(data)} records")
+```
+
+For manual control over the lifecycle, use `client.scraper_studio.trigger()` → `.status()` → `.fetch()`.
 
 ## Datasets API
 
@@ -259,6 +321,29 @@ with SyncBrightDataClient() as client:
 ```
 
 See [docs/sync_client.md](docs/sync_client.md) for details.
+
+## Account & Zones
+
+Inspect the account, list zones, and clean up unused ones:
+
+```python
+async with BrightDataClient() as client:
+    # Verify token + connectivity (never raises — returns False on any error)
+    if await client.test_connection():
+        print("Connected")
+
+    # Account status, usage stats, credit balance
+    info = await client.get_account_info()
+    print(info)
+
+    # All zones on this account, with type and usage
+    zones = await client.list_zones()
+    for z in zones:
+        print(z["name"], z["type"])
+
+    # Delete a zone — destructive, confirm before calling
+    await client.delete_zone("zone_to_remove")
+```
 
 ## Troubleshooting
 
