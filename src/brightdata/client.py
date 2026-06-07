@@ -285,20 +285,19 @@ class BrightDataClient:
     @property
     def crawler(self) -> CrawlerService:
         """
-        Access web crawling services.
+        Access Crawl API services.
 
-        Provides access to domain crawling capabilities:
-        - client.crawler.discover(url="...")
-        - client.crawler.sitemap(url="...")
+        Sync path (`crawl()`) returns inline results; async path
+        (`trigger()` + `status()` + `download()`) returns a snapshot_id to
+        poll. Each returned record carries every output format the API
+        computed (markdown, html2text, page_html, ...).
 
         Returns:
-            CrawlerService instance for crawling operations
+            CrawlerService instance.
 
         Example:
-            >>> result = client.crawler.discover(
-            ...     url="https://example.com",
-            ...     depth=3
-            ... )
+            >>> result = await client.crawler.crawl(urls="https://example.com")
+            >>> print(result.data[0]["markdown"])
         """
         if self._crawler_service is None:
             self._crawler_service = CrawlerService(self)

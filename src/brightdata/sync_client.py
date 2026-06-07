@@ -744,19 +744,27 @@ class SyncPinterestSearchScraper:
 
 
 class SyncCrawlerService:
-    """Sync wrapper for CrawlerService."""
+    """Sync wrapper for CrawlerService — see brightdata.crawler.CrawlerService."""
 
     def __init__(self, async_service, loop):
         self._async = async_service
         self._loop = loop
 
-    def crawl(self, url, **kwargs):
-        """Crawl a URL."""
-        return self._loop.run_until_complete(self._async.crawl(url, **kwargs))
+    def crawl(self, urls, **kwargs):
+        """Sync path — POST /scrape, returns CrawlResult inline."""
+        return self._loop.run_until_complete(self._async.crawl(urls, **kwargs))
 
-    def scrape(self, url, **kwargs):
-        """Scrape a URL."""
-        return self._loop.run_until_complete(self._async.scrape(url, **kwargs))
+    def trigger(self, urls, **kwargs):
+        """Async path step 1 — POST /trigger, returns CrawlJob."""
+        return self._loop.run_until_complete(self._async.trigger(urls, **kwargs))
+
+    def status(self, snapshot_id):
+        """Async path step 2 — GET /progress/<id>, returns status string."""
+        return self._loop.run_until_complete(self._async.status(snapshot_id))
+
+    def download(self, snapshot_id, **kwargs):
+        """Async path step 3 — poll until ready, then GET /snapshot/<id>."""
+        return self._loop.run_until_complete(self._async.download(snapshot_id, **kwargs))
 
 
 # ============================================================================

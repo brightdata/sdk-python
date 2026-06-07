@@ -81,15 +81,21 @@ class BingURLBuilder(BaseURLBuilder):
         num_results: int = 10,
         **kwargs,
     ) -> str:
-        """Build Bing search URL."""
+        """Build Bing search URL.
+
+        Parsing is opted in via the BingSERPService.DATA_FORMAT = "parsed_bing"
+        payload field, not a URL flag — so this builder only assembles the
+        target Bing URL (query, count, market, language).
+        """
         encoded_query = quote_plus(query)
         url = f"https://www.bing.com/search?q={encoded_query}"
         url += f"&count={num_results}"
 
         if location:
             location_code = LocationService.parse_location(location, LocationFormat.BING)
-            market = f"{language}_{location_code}"
-            url += f"&mkt={market}"
+            url += f"&mkt={language}-{location_code}"
+        elif language:
+            url += f"&setlang={language}"
 
         return url
 
@@ -106,7 +112,14 @@ class YandexURLBuilder(BaseURLBuilder):
         num_results: int = 10,
         **kwargs,
     ) -> str:
-        """Build Yandex search URL."""
+        """Build Yandex search URL.
+
+        Note: Bright Data does NOT provide a parsed JSON format for Yandex
+        (brd_json=1 returns HTTP 400 "JSON output is not supported", and there
+        is no `parsed_yandex` data_format). Yandex responses come back as raw
+        HTML and the normalizer returns them via `raw_html` rather than
+        structured organic results.
+        """
         encoded_query = quote_plus(query)
         url = f"https://yandex.com/search/?text={encoded_query}"
         url += f"&numdoc={num_results}"

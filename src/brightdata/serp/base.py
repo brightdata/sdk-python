@@ -35,6 +35,11 @@ class BaseSERPService:
     PAGE_SIZE = 10
     MAX_PAGES = 20
     PAGINATION_TIMEOUT = 300
+    # Bright Data data_format selector (e.g. "parsed_bing"). When set, the SDK
+    # opts in to engine-specific server-side parsing via the payload field
+    # instead of (or in addition to) the URL-level brd_json=1 flag. Leave None
+    # for engines that use brd_json=1 (Google) or have no parser (Yandex).
+    DATA_FORMAT: Optional[str] = None
 
     def __init__(
         self,
@@ -232,6 +237,7 @@ class BaseSERPService:
             results_per_page=num_results,
             trigger_sent_at=trigger_sent_at,
             data_fetched_at=data_fetched_at,
+            raw_html=normalized_data.get("raw_html"),
         )
 
     async def _execute_serp_request(
@@ -247,7 +253,9 @@ class BaseSERPService:
             Tuple of (raw_data, data_fetched_at, error)
             If error is not None, raw_data will be empty dict.
         """
-        response_format = "json" if "brd_json=1" in search_url else "raw"
+        # JSON when either the URL opts in (Google) or the engine declares a
+        # server-side parser via DATA_FORMAT (Bing).
+        response_format = "json" if ("brd_json=1" in search_url or self.DATA_FORMAT) else "raw"
 
         payload = {
             "zone": zone,
@@ -255,6 +263,9 @@ class BaseSERPService:
             "format": response_format,
             "method": "GET",
         }
+
+        if self.DATA_FORMAT:
+            payload["data_format"] = self.DATA_FORMAT
 
         sdk_function = get_caller_function_name()
         if sdk_function:
@@ -278,16 +289,41 @@ class BaseSERPService:
                         except Exception:
                             data = {"raw_html": text}
 
-                    # Handle wrapped response format (status_code/headers/body)
+                    # Handle wrapped response format (status_code/headers/body).
+                    # Surface inner non-2xx (>=400) as a real error instead of
+                    # silently returning success with empty data — see
+                    # devdocs/error_improvement.md for the incident this fixes.
                     if isinstance(data, dict) and "body" in data and "status_code" in data:
-                        body = data.get("body", "")
-                        if isinstance(body, str) and body.strip().startswith("<"):
-                            data = {"body": body, "status_code": data.get("status_code")}
+                        inner_status = data.get("status_code")
+                        inner_headers = data.get("headers")
+                        if not isinstance(inner_headers, dict):
+                            inner_headers = {}
+                        inner_body = data.get("body", "")
+
+                        if isinstance(inner_status, int) and inner_status >= 400:
+                            err_code = inner_headers.get("x-brd-err-code")
+                            err_msg = (
+                                inner_headers.get("x-brd-err-msg")
+                                or inner_headers.get("x-brd-error")
+                                or (inner_body if isinstance(inner_body, str) else "")
+                                or "no error message"
+                            )
+                            prefix = f"HTTP {inner_status}"
+                            if err_code:
+                                prefix += f" ({err_code})"
+                            return ({}, data_fetched_at, f"{prefix}: {err_msg}")
+
+                        if isinstance(inner_body, str) and inner_body.strip().startswith("<"):
+                            data = {"body": inner_body, "status_code": inner_status}
                         else:
                             try:
-                                data = json.loads(body) if isinstance(body, str) else body
+                                data = (
+                                    json.loads(inner_body)
+                                    if isinstance(inner_body, str)
+                                    else inner_body
+                                )
                             except (json.JSONDecodeError, TypeError):
-                                data = {"body": body, "status_code": data.get("status_code")}
+                                data = {"body": inner_body, "status_code": inner_status}
 
                     return (data, data_fetched_at, None)
                 else:
@@ -544,6 +580,7 @@ class BaseSERPService:
                         results_per_page=num_results,
                         trigger_sent_at=trigger_sent_at,
                         data_fetched_at=data_fetched_at,
+                        raw_html=normalized_data.get("raw_html"),
                     )
                 except Exception as e:
                     return SearchResult(
