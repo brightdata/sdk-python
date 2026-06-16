@@ -1,11 +1,12 @@
 # Bright Data Python SDK Changelog
 
-## Unreleased - Sync parity + colorless job verbs
+## Version 2.4.0 - Sync parity, colorless job verbs, dataset error reporting
 
 - **Sync client parity**: `SyncBrightDataClient` now mirrors the async surface. Added `client.datasets` (fixes the `SyncBrightDataClient` `datasets` `AttributeError`), the 5 missing scrapers (`scrape.tiktok` / `youtube` / `reddit` / `perplexity` / `digikey`), the 2 missing search verticals (`search.tiktok` / `youtube`), Pinterest trigger/status/fetch, and Instagram-search `profiles` / `reels_all`.
 - **Service-level job verbs (colorless pattern)**: every scraper now exposes generic `status` / `wait` / `fetch` / `to_result(snapshot_id)` (on `BaseWebScraper`), and `DiscoverService` gained `status` / `wait` / `fetch` / `to_result(task_id)` — so a triggered job can be driven by its id alone, like the crawler. Purely additive; the existing `job.fetch()` etc. are unchanged.
 - **Discover sync manual path (new)**: `SyncBrightDataClient` adds `discover_status` / `discover_wait` / `discover_fetch` / `discover_to_result(task_id)`, and a colorless `DiscoverSnapshot` handle.
 - **Contract change**: sync `discover_trigger()` now returns a `DiscoverSnapshot` (a typed, drivable handle) instead of the async-only `DiscoverJob` (which could not be used from sync). Migration: poll via `client.discover_status(snap.task_id)` / `client.discover_fetch(snap.task_id)`.
+- **Fixed**: failed dataset snapshots now expose the API failure reason — and, when no recognized reason key is present, the raw snapshot status response as a fallback — plus the `snapshot_id`, instead of the unhelpful `DatasetError: Snapshot failed: None`. `SnapshotStatus` now retains the full API response (`.raw`) and matches more reason keys (`error` / `error_message` / `message` / `failure_reason`). The synchronous path inherits the fix.
 
 ---
 
