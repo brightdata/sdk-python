@@ -160,6 +160,62 @@ class DiscoverService:
             intent=intent,
         )
 
+    # ------------------------------------------------------------------
+    # PUBLIC SERVICE VERBS (drive a discover task by task_id)
+    # ------------------------------------------------------------------
+    # Discover was the one subsystem lacking id-based status/fetch on the
+    # service (it had only the DiscoverJob methods). These are additive and
+    # mirror DiscoverJob.status/fetch/wait/to_result, keyed by task_id, so a
+    # caller can poll/fetch a triggered search with only its task_id.
+
+    async def status(self, task_id: str) -> str:
+        """Check a discover task's status by task_id ('processing' or 'done')."""
+        response_data = await self._poll_once(task_id)
+        return response_data.get("status", "processing")
+
+    async def fetch(self, task_id: str) -> List[Dict[str, Any]]:
+        """Fetch a discover task's results by task_id. Call after status == 'done'."""
+        response_data = await self._poll_once(task_id)
+        return response_data.get("results", [])
+
+    async def wait(self, task_id: str, timeout: int = 60, poll_interval: int = 2) -> str:
+        """Poll a discover task until done (or fail/timeout), by task_id."""
+        await self._poll_until_done(task_id, timeout, poll_interval)
+        return "done"
+
+    async def to_result(
+        self, task_id: str, timeout: int = 60, poll_interval: int = 2
+    ) -> DiscoverResult:
+        """
+        Wait + fetch + wrap a discover task (by task_id) as DiscoverResult.
+
+        Note: query/intent are not recoverable from a bare task_id, so they are
+        left empty here; use DiscoverJob.to_result() (or the service's search())
+        when you need them populated.
+        """
+        trigger_time = datetime.now(timezone.utc)
+        try:
+            response_data = await self._poll_until_done(task_id, timeout, poll_interval)
+            fetch_time = datetime.now(timezone.utc)
+            results = response_data.get("results", [])
+            return DiscoverResult(
+                success=True,
+                data=results,
+                duration_seconds=response_data.get("duration_seconds"),
+                total_results=len(results),
+                task_id=task_id,
+                trigger_sent_at=trigger_time,
+                data_fetched_at=fetch_time,
+            )
+        except Exception as e:
+            return DiscoverResult(
+                success=False,
+                error=str(e),
+                task_id=task_id,
+                trigger_sent_at=trigger_time,
+                data_fetched_at=datetime.now(timezone.utc),
+            )
+
     async def _trigger(
         self,
         query: str,

@@ -46,6 +46,30 @@ class DiscoverResult(BaseResult):
 
 
 @dataclass
+class DiscoverSnapshot:
+    """
+    Colorless handle for a triggered Discover search — data only, no I/O methods.
+
+    Mirrors the crawler's CrawlJob shape: the verbs live on the service, not the
+    handle. Returned by the sync client's ``discover_trigger()``; poll/fetch via
+    ``discover_status`` / ``discover_wait`` / ``discover_fetch`` / ``discover_to_result``
+    (by ``task_id``), or the async ``DiscoverService`` verbs.
+
+    Attributes:
+        task_id: Discover API task identifier.
+        query: Original search query (echo).
+        intent: Intent used for ranking (echo).
+    """
+
+    task_id: str
+    query: str = ""
+    intent: Optional[str] = None
+
+    def __repr__(self) -> str:
+        return f"<DiscoverSnapshot task_id={self.task_id[:16]}...>"
+
+
+@dataclass
 class DiscoverJob:
     """
     Handle for a pending Discover API search.

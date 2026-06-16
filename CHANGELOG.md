@@ -1,5 +1,14 @@
 # Bright Data Python SDK Changelog
 
+## Unreleased - Sync parity + colorless job verbs
+
+- **Sync client parity**: `SyncBrightDataClient` now mirrors the async surface. Added `client.datasets` (fixes the `SyncBrightDataClient` `datasets` `AttributeError`), the 5 missing scrapers (`scrape.tiktok` / `youtube` / `reddit` / `perplexity` / `digikey`), the 2 missing search verticals (`search.tiktok` / `youtube`), Pinterest trigger/status/fetch, and Instagram-search `profiles` / `reels_all`.
+- **Service-level job verbs (colorless pattern)**: every scraper now exposes generic `status` / `wait` / `fetch` / `to_result(snapshot_id)` (on `BaseWebScraper`), and `DiscoverService` gained `status` / `wait` / `fetch` / `to_result(task_id)` — so a triggered job can be driven by its id alone, like the crawler. Purely additive; the existing `job.fetch()` etc. are unchanged.
+- **Discover sync manual path (new)**: `SyncBrightDataClient` adds `discover_status` / `discover_wait` / `discover_fetch` / `discover_to_result(task_id)`, and a colorless `DiscoverSnapshot` handle.
+- **Contract change**: sync `discover_trigger()` now returns a `DiscoverSnapshot` (a typed, drivable handle) instead of the async-only `DiscoverJob` (which could not be used from sync). Migration: poll via `client.discover_status(snap.task_id)` / `client.discover_fetch(snap.task_id)`.
+
+---
+
 ## Version 2.3.0 - Browser API, Scraper Studio, 175 Datasets
 
 - **Browser API**: Connect to cloud Chrome via CDP WebSocket. SDK builds the `wss://` URL, you connect with Playwright/Puppeteer (`client.browser.get_connect_url()`)
