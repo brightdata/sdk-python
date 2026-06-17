@@ -11,7 +11,7 @@ version = "2.4.0"
 description = "Modern async-first Python SDK for Bright Data APIs"
 authors = [{name = "Bright Data", email = "support@brightdata.com"}]
 license = {text = "MIT"}
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 readme = "README.md"
 dependencies = [
     "aiohttp>=3.9.0",
@@ -33,7 +33,7 @@ dev = [
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.1.0",
     "pytest-mock>=3.11.0",
-    "black>=25.0.0",
+    "black==26.5.1",
     "ruff>=0.1.0",
     "mypy>=1.5.0",
     "pre-commit>=3.4.0",
@@ -45,11 +45,11 @@ all = ["brightdata-sdk[dev,browser]"]
 
 [tool.black]
 line-length = 100
-target-version = ['py39']
+target-version = ['py310']
 
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py310"
 exclude = [
     "notebooks",
     "examples",
@@ -66,7 +66,7 @@ ignore = [
 ]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 warn_return_any = false
 warn_unused_configs = true
 disallow_untyped_defs = false
