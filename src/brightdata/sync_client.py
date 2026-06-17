@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 from .client import BrightDataClient
 from .browser.service import BrowserService
 from .models import ScrapeResult, SearchResult
-from .discover.models import DiscoverResult, DiscoverJob
+from .discover.models import DiscoverResult, DiscoverSnapshot
 from .types import AccountInfo
 
 
@@ -106,6 +106,7 @@ class SyncBrightDataClient:
         self._search: Optional["SyncSearchService"] = None
         self._crawler: Optional["SyncCrawlerService"] = None
         self._scraper_studio: Optional["SyncScraperStudioService"] = None
+        self._datasets: Optional["SyncDatasetsClient"] = None
 
     def __enter__(self):
         """Initialize persistent event loop and async client."""
@@ -195,9 +196,45 @@ class SyncBrightDataClient:
         """Search the web with AI-powered relevance ranking."""
         return self._run(self._async_client.discover(query, **kwargs))
 
-    def discover_trigger(self, query: str, **kwargs) -> DiscoverJob:
-        """Trigger a discover search, return job for manual polling."""
-        return self._run(self._async_client.discover_trigger(query, **kwargs))
+    def discover_trigger(self, query: str, **kwargs) -> DiscoverSnapshot:
+        """Trigger a discover search; returns a colorless DiscoverSnapshot.
+
+        Poll/fetch with discover_status / discover_wait / discover_fetch /
+        discover_to_result (by task_id). (Previously returned the async-only
+        DiscoverJob, which could not be driven from sync.)
+        """
+        job = self._run(self._async_client.discover_trigger(query, **kwargs))
+        return DiscoverSnapshot(
+            task_id=job.task_id,
+            query=getattr(job, "query", "") or "",
+            intent=getattr(job, "intent", None),
+        )
+
+    def _discover_service(self):
+        """The async DiscoverService, ensured to exist (lazy, same as the async client)."""
+        svc = self._async_client._discover_service
+        if svc is None:
+            from .discover.service import DiscoverService
+
+            svc = DiscoverService(self._async_client.engine)
+            self._async_client._discover_service = svc
+        return svc
+
+    def discover_status(self, task_id: str) -> str:
+        """Check a triggered discover search's status by task_id ('processing'/'done')."""
+        return self._run(self._discover_service().status(task_id))
+
+    def discover_wait(self, task_id: str, **kwargs) -> str:
+        """Poll a triggered discover search until done, by task_id."""
+        return self._run(self._discover_service().wait(task_id, **kwargs))
+
+    def discover_fetch(self, task_id: str):
+        """Fetch a triggered discover search's results by task_id."""
+        return self._run(self._discover_service().fetch(task_id))
+
+    def discover_to_result(self, task_id: str, **kwargs) -> DiscoverResult:
+        """Wait + fetch + wrap a triggered discover search as DiscoverResult, by task_id."""
+        return self._run(self._discover_service().to_result(task_id, **kwargs))
 
     # ========================================
     # Service Properties
@@ -214,6 +251,13 @@ class SyncBrightDataClient:
         if self._scrape is None:
             self._scrape = SyncScrapeService(self._async_client.scrape, self._loop)
         return self._scrape
+
+    @property
+    def datasets(self) -> "SyncDatasetsClient":
+        """Access pre-collected datasets (sync)."""
+        if self._datasets is None:
+            self._datasets = SyncDatasetsClient(self._async_client.datasets, self._loop)
+        return self._datasets
 
     @property
     def search(self) -> "SyncSearchService":
@@ -266,6 +310,12 @@ class SyncScrapeService:
         self._instagram = None
         self._facebook = None
         self._chatgpt = None
+        self._pinterest = None
+        self._tiktok = None
+        self._youtube = None
+        self._reddit = None
+        self._perplexity = None
+        self._digikey = None
 
     @property
     def amazon(self) -> "SyncAmazonScraper":
@@ -299,9 +349,39 @@ class SyncScrapeService:
 
     @property
     def pinterest(self) -> "SyncPinterestScraper":
-        if not hasattr(self, "_pinterest") or self._pinterest is None:
+        if self._pinterest is None:
             self._pinterest = SyncPinterestScraper(self._async.pinterest, self._loop)
         return self._pinterest
+
+    @property
+    def tiktok(self) -> "SyncTikTokScraper":
+        if self._tiktok is None:
+            self._tiktok = SyncTikTokScraper(self._async.tiktok, self._loop)
+        return self._tiktok
+
+    @property
+    def youtube(self) -> "SyncYouTubeScraper":
+        if self._youtube is None:
+            self._youtube = SyncYouTubeScraper(self._async.youtube, self._loop)
+        return self._youtube
+
+    @property
+    def reddit(self) -> "SyncRedditScraper":
+        if self._reddit is None:
+            self._reddit = SyncRedditScraper(self._async.reddit, self._loop)
+        return self._reddit
+
+    @property
+    def perplexity(self) -> "SyncPerplexityScraper":
+        if self._perplexity is None:
+            self._perplexity = SyncPerplexityScraper(self._async.perplexity, self._loop)
+        return self._perplexity
+
+    @property
+    def digikey(self) -> "SyncDigiKeyScraper":
+        if self._digikey is None:
+            self._digikey = SyncDigiKeyScraper(self._async.digikey, self._loop)
+        return self._digikey
 
 
 class SyncAmazonScraper:
@@ -592,6 +672,207 @@ class SyncChatGPTScraper:
         return self._loop.run_until_complete(self._async.prompts_fetch(snapshot_id))
 
 
+class SyncTikTokScraper:
+    """Sync wrapper for TikTokScraper."""
+
+    def __init__(self, async_scraper, loop):
+        self._async = async_scraper
+        self._loop = loop
+
+    # Profiles
+    def profiles(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.profiles(*args, **kwargs))
+
+    def profiles_trigger(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.profiles_trigger(*args, **kwargs))
+
+    def profiles_status(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.profiles_status(snapshot_id))
+
+    def profiles_fetch(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.profiles_fetch(snapshot_id))
+
+    # Posts
+    def posts(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.posts(*args, **kwargs))
+
+    def posts_trigger(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.posts_trigger(*args, **kwargs))
+
+    def posts_status(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.posts_status(snapshot_id))
+
+    def posts_fetch(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.posts_fetch(snapshot_id))
+
+    # Comments
+    def comments(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.comments(*args, **kwargs))
+
+    def comments_trigger(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.comments_trigger(*args, **kwargs))
+
+    def comments_status(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.comments_status(snapshot_id))
+
+    def comments_fetch(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.comments_fetch(snapshot_id))
+
+    # Fast API variants
+    def posts_by_profile_fast(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.posts_by_profile_fast(*args, **kwargs))
+
+    def posts_by_url_fast(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.posts_by_url_fast(*args, **kwargs))
+
+    def posts_by_search_url_fast(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.posts_by_search_url_fast(*args, **kwargs))
+
+
+class SyncYouTubeScraper:
+    """Sync wrapper for YouTubeScraper."""
+
+    def __init__(self, async_scraper, loop):
+        self._async = async_scraper
+        self._loop = loop
+
+    # Videos
+    def videos(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.videos(*args, **kwargs))
+
+    def videos_trigger(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.videos_trigger(*args, **kwargs))
+
+    def videos_status(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.videos_status(snapshot_id))
+
+    def videos_fetch(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.videos_fetch(snapshot_id))
+
+    # Channels
+    def channels(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.channels(*args, **kwargs))
+
+    def channels_trigger(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.channels_trigger(*args, **kwargs))
+
+    def channels_status(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.channels_status(snapshot_id))
+
+    def channels_fetch(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.channels_fetch(snapshot_id))
+
+    # Comments
+    def comments(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.comments(*args, **kwargs))
+
+    def comments_trigger(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.comments_trigger(*args, **kwargs))
+
+    def comments_status(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.comments_status(snapshot_id))
+
+    def comments_fetch(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.comments_fetch(snapshot_id))
+
+
+class SyncRedditScraper:
+    """Sync wrapper for RedditScraper."""
+
+    def __init__(self, async_scraper, loop):
+        self._async = async_scraper
+        self._loop = loop
+
+    # Posts
+    def posts(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.posts(*args, **kwargs))
+
+    def posts_trigger(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.posts_trigger(*args, **kwargs))
+
+    def posts_status(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.posts_status(snapshot_id))
+
+    def posts_fetch(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.posts_fetch(snapshot_id))
+
+    # Comments
+    def comments(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.comments(*args, **kwargs))
+
+    def comments_trigger(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.comments_trigger(*args, **kwargs))
+
+    def comments_status(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.comments_status(snapshot_id))
+
+    def comments_fetch(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.comments_fetch(snapshot_id))
+
+    # Discovery
+    def posts_by_keyword(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.posts_by_keyword(*args, **kwargs))
+
+    def posts_by_subreddit(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.posts_by_subreddit(*args, **kwargs))
+
+
+class SyncPerplexityScraper:
+    """Sync wrapper for PerplexityScraper."""
+
+    def __init__(self, async_scraper, loop):
+        self._async = async_scraper
+        self._loop = loop
+
+    def search(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.search(*args, **kwargs))
+
+    def search_trigger(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.search_trigger(*args, **kwargs))
+
+    def search_status(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.search_status(snapshot_id))
+
+    def search_fetch(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.search_fetch(snapshot_id))
+
+
+class SyncDigiKeyScraper:
+    """Sync wrapper for DigiKeyScraper."""
+
+    def __init__(self, async_scraper, loop):
+        self._async = async_scraper
+        self._loop = loop
+
+    # Products
+    def products(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.products(*args, **kwargs))
+
+    def products_trigger(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.products_trigger(*args, **kwargs))
+
+    def products_status(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.products_status(snapshot_id))
+
+    def products_fetch(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.products_fetch(snapshot_id))
+
+    # Discover by category
+    def discover_by_category(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.discover_by_category(*args, **kwargs))
+
+    def discover_by_category_trigger(self, *args, **kwargs):
+        return self._loop.run_until_complete(
+            self._async.discover_by_category_trigger(*args, **kwargs)
+        )
+
+    def discover_by_category_status(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.discover_by_category_status(snapshot_id))
+
+    def discover_by_category_fetch(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.discover_by_category_fetch(snapshot_id))
+
+
 # ============================================================================
 # SYNC SEARCH SERVICE
 # ============================================================================
@@ -606,6 +887,9 @@ class SyncSearchService:
         self._amazon = None
         self._linkedin = None
         self._instagram = None
+        self._pinterest = None
+        self._tiktok = None
+        self._youtube = None
 
     def google(self, query, **kwargs) -> SearchResult:
         """Search Google."""
@@ -648,9 +932,23 @@ class SyncSearchService:
     @property
     def pinterest(self) -> "SyncPinterestSearchScraper":
         """Pinterest search service."""
-        if not hasattr(self, "_pinterest") or self._pinterest is None:
+        if self._pinterest is None:
             self._pinterest = SyncPinterestSearchScraper(self._async.pinterest, self._loop)
         return self._pinterest
+
+    @property
+    def tiktok(self) -> "SyncTikTokSearchScraper":
+        """TikTok search service."""
+        if self._tiktok is None:
+            self._tiktok = SyncTikTokSearchScraper(self._async.tiktok, self._loop)
+        return self._tiktok
+
+    @property
+    def youtube(self) -> "SyncYouTubeSearchScraper":
+        """YouTube search service."""
+        if self._youtube is None:
+            self._youtube = SyncYouTubeSearchScraper(self._async.youtube, self._loop)
+        return self._youtube
 
 
 class SyncAmazonSearchScraper:
@@ -694,6 +992,12 @@ class SyncInstagramSearchScraper:
     def reels(self, url, **kwargs):
         return self._loop.run_until_complete(self._async.reels(url, **kwargs))
 
+    def profiles(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.profiles(*args, **kwargs))
+
+    def reels_all(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.reels_all(*args, **kwargs))
+
 
 class SyncChatGPTSearchService:
     """Sync wrapper for ChatGPTSearchService."""
@@ -717,8 +1021,26 @@ class SyncPinterestScraper:
     def posts(self, url, **kwargs):
         return self._loop.run_until_complete(self._async.posts(url, **kwargs))
 
+    def posts_trigger(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.posts_trigger(*args, **kwargs))
+
+    def posts_status(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.posts_status(snapshot_id))
+
+    def posts_fetch(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.posts_fetch(snapshot_id))
+
     def profiles(self, url, **kwargs):
         return self._loop.run_until_complete(self._async.profiles(url, **kwargs))
+
+    def profiles_trigger(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.profiles_trigger(*args, **kwargs))
+
+    def profiles_status(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.profiles_status(snapshot_id))
+
+    def profiles_fetch(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.profiles_fetch(snapshot_id))
 
 
 class SyncPinterestSearchScraper:
@@ -736,6 +1058,52 @@ class SyncPinterestSearchScraper:
 
     def profiles(self, keyword, **kwargs):
         return self._loop.run_until_complete(self._async.profiles(keyword, **kwargs))
+
+
+class SyncTikTokSearchScraper:
+    """Sync wrapper for TikTokSearchScraper."""
+
+    def __init__(self, async_scraper, loop):
+        self._async = async_scraper
+        self._loop = loop
+
+    def profiles(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.profiles(*args, **kwargs))
+
+    def posts_by_keyword(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.posts_by_keyword(*args, **kwargs))
+
+    def posts_by_profile(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.posts_by_profile(*args, **kwargs))
+
+    def posts_by_url(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.posts_by_url(*args, **kwargs))
+
+
+class SyncYouTubeSearchScraper:
+    """Sync wrapper for YouTubeSearchScraper."""
+
+    def __init__(self, async_scraper, loop):
+        self._async = async_scraper
+        self._loop = loop
+
+    def videos_by_keyword(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.videos_by_keyword(*args, **kwargs))
+
+    def videos_by_hashtag(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.videos_by_hashtag(*args, **kwargs))
+
+    def videos_by_channel(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.videos_by_channel(*args, **kwargs))
+
+    def videos_by_explore(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.videos_by_explore(*args, **kwargs))
+
+    def videos_by_search_filters(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.videos_by_search_filters(*args, **kwargs))
+
+    def channels_by_keyword(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.channels_by_keyword(*args, **kwargs))
 
 
 # ============================================================================
@@ -796,3 +1164,64 @@ class SyncScraperStudioService:
     def fetch(self, response_id):
         """Fetch results."""
         return self._loop.run_until_complete(self._async.fetch(response_id))
+
+
+# ============================================================================
+# SYNC DATASETS CLIENT
+# ============================================================================
+
+
+class SyncDatasetsClient:
+    """Sync wrapper for DatasetsClient — access pre-collected datasets.
+
+    Mirrors the async DatasetsClient: ``list()`` plus dynamic dataset access
+    via ``__getattr__`` (e.g. ``client.datasets.imdb_movies``), each returning
+    a SyncDataset.
+    """
+
+    def __init__(self, async_datasets, loop):
+        self._async = async_datasets
+        self._loop = loop
+        self._cache: dict = {}
+
+    def list(self):
+        """List all available datasets."""
+        return self._loop.run_until_complete(self._async.list())
+
+    def __getattr__(self, name):
+        # Guard: never recurse for private/dunder attrs (e.g. during init/copy).
+        if name.startswith("_"):
+            raise AttributeError(name)
+        if name not in self._cache:
+            # getattr on the async client triggers its registry import + instantiation;
+            # raises AttributeError with the available-datasets list for unknown names.
+            self._cache[name] = SyncDataset(getattr(self._async, name), self._loop)
+        return self._cache[name]
+
+
+class SyncDataset:
+    """Sync wrapper for a single dataset (BaseDataset)."""
+
+    def __init__(self, async_dataset, loop):
+        self._async = async_dataset
+        self._loop = loop
+
+    def __call__(self, *args, **kwargs):
+        """Filter the dataset and create a snapshot — returns snapshot_id."""
+        return self._loop.run_until_complete(self._async(*args, **kwargs))
+
+    def download(self, snapshot_id, **kwargs):
+        """Poll until ready, then download snapshot data."""
+        return self._loop.run_until_complete(self._async.download(snapshot_id, **kwargs))
+
+    def get_status(self, snapshot_id):
+        """Check snapshot status."""
+        return self._loop.run_until_complete(self._async.get_status(snapshot_id))
+
+    def sample(self, records_limit=10):
+        """Get a sample of records without specifying a filter."""
+        return self._loop.run_until_complete(self._async.sample(records_limit=records_limit))
+
+    def get_metadata(self):
+        """Get the dataset's field schema."""
+        return self._loop.run_until_complete(self._async.get_metadata())

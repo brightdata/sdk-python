@@ -27,7 +27,7 @@ from .models import (
 from .scrapers.job import ScrapeJob
 
 # Export Discover API models
-from .discover.models import DiscoverResult, DiscoverJob
+from .discover.models import DiscoverResult, DiscoverJob, DiscoverSnapshot
 
 # Export payload models (dataclasses)
 from .payloads import (
@@ -137,6 +137,7 @@ __all__ = [
     # Discover API
     "DiscoverResult",
     "DiscoverJob",
+    "DiscoverSnapshot",
     # Services
     "WebUnlockerService",
     "BrowserService",

@@ -11,8 +11,10 @@ Philosophy:
 
 import asyncio
 import os
+import time
 import concurrent.futures
 from abc import ABC
+from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional, Union
 
 from ..core.engine import AsyncEngine
@@ -355,6 +357,137 @@ class BaseWebScraper(ABC):
     def _fetch_results(self, snapshot_id: str, format: str = "json") -> Any:
         """Fetch scrape job results (internal sync wrapper)."""
         return _run_blocking(self._fetch_results_async(snapshot_id, format=format))
+
+    # ============================================================================
+    # PUBLIC SERVICE VERBS (drive a triggered job by snapshot_id)
+    # ============================================================================
+    # These let any triggered scrape be polled/fetched from the service, given
+    # only its snapshot_id — the "colorless job" pattern the crawler already uses
+    # (CrawlJob is data; CrawlerService.status/download own the verbs). They are
+    # purely additive: the same logic that ScrapeJob.status/wait/fetch/to_result
+    # run, exposed on the service so a plain snapshot_id (or a future colorless
+    # snapshot) is all a caller needs.
+
+    async def status(self, snapshot_id: str) -> str:
+        """
+        Check a triggered job's status by snapshot_id.
+
+        Returns:
+            Status string: "ready", "in_progress", "error", etc.
+
+        Example:
+            >>> sid = (await scraper.products_trigger(url)).snapshot_id
+            >>> s = await scraper.status(sid)
+        """
+        return await self._check_status_async(snapshot_id)
+
+    async def wait(
+        self,
+        snapshot_id: str,
+        timeout: Optional[int] = None,
+        poll_interval: int = DEFAULT_POLL_INTERVAL,
+        verbose: bool = False,
+    ) -> str:
+        """
+        Poll a triggered job until it is ready (by snapshot_id).
+
+        Args:
+            snapshot_id: Snapshot identifier from a trigger operation.
+            timeout: Maximum seconds to wait (uses MIN_POLL_TIMEOUT if None).
+            poll_interval: Seconds between status checks.
+            verbose: Print status updates.
+
+        Returns:
+            Final status ("ready").
+
+        Raises:
+            TimeoutError: If timeout is reached.
+            APIError: If the job fails.
+        """
+        wait_timeout = timeout or self.MIN_POLL_TIMEOUT
+        start_time = time.time()
+
+        while True:
+            elapsed = time.time() - start_time
+            if elapsed > wait_timeout:
+                raise TimeoutError(f"Job {snapshot_id} timed out after {wait_timeout}s")
+
+            current = await self.status(snapshot_id)
+
+            if verbose:
+                print(f"   [{elapsed:.1f}s] Job status: {current}")
+
+            if current == "ready":
+                return current
+            elif current == "error" or current == "failed":
+                raise APIError(f"Job {snapshot_id} failed with status: {current}")
+
+            await asyncio.sleep(poll_interval)
+
+    async def fetch(self, snapshot_id: str, format: str = "json") -> Any:
+        """
+        Fetch a triggered job's results by snapshot_id.
+
+        Note: Does not check readiness. Use wait() first or check status().
+
+        Args:
+            snapshot_id: Snapshot identifier from a trigger operation.
+            format: Result format ("json" or "raw").
+
+        Returns:
+            The job results.
+        """
+        return await self._fetch_results_async(snapshot_id, format=format)
+
+    async def to_result(
+        self,
+        snapshot_id: str,
+        timeout: Optional[int] = None,
+        poll_interval: int = DEFAULT_POLL_INTERVAL,
+    ) -> ScrapeResult:
+        """
+        Wait for a triggered job to complete, fetch it, and wrap in a ScrapeResult.
+
+        Convenience that combines wait() + fetch() + result construction, by
+        snapshot_id. Cost/timing are derived from the service's own
+        PLATFORM_NAME / COST_PER_RECORD, so nothing is needed beyond the id.
+
+        Args:
+            snapshot_id: Snapshot identifier from a trigger operation.
+            timeout: Maximum seconds to wait (uses MIN_POLL_TIMEOUT if None).
+            poll_interval: Seconds between status checks.
+
+        Returns:
+            ScrapeResult (success or, on failure, success=False with error set).
+        """
+        start_time = datetime.now(timezone.utc)
+
+        try:
+            await self.wait(snapshot_id, timeout=timeout, poll_interval=poll_interval)
+            data = await self.fetch(snapshot_id)
+            end_time = datetime.now(timezone.utc)
+
+            record_count = len(data) if isinstance(data, list) else 1
+            estimated_cost = record_count * self.COST_PER_RECORD
+
+            return ScrapeResult(
+                success=True,
+                data=data,
+                platform=self.PLATFORM_NAME or None,
+                cost=estimated_cost,
+                snapshot_id=snapshot_id,
+                trigger_sent_at=start_time,
+                data_fetched_at=end_time,
+            )
+        except Exception as e:
+            return ScrapeResult(
+                success=False,
+                error=str(e),
+                platform=self.PLATFORM_NAME or None,
+                snapshot_id=snapshot_id,
+                trigger_sent_at=start_time,
+                data_fetched_at=datetime.now(timezone.utc),
+            )
 
     # ============================================================================
     # CONTEXT MANAGER SUPPORT (for standalone usage)

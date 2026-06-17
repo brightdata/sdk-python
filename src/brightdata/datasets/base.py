@@ -102,7 +102,9 @@ class BaseDataset:
             data = await response.json()
 
         if "snapshot_id" not in data:
-            error_msg = data.get("error") or data.get("message") or str(data)
+            error_msg = (
+                data.get("error") or data.get("message") or data.get("failure_reason") or str(data)
+            )
             raise DatasetError(f"Failed to create snapshot: {error_msg}")
 
         return data["snapshot_id"]
@@ -180,11 +182,12 @@ class BaseDataset:
             if status.status == "ready":
                 break
             elif status.status == "failed":
-                raise DatasetError(f"Snapshot failed: {status.error}")
+                reason = status.error or status.raw or "no reason returned by API"
+                raise DatasetError(f"Snapshot {snapshot_id} failed: {reason}")
             elif time.time() - start_time > timeout:
                 raise TimeoutError(
                     f"Snapshot {snapshot_id} not ready after {timeout}s "
-                    f"(status: {status.status})"
+                    f"(status: {status.status}, last_response: {status.raw})"
                 )
 
             await asyncio.sleep(poll_interval)

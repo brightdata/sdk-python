@@ -58,6 +58,7 @@ class SnapshotStatus:
     file_size: Optional[int] = None  # bytes
     cost: Optional[float] = None
     error: Optional[str] = None
+    raw: Dict[str, Any] = field(default_factory=dict)  # full API response — never lose the reason
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SnapshotStatus":
@@ -69,5 +70,11 @@ class SnapshotStatus:
             dataset_size=data.get("dataset_size"),
             file_size=data.get("file_size"),
             cost=data.get("cost"),
-            error=data.get("error", data.get("error_message")),
+            error=(
+                data.get("error")
+                or data.get("error_message")
+                or data.get("message")
+                or data.get("failure_reason")
+            ),
+            raw=data,
         )
