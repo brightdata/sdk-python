@@ -53,6 +53,7 @@ class WorkflowExecutor:
         normalize_func: Optional[Callable[[Any], Any]] = None,
         sdk_function: Optional[str] = None,
         extra_params: Optional[Dict[str, str]] = None,
+        limit_per_input: Optional[int] = None,
     ) -> ScrapeResult:
         """
         Execute complete trigger/poll/fetch workflow.
@@ -80,6 +81,7 @@ class WorkflowExecutor:
                 include_errors=include_errors,
                 sdk_function=sdk_function,
                 extra_params=extra_params,
+                limit_per_input=limit_per_input,
             )
         except APIError as e:
             return ScrapeResult(

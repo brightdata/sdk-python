@@ -70,6 +70,11 @@ try:
 except ImportError:
     RedditScraper = None
 
+try:
+    from .x.scraper import XScraper
+except ImportError:
+    XScraper = None
+
 
 __all__ = [
     "BaseWebScraper",
@@ -91,4 +96,5 @@ __all__ = [
     "YouTubeSearchScraper",
     "DigiKeyScraper",
     "RedditScraper",
+    "XScraper",
 ]
