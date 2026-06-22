@@ -32,6 +32,7 @@ class ScrapeService:
         self._digikey = None
         self._reddit = None
         self._pinterest = None
+        self._x = None
 
     @property
     def amazon(self):
@@ -378,3 +379,31 @@ class ScrapeService:
                 bearer_token=self._client.token, engine=self._client.engine
             )
         return self._pinterest
+
+    @property
+    def x(self):
+        """
+        Access X (Twitter) scraper.
+
+        Returns:
+            XScraper instance for X posts and profiles (collect + discover)
+
+        Example:
+            >>> # Posts by URL
+            >>> result = await client.scrape.x.posts(
+            ...     url="https://x.com/FabrizioRomano/status/1683559267524136962"
+            ... )
+            >>>
+            >>> # Discover posts from a profile (optional date range)
+            >>> result = await client.scrape.x.posts_by_profile(
+            ...     url="https://x.com/elonmusk", start_date="2023-01-15"
+            ... )
+            >>>
+            >>> # Discover a profile by handle
+            >>> result = await client.scrape.x.profiles_by_username(user_name="elonmusk")
+        """
+        if self._x is None:
+            from .x import XScraper
+
+            self._x = XScraper(bearer_token=self._client.token, engine=self._client.engine)
+        return self._x
