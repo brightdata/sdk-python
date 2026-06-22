@@ -46,6 +46,7 @@ class DatasetAPIClient:
         include_errors: bool = True,
         sdk_function: Optional[str] = None,
         extra_params: Optional[Dict[str, str]] = None,
+        limit_per_input: Optional[int] = None,
     ) -> Optional[str]:
         """
         Trigger dataset collection and get snapshot_id.
@@ -75,8 +76,15 @@ class DatasetAPIClient:
         if extra_params:
             params.update(extra_params)
 
+        # Most datasets accept the bare input array as the body. When a
+        # limit_per_input cap is requested, send the wrapped body shape the
+        # Datasets v3 API documents: {"input": [...], "limit_per_input": N}.
+        body: Any = payload
+        if limit_per_input is not None:
+            body = {"input": payload, "limit_per_input": limit_per_input}
+
         async with self.engine.post_to_url(
-            self.TRIGGER_URL, json_data=payload, params=params
+            self.TRIGGER_URL, json_data=body, params=params
         ) as response:
             if response.status == HTTPStatus.OK:
                 data = await response.json()

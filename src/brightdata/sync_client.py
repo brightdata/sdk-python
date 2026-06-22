@@ -316,6 +316,7 @@ class SyncScrapeService:
         self._reddit = None
         self._perplexity = None
         self._digikey = None
+        self._x = None
 
     @property
     def amazon(self) -> "SyncAmazonScraper":
@@ -382,6 +383,12 @@ class SyncScrapeService:
         if self._digikey is None:
             self._digikey = SyncDigiKeyScraper(self._async.digikey, self._loop)
         return self._digikey
+
+    @property
+    def x(self) -> "SyncXScraper":
+        if self._x is None:
+            self._x = SyncXScraper(self._async.x, self._loop)
+        return self._x
 
 
 class SyncAmazonScraper:
@@ -871,6 +878,85 @@ class SyncDigiKeyScraper:
 
     def discover_by_category_fetch(self, snapshot_id):
         return self._loop.run_until_complete(self._async.discover_by_category_fetch(snapshot_id))
+
+
+class SyncXScraper:
+    """Sync wrapper for XScraper (X / Twitter)."""
+
+    def __init__(self, async_scraper, loop):
+        self._async = async_scraper
+        self._loop = loop
+
+    # Posts - collect by URL
+    def posts(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.posts(*args, **kwargs))
+
+    def posts_trigger(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.posts_trigger(*args, **kwargs))
+
+    def posts_status(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.posts_status(snapshot_id))
+
+    def posts_fetch(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.posts_fetch(snapshot_id))
+
+    # Posts - discover by profile URL
+    def posts_by_profile(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.posts_by_profile(*args, **kwargs))
+
+    def posts_by_profile_trigger(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.posts_by_profile_trigger(*args, **kwargs))
+
+    def posts_by_profile_status(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.posts_by_profile_status(snapshot_id))
+
+    def posts_by_profile_fetch(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.posts_by_profile_fetch(snapshot_id))
+
+    # Posts - discover by profiles array
+    def posts_by_profiles_array(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.posts_by_profiles_array(*args, **kwargs))
+
+    def posts_by_profiles_array_trigger(self, *args, **kwargs):
+        return self._loop.run_until_complete(
+            self._async.posts_by_profiles_array_trigger(*args, **kwargs)
+        )
+
+    def posts_by_profiles_array_status(self, snapshot_id):
+        return self._loop.run_until_complete(
+            self._async.posts_by_profiles_array_status(snapshot_id)
+        )
+
+    def posts_by_profiles_array_fetch(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.posts_by_profiles_array_fetch(snapshot_id))
+
+    # Profiles - collect by URL
+    def profiles(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.profiles(*args, **kwargs))
+
+    def profiles_trigger(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.profiles_trigger(*args, **kwargs))
+
+    def profiles_status(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.profiles_status(snapshot_id))
+
+    def profiles_fetch(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.profiles_fetch(snapshot_id))
+
+    # Profiles - discover by user name
+    def profiles_by_username(self, *args, **kwargs):
+        return self._loop.run_until_complete(self._async.profiles_by_username(*args, **kwargs))
+
+    def profiles_by_username_trigger(self, *args, **kwargs):
+        return self._loop.run_until_complete(
+            self._async.profiles_by_username_trigger(*args, **kwargs)
+        )
+
+    def profiles_by_username_status(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.profiles_by_username_status(snapshot_id))
+
+    def profiles_by_username_fetch(self, snapshot_id):
+        return self._loop.run_until_complete(self._async.profiles_by_username_fetch(snapshot_id))
 
 
 # ============================================================================
