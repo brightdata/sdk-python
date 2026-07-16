@@ -13,7 +13,7 @@ pip install brightdata-sdk
 
 ## Configuration
 
-Get your API Token from the [Bright Data Control Panel](https://brightdata.com/cp/api_keys):
+Get your API Token from the [Bright Data Control Panel](https://brightdata.com/cp/setting/users):
 
 ```bash
 export BRIGHTDATA_API_TOKEN="your_api_token_here"
