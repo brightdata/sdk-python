@@ -194,7 +194,7 @@ async with BrightDataClient() as client:
         num_results=10,
     )
     for item in result.data:
-        print(f"[{item['relevance_score']:.2f}] {item['title']}  {item['url']}")
+        print(f"[{item['relevance_score']:.2f}] {item['title']}  {item['link']}")
 ```
 
 For long-running discoveries, trigger and poll separately:
