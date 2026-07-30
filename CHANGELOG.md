@@ -1,5 +1,9 @@
 # Bright Data Python SDK Changelog
 
+## Version 2.5.1 - Lint cleanup
+
+- **Chore**: pinned an explicit `ruff` lint rule scope (`select`) and sorted imports repo-wide. No behavior changes.
+
 ## Version 2.5.0 - CLI-credentials auth + scraper-core dedup
 
 - **CLI-credentials auth fallback**: one `brightdata login` now authenticates the SDK too. With no token given, `BrightDataClient()` / `SyncBrightDataClient()` fall back to the token already saved by the Bright Data CLI. Resolution order: `token=` parameter → `BRIGHTDATA_API_TOKEN` / `BRIGHTDATA_API_KEY` env vars → CLI login → actionable error mentioning `brightdata login`.
