@@ -8,14 +8,10 @@ Supports:
 """
 
 import asyncio
-import os
 from typing import List, Dict, Any, Optional, Union
 
-from ..api_client import DatasetAPIClient
-from ..workflow import WorkflowExecutor
-from ...core.engine import AsyncEngine
+from ..base import ScraperCore
 from ...models import ScrapeResult
-from ...exceptions import ValidationError
 from ...constants import (
     COST_PER_RECORD_INSTAGRAM,
     DEFAULT_TIMEOUT_SHORT,
@@ -25,7 +21,7 @@ from ...utils.validation import validate_url_list, validate_instagram_date
 from ...utils.function_detection import get_caller_function_name
 
 
-class InstagramSearchScraper:
+class InstagramSearchScraper(ScraperCore):
     """
     Instagram scraper for parameter-based content discovery.
 
@@ -52,46 +48,8 @@ class InstagramSearchScraper:
     MIN_POLL_TIMEOUT = DEFAULT_TIMEOUT_SHORT
     COST_PER_RECORD = COST_PER_RECORD_INSTAGRAM
 
-    def __init__(
-        self,
-        bearer_token: Optional[str] = None,
-        engine: Optional[AsyncEngine] = None,
-    ):
-        """
-        Initialize Instagram search scraper.
-
-        Args:
-            bearer_token: Bright Data API token. If None, loads from environment.
-            engine: Optional AsyncEngine instance for connection reuse.
-        """
-        self.bearer_token = bearer_token or os.getenv("BRIGHTDATA_API_TOKEN")
-        if not self.bearer_token:
-            raise ValidationError(
-                "Bearer token required for Instagram search. "
-                "Provide bearer_token parameter or set BRIGHTDATA_API_TOKEN environment variable."
-            )
-
-        # Reuse engine if provided, otherwise create new
-        self.engine = engine if engine is not None else AsyncEngine(self.bearer_token)
-        self.api_client = DatasetAPIClient(self.engine)
-        self.workflow_executor = WorkflowExecutor(
-            api_client=self.api_client,
-            platform_name=self.PLATFORM_NAME,
-            cost_per_record=self.COST_PER_RECORD,
-        )
-
-    # ============================================================================
-    # CONTEXT MANAGER SUPPORT
-    # ============================================================================
-
-    async def __aenter__(self):
-        """Async context manager entry."""
-        await self.engine.__aenter__()
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Async context manager exit."""
-        await self.engine.__aexit__(exc_type, exc_val, exc_tb)
+    # Construction (token/engine/api_client/workflow_executor) and async
+    # context-manager support are inherited from ScraperCore.
 
     # ============================================================================
     # INTERNAL HELPERS

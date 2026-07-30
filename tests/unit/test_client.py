@@ -34,8 +34,9 @@ class TestTokenLoading:
 
     def test_raises_without_token(self):
         with patch.dict("os.environ", {}, clear=True):
-            with pytest.raises(ValidationError, match="API token required"):
-                BrightDataClient()
+            with patch("brightdata.client.read_cli_credentials", return_value=None):
+                with pytest.raises(ValidationError, match="API token required"):
+                    BrightDataClient()
 
     def test_rejects_short_token(self):
         with pytest.raises(ValidationError, match="at least 10 characters"):

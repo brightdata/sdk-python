@@ -13,16 +13,14 @@ Implements:
 import asyncio
 from typing import Union, List, Optional, Dict, Any
 
-from ...core.engine import AsyncEngine
 from ...models import ScrapeResult
 from ...exceptions import ValidationError
 from ...utils.function_detection import get_caller_function_name
 from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT, COST_PER_RECORD_LINKEDIN
-from ..api_client import DatasetAPIClient
-from ..workflow import WorkflowExecutor
+from ..base import ScraperCore
 
 
-class LinkedInSearchScraper:
+class LinkedInSearchScraper(ScraperCore):
     """
     LinkedIn Search Scraper for parameter-based discovery.
 
@@ -55,23 +53,12 @@ class LinkedInSearchScraper:
     DATASET_ID_JOBS = "gd_lpfll7v5hcqtkxl6l"  # URL-based job scraping
     DATASET_ID_JOBS_DISCOVERY = "gd_m487ihp32jtc4ujg45"  # Keyword/location discovery
 
-    def __init__(self, bearer_token: str, engine: Optional[AsyncEngine] = None):
-        """
-        Initialize LinkedIn search scraper.
+    # Platform configuration (consumed by ScraperCore.__init__)
+    PLATFORM_NAME = "linkedin"
+    COST_PER_RECORD = COST_PER_RECORD_LINKEDIN
 
-        Args:
-            bearer_token: Bright Data API token
-            engine: Optional AsyncEngine instance. If not provided, creates a new one.
-                    Allows dependency injection for testing and flexibility.
-        """
-        self.bearer_token = bearer_token
-        self.engine = engine if engine is not None else AsyncEngine(bearer_token)
-        self.api_client = DatasetAPIClient(self.engine)
-        self.workflow_executor = WorkflowExecutor(
-            api_client=self.api_client,
-            platform_name="linkedin",
-            cost_per_record=COST_PER_RECORD_LINKEDIN,
-        )
+    # Construction (token/engine/api_client/workflow_executor) and async
+    # context-manager support are inherited from ScraperCore.
 
     # ============================================================================
     # POSTS DISCOVERY (by profile + date range)

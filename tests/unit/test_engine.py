@@ -10,7 +10,6 @@ import pytest
 from brightdata.core.engine import AsyncEngine
 from brightdata.exceptions import AuthenticationError, NetworkError, SSLError
 
-
 # ---------------------------------------------------------------------------
 # Initialization
 # ---------------------------------------------------------------------------
@@ -81,7 +80,9 @@ class TestEngineContextManager:
             headers = engine._session.headers
             assert headers["Authorization"] == "Bearer my_secret_token"
             assert headers["Content-Type"] == "application/json"
-            assert "brightdata-sdk/" in headers["User-Agent"]
+            assert "brightdata-sdk-python/" in headers["User-Agent"]
+            # No auth_source given -> no auth field in the UA
+            assert "(auth=" not in headers["User-Agent"]
 
 
 # ---------------------------------------------------------------------------

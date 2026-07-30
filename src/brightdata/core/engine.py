@@ -52,6 +52,7 @@ class AsyncEngine:
         rate_period: float = 1.0,
         ssl_verify: bool = True,
         ssl_ca_cert: Optional[str] = None,
+        auth_source: Optional[str] = None,
     ):
         """
         Initialize async engine.
@@ -66,12 +67,17 @@ class AsyncEngine:
                        Set to False for sandbox/proxy environments.
             ssl_ca_cert: Path to a custom CA certificate bundle file.
                         Use when behind a corporate proxy with its own CA.
+            auth_source: How the bearer token was obtained ("param", "env",
+                        "cli_credentials"). Reported in the User-Agent for
+                        onboarding metrics; the token itself is never logged.
+                        None (e.g. standalone scraper usage) omits the field.
         """
         self.bearer_token = bearer_token
         self.timeout = aiohttp.ClientTimeout(total=timeout)
         self._session: Optional[aiohttp.ClientSession] = None
         self._ssl_verify = ssl_verify
         self._ssl_ca_cert = ssl_ca_cert
+        self._auth_source = auth_source
 
         # Store rate limit config (create limiter per event loop in __aenter__)
         if rate_limit is None:
@@ -103,6 +109,10 @@ class AsyncEngine:
         )
 
         # Create session with the connector
+        user_agent = f"brightdata-sdk-python/{__version__}"
+        if self._auth_source:
+            user_agent += f" (auth={self._auth_source})"
+
         self._session = aiohttp.ClientSession(
             connector=connector,
             trust_env=True,
@@ -110,7 +120,7 @@ class AsyncEngine:
             headers={
                 "Authorization": f"Bearer {self.bearer_token}",
                 "Content-Type": "application/json",
-                "User-Agent": f"brightdata-sdk/{__version__}",
+                "User-Agent": user_agent,
             },
         )
 
