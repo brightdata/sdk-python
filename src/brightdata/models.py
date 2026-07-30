@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
-from datetime import datetime
-from typing import Any, Optional, List, Dict, Union, Literal
 import json
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List, Literal, Optional, Union
 
 StatusType = Literal["ready", "error", "timeout", "in_progress"]
 PlatformType = Optional[Literal["linkedin", "amazon", "chatgpt", "instagram", "facebook"]]

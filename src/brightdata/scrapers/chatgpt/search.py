@@ -10,12 +10,12 @@ Uses standard async workflow (trigger/poll/fetch).
 """
 
 import asyncio
-from typing import Union, List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional, Union
 
-from ...models import ScrapeResult
+from ...constants import COST_PER_RECORD_CHATGPT, DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT
 from ...exceptions import ValidationError
+from ...models import ScrapeResult
 from ...utils.function_detection import get_caller_function_name
-from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT, COST_PER_RECORD_CHATGPT
 from ..base import ScraperCore
 
 

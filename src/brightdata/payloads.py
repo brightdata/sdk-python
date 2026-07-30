@@ -14,9 +14,9 @@ All payload classes can be converted to dict via asdict() when needed for API ca
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
-from typing import Optional, List, Dict, Any
 import re
+from dataclasses import asdict, dataclass, field
+from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
 # ============================================================================

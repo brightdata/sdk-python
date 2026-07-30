@@ -19,7 +19,8 @@ Performance Note:
 - See devdocs/web_unlocker_async_inspection.md for details
 """
 
-from typing import Optional, Any
+from typing import Any, Optional
+
 from ..core.engine import AsyncEngine
 from ..exceptions import APIError
 

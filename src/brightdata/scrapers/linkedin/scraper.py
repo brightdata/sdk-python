@@ -23,15 +23,15 @@ For search/discovery operations, see search.py which contains LinkedInSearchScra
 """
 
 import asyncio
-from typing import Union, List, Any
+from typing import Any, List, Union
 
-from ..base import BaseWebScraper
-from ..registry import register
-from ..job import ScrapeJob
+from ...constants import COST_PER_RECORD_LINKEDIN, DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT
 from ...models import ScrapeResult
-from ...utils.validation import validate_url, validate_url_list
 from ...utils.function_detection import get_caller_function_name
-from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT, COST_PER_RECORD_LINKEDIN
+from ...utils.validation import validate_url, validate_url_list
+from ..base import BaseWebScraper
+from ..job import ScrapeJob
+from ..registry import register
 
 
 @register("linkedin")

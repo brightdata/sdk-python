@@ -12,7 +12,8 @@ import importlib
 import logging
 import pkgutil
 from functools import lru_cache
-from typing import Dict, Type, Optional, List
+from typing import Dict, List, Optional, Type
+
 import tldextract
 
 # Configure logger for registry operations

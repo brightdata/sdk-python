@@ -1,8 +1,9 @@
 """Input validation utilities."""
 
 import re
-from urllib.parse import urlparse
 from typing import List
+from urllib.parse import urlparse
+
 from ..exceptions import ValidationError
 
 

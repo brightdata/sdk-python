@@ -5,7 +5,7 @@ Data models for Scraper Studio API responses.
 import asyncio
 import time
 from dataclasses import dataclass
-from typing import Dict, List, Any, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from ..exceptions import DataNotReadyError
 

@@ -16,16 +16,16 @@ API Specifications:
 """
 
 import asyncio
-from typing import List, Dict, Any, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
-from ..base import ScraperCore
-from ...models import ScrapeResult
 from ...constants import (
     COST_PER_RECORD_TIKTOK,
-    DEFAULT_TIMEOUT_MEDIUM,
     DEFAULT_POLL_INTERVAL,
+    DEFAULT_TIMEOUT_MEDIUM,
 )
+from ...models import ScrapeResult
 from ...utils.function_detection import get_caller_function_name
+from ..base import ScraperCore
 
 
 class TikTokSearchScraper(ScraperCore):

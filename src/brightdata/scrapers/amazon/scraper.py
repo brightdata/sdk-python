@@ -14,15 +14,15 @@ Sync methods use asyncio.run() internally.
 """
 
 import asyncio
-from typing import Union, List, Optional, Any
+from typing import Any, List, Optional, Union
 
-from ..base import BaseWebScraper
-from ..registry import register
-from ..job import ScrapeJob
+from ...constants import DEFAULT_COST_PER_RECORD, DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM
 from ...models import ScrapeResult
-from ...utils.validation import validate_url, validate_url_list
 from ...utils.function_detection import get_caller_function_name
-from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM, DEFAULT_COST_PER_RECORD
+from ...utils.validation import validate_url, validate_url_list
+from ..base import BaseWebScraper
+from ..job import ScrapeJob
+from ..registry import register
 
 
 @register("amazon")

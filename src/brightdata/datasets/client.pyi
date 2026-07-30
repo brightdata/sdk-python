@@ -1,9 +1,8 @@
 """Type stub for DatasetsClient — provides IDE autocomplete."""
 
 from typing import List
-from .models import DatasetInfo
-from ..core.engine import AsyncEngine
 
+from ..core.engine import AsyncEngine
 from .agoda import AgodaProperties
 from .airbnb import AirbnbProperties
 from .amazon import (
@@ -143,6 +142,7 @@ from .mediamarkt import MediamarktProducts
 from .mercadolivre import MercadolivreProducts
 from .metrocuadrado import MetrocuadradoProperties
 from .microcenter import MicroCenterProducts
+from .models import DatasetInfo
 from .montblanc import MontblancProducts
 from .mouser import MouserProducts
 from .moynat import MoynatProducts

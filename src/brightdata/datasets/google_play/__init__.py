@@ -1,6 +1,6 @@
 """Google Play datasets."""
 
-from .store import GooglePlayStore
 from .reviews import GooglePlayReviews
+from .store import GooglePlayStore
 
 __all__ = ["GooglePlayStore", "GooglePlayReviews"]

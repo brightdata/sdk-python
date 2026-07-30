@@ -1,24 +1,25 @@
 """Base SERP service with separated responsibilities."""
 
 import asyncio
-import aiohttp
 import json
 import re
 import time
 import warnings
-from typing import Union, List, Optional, Dict, Any, Tuple
 from datetime import datetime, timezone
-
-from .url_builder import BaseURLBuilder
-from .data_normalizer import BaseDataNormalizer
-from ..core.engine import AsyncEngine
-from ..models import SearchResult
 from http import HTTPStatus
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import aiohttp
+
+from ..core.engine import AsyncEngine
 from ..exceptions import ValidationError
-from ..utils.validation import validate_zone_name
-from ..utils.retry import retry_with_backoff
+from ..models import SearchResult
 from ..utils.function_detection import get_caller_function_name
+from ..utils.retry import retry_with_backoff
+from ..utils.validation import validate_zone_name
 from ..web_unlocker.async_client import AsyncUnblockerClient
+from .data_normalizer import BaseDataNormalizer
+from .url_builder import BaseURLBuilder
 
 
 class BaseSERPService:

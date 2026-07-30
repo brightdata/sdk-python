@@ -3,7 +3,8 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 from urllib.parse import quote_plus
-from ..utils.location import LocationService, LocationFormat
+
+from ..utils.location import LocationFormat, LocationService
 
 
 class BaseURLBuilder(ABC):

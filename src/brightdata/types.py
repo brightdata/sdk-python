@@ -4,7 +4,8 @@ Type definitions for Bright Data SDK.
 This module provides type definitions for API responses used internally.
 """
 
-from typing import TypedDict, Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional, TypedDict
+
 from typing_extensions import NotRequired
 
 

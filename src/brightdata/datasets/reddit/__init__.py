@@ -1,6 +1,6 @@
 """Reddit datasets."""
 
-from .posts import RedditPosts
 from .comments import RedditComments
+from .posts import RedditPosts
 
 __all__ = ["RedditPosts", "RedditComments"]

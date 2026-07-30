@@ -6,7 +6,7 @@ IDE autocomplete is provided via the companion client.pyi stub file.
 """
 
 import importlib
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from .models import DatasetInfo
 

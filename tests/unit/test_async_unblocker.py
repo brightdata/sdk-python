@@ -1,13 +1,12 @@
 """Tests for web_unlocker/async_client.py — Trigger, status, and fetch operations."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from brightdata.web_unlocker.async_client import AsyncUnblockerClient
+import pytest
+
 from brightdata.exceptions import APIError
-
+from brightdata.web_unlocker.async_client import AsyncUnblockerClient
 from tests.conftest import MockContextManager
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

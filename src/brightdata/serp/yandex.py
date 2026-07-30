@@ -1,10 +1,11 @@
 """Yandex SERP service."""
 
 from typing import Optional
-from .base import BaseSERPService
-from .url_builder import YandexURLBuilder
-from .data_normalizer import YandexDataNormalizer
+
 from ..core.engine import AsyncEngine
+from .base import BaseSERPService
+from .data_normalizer import YandexDataNormalizer
+from .url_builder import YandexURLBuilder
 
 
 class YandexSERPService(BaseSERPService):

@@ -7,7 +7,7 @@ Records: 620M+ profiles
 See FIELDS dict for all filterable fields with descriptions and fill rates.
 """
 
-from typing import TYPE_CHECKING, Dict, Any
+from typing import TYPE_CHECKING, Any, Dict
 
 from ..base import BaseDataset
 

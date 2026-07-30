@@ -8,11 +8,11 @@ Philosophy:
 - Follow principle of least surprise - common patterns from other SDKs
 """
 
-import os
 import asyncio
+import os
 import warnings
-from typing import Optional, Dict, Any, Union, List
 from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional, Union
 
 try:
     from dotenv import load_dotenv
@@ -21,22 +21,23 @@ try:
 except ImportError:
     pass
 
+from http import HTTPStatus
+
+from .browser.service import BrowserService
+from .cli_credentials import read_cli_credentials
 from .core.engine import AsyncEngine
 from .core.zone_manager import ZoneManager
-from .web_unlocker.service import WebUnlockerService
+from .crawler.service import CrawlerService
+from .datasets import DatasetsClient
+from .discover.models import DiscoverJob, DiscoverResult
+from .discover.service import DiscoverService
+from .exceptions import APIError, AuthenticationError, ValidationError
+from .models import ScrapeResult
+from .scraper_studio.service import ScraperStudioService
 from .scrapers.service import ScrapeService
 from .serp.service import SearchService
-from .crawler.service import CrawlerService
-from .scraper_studio.service import ScraperStudioService
-from .browser.service import BrowserService
-from .discover.service import DiscoverService
-from .discover.models import DiscoverResult, DiscoverJob
-from .datasets import DatasetsClient
-from .models import ScrapeResult
 from .types import AccountInfo
-from .cli_credentials import read_cli_credentials
-from http import HTTPStatus
-from .exceptions import ValidationError, AuthenticationError, APIError
+from .web_unlocker.service import WebUnlockerService
 
 
 class BrightDataClient:

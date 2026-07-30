@@ -9,19 +9,19 @@ Supports:
 """
 
 import asyncio
-from typing import List, Any, Union
+from typing import Any, List, Union
 
-from ..base import BaseWebScraper
-from ..registry import register
-from ..job import ScrapeJob
-from ...models import ScrapeResult
 from ...constants import (
     COST_PER_RECORD_INSTAGRAM,
-    DEFAULT_TIMEOUT_SHORT,
     DEFAULT_POLL_INTERVAL,
+    DEFAULT_TIMEOUT_SHORT,
 )
-from ...utils.validation import validate_url, validate_url_list
+from ...models import ScrapeResult
 from ...utils.function_detection import get_caller_function_name
+from ...utils.validation import validate_url, validate_url_list
+from ..base import BaseWebScraper
+from ..job import ScrapeJob
+from ..registry import register
 
 
 @register("instagram")

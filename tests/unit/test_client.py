@@ -1,17 +1,16 @@
 """Tests for client.py — BrightDataClient init, services, context manager, API methods."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 from brightdata.client import BrightDataClient
-from brightdata.exceptions import ValidationError, AuthenticationError, APIError
-from brightdata.scrapers.service import ScrapeService
-from brightdata.serp.service import SearchService
 from brightdata.crawler.service import CrawlerService
 from brightdata.datasets import DatasetsClient
-
-from tests.conftest import MockResponse, MockContextManager
-
+from brightdata.exceptions import APIError, AuthenticationError, ValidationError
+from brightdata.scrapers.service import ScrapeService
+from brightdata.serp.service import SearchService
+from tests.conftest import MockContextManager, MockResponse
 
 # ---------------------------------------------------------------------------
 # Token loading
