@@ -13,7 +13,7 @@ pip install brightdata-sdk
 
 ## Configuration
 
-Get your API Token from the [Bright Data Control Panel](https://brightdata.com/cp/api_keys):
+Get your API Token from the [Bright Data Control Panel](https://brightdata.com/cp/setting/users):
 
 ```bash
 export BRIGHTDATA_API_TOKEN="your_api_token_here"
@@ -197,7 +197,7 @@ async with BrightDataClient() as client:
         num_results=10,
     )
     for item in result.data:
-        print(f"[{item['relevance_score']:.2f}] {item['title']}  {item['url']}")
+        print(f"[{item['relevance_score']:.2f}] {item['title']}  {item['link']}")
 ```
 
 For long-running discoveries, trigger and poll separately:
