@@ -1,10 +1,11 @@
 """Bing SERP service."""
 
 from typing import Optional
-from .base import BaseSERPService
-from .url_builder import BingURLBuilder
-from .data_normalizer import BingDataNormalizer
+
 from ..core.engine import AsyncEngine
+from .base import BaseSERPService
+from .data_normalizer import BingDataNormalizer
+from .url_builder import BingURLBuilder
 
 
 class BingSERPService(BaseSERPService):

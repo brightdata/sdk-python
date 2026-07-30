@@ -11,12 +11,12 @@ Provides shared polling logic for:
 from __future__ import annotations
 
 import asyncio
-from typing import Any, List, Callable, Awaitable
 from datetime import datetime, timezone
+from typing import Any, Awaitable, Callable, List
 
-from ..models import ScrapeResult
 from ..constants import DEFAULT_POLL_INTERVAL, DEFAULT_POLL_TIMEOUT
 from ..exceptions import DataNotReadyError
+from ..models import ScrapeResult
 
 
 async def poll_until_ready(

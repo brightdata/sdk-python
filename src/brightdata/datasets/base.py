@@ -4,7 +4,7 @@ Base dataset class - provides common functionality for all datasets.
 
 import asyncio
 import time
-from typing import Dict, List, Any, Optional, Literal, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional
 
 from .models import DatasetMetadata, SnapshotStatus
 

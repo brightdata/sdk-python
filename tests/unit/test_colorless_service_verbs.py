@@ -12,16 +12,16 @@ regression) and that the relocated logic matches the job's behavior.
 Mocked at the api_client / _poll_once seam (not raw aiohttp), per the plan.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
+from brightdata.discover.models import DiscoverResult
+from brightdata.discover.service import DiscoverService
+from brightdata.exceptions import APIError
+from brightdata.models import ScrapeResult
 from brightdata.scrapers.amazon import AmazonScraper
 from brightdata.scrapers.job import ScrapeJob
-from brightdata.discover.service import DiscoverService
-from brightdata.models import ScrapeResult
-from brightdata.discover.models import DiscoverResult
-from brightdata.exceptions import APIError
-
 
 # ---------------------------------------------------------------------------
 # Helpers

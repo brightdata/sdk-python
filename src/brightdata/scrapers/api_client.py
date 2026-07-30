@@ -7,10 +7,10 @@ Handles all HTTP communication with Bright Data's Datasets API v3:
 - Fetching snapshot results
 """
 
-from typing import List, Dict, Any, Optional
+from http import HTTPStatus
+from typing import Any, Dict, List, Optional
 
 from ..core.engine import AsyncEngine
-from http import HTTPStatus
 from ..exceptions import APIError, DataNotReadyError
 
 

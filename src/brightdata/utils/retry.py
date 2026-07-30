@@ -1,7 +1,8 @@
 """Retry logic with exponential backoff."""
 
 import asyncio
-from typing import Callable, Awaitable, TypeVar, Optional, List, Type
+from typing import Awaitable, Callable, List, Optional, Type, TypeVar
+
 from ..exceptions import APIError, NetworkError
 
 T = TypeVar("T")

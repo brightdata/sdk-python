@@ -2,10 +2,10 @@
 Dataset utilities - helpers for exporting and processing dataset results.
 """
 
-import json
 import csv
+import json
 from pathlib import Path
-from typing import List, Dict, Any, Union, Optional
+from typing import Any, Dict, List, Optional, Union
 
 
 def export_json(

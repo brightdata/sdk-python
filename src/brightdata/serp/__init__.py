@@ -1,10 +1,10 @@
 """SERP API services."""
 
 from .base import BaseSERPService
-from .google import GoogleSERPService
 from .bing import BingSERPService
-from .yandex import YandexSERPService
+from .google import GoogleSERPService
 from .service import SearchService
+from .yandex import YandexSERPService
 
 __all__ = [
     "BaseSERPService",

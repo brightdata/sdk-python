@@ -10,26 +10,26 @@ Philosophy:
 """
 
 import asyncio
+import concurrent.futures
 import os
 import time
-import concurrent.futures
 from abc import ABC
 from datetime import datetime, timezone
-from typing import List, Dict, Any, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
-from ..core.engine import AsyncEngine
-from ..models import ScrapeResult
-from ..exceptions import ValidationError, APIError
-from ..utils.validation import validate_url, validate_url_list
-from ..utils.function_detection import get_caller_function_name
 from ..constants import (
-    DEFAULT_POLL_INTERVAL,
-    DEFAULT_MIN_POLL_TIMEOUT,
     DEFAULT_COST_PER_RECORD,
+    DEFAULT_MIN_POLL_TIMEOUT,
+    DEFAULT_POLL_INTERVAL,
 )
+from ..core.engine import AsyncEngine
+from ..exceptions import APIError, ValidationError
+from ..models import ScrapeResult
+from ..utils.function_detection import get_caller_function_name
+from ..utils.validation import validate_url, validate_url_list
 from .api_client import DatasetAPIClient
-from .workflow import WorkflowExecutor
 from .job import ScrapeJob
+from .workflow import WorkflowExecutor
 
 
 class ScraperCore:

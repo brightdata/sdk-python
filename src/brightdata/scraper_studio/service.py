@@ -7,11 +7,11 @@ ScrapeService and SearchService.
 All methods are async-only. For sync usage, use SyncBrightDataClient.
 """
 
-from typing import Dict, List, Any, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Union
 
-from .client import ScraperStudioAPIClient
-from .models import ScraperStudioJob, JobStatus
 from ..constants import SCRAPER_STUDIO_DEFAULT_TIMEOUT, SCRAPER_STUDIO_POLL_INTERVAL
+from .client import ScraperStudioAPIClient
+from .models import JobStatus, ScraperStudioJob
 
 if TYPE_CHECKING:
     from ..client import BrightDataClient

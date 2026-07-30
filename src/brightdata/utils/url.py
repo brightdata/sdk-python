@@ -1,7 +1,7 @@
 """URL utilities."""
 
-from urllib.parse import urlparse
 from typing import Optional
+from urllib.parse import urlparse
 
 
 def extract_root_domain(url: str) -> Optional[str]:

@@ -19,12 +19,12 @@ import asyncio
 import json
 from datetime import datetime, timezone
 from http import HTTPStatus
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
-from .models import CrawlJob, CrawlResult
 from ..exceptions import APIError, ValidationError
 from ..utils.function_detection import get_caller_function_name
 from ..utils.validation import validate_url, validate_url_list
+from .models import CrawlJob, CrawlResult
 
 if TYPE_CHECKING:
     from ..client import BrightDataClient

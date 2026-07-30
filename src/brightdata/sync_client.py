@@ -6,14 +6,14 @@ Provides sync interface using persistent event loop for optimal performance.
 
 import asyncio
 import logging
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-from .client import BrightDataClient
 from .browser.service import BrowserService
-from .models import ScrapeResult, SearchResult
+from .client import BrightDataClient
 from .discover.models import DiscoverResult, DiscoverSnapshot
+from .models import ScrapeResult, SearchResult
 from .types import AccountInfo
 
 

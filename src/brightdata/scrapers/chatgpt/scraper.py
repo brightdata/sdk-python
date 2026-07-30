@@ -8,15 +8,15 @@ Supports:
 """
 
 import asyncio
-from typing import List, Any, Optional, Union
+from typing import Any, List, Optional, Union
 
-from ..base import BaseWebScraper
-from ..registry import register
-from ..job import ScrapeJob
+from ...constants import COST_PER_RECORD_CHATGPT, DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_LONG
+from ...exceptions import ValidationError
 from ...models import ScrapeResult
 from ...utils.function_detection import get_caller_function_name
-from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_LONG, COST_PER_RECORD_CHATGPT
-from ...exceptions import ValidationError
+from ..base import BaseWebScraper
+from ..job import ScrapeJob
+from ..registry import register
 
 
 @register("chatgpt")

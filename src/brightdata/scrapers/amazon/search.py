@@ -9,12 +9,12 @@ Async methods are the default. Sync methods use asyncio.run() internally.
 """
 
 import asyncio
-from typing import Union, List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional, Union
 
-from ...models import ScrapeResult
+from ...constants import DEFAULT_COST_PER_RECORD, DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM
 from ...exceptions import ValidationError
+from ...models import ScrapeResult
 from ...utils.function_detection import get_caller_function_name
-from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM, DEFAULT_COST_PER_RECORD
 from ..base import ScraperCore
 
 

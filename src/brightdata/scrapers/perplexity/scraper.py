@@ -13,15 +13,15 @@ API Specifications:
 """
 
 import asyncio
-from typing import List, Any, Optional, Union
+from typing import Any, List, Optional, Union
 
-from ..base import BaseWebScraper
-from ..registry import register
-from ..job import ScrapeJob
+from ...constants import COST_PER_RECORD_PERPLEXITY, DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT
+from ...exceptions import ValidationError
 from ...models import ScrapeResult
 from ...utils.function_detection import get_caller_function_name
-from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT, COST_PER_RECORD_PERPLEXITY
-from ...exceptions import ValidationError
+from ..base import BaseWebScraper
+from ..job import ScrapeJob
+from ..registry import register
 
 
 @register("perplexity")

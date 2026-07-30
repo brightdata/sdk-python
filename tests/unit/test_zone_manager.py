@@ -3,10 +3,8 @@
 import pytest
 
 from brightdata.core.zone_manager import ZoneManager
-from brightdata.exceptions.errors import ZoneError, AuthenticationError
-
-from tests.conftest import MockResponse, MockContextManager
-
+from brightdata.exceptions.errors import AuthenticationError, ZoneError
+from tests.conftest import MockContextManager, MockResponse
 
 # ---------------------------------------------------------------------------
 # List Zones

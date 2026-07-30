@@ -6,21 +6,21 @@ data across different search engines.
 All methods are async-only. For sync usage, use SyncBrightDataClient.
 """
 
-from typing import Optional, Union, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional, Union
 
 from ..models import SearchResult
 
 if TYPE_CHECKING:
     from ..client import BrightDataClient
-    from .google import GoogleSERPService
-    from .bing import BingSERPService
-    from .yandex import YandexSERPService
     from ..scrapers.amazon.search import AmazonSearchScraper
-    from ..scrapers.linkedin.search import LinkedInSearchScraper
     from ..scrapers.chatgpt.search import ChatGPTSearchService
     from ..scrapers.instagram.search import InstagramSearchScraper
+    from ..scrapers.linkedin.search import LinkedInSearchScraper
     from ..scrapers.tiktok.search import TikTokSearchScraper
     from ..scrapers.youtube.search import YouTubeSearchScraper
+    from .bing import BingSERPService
+    from .google import GoogleSERPService
+    from .yandex import YandexSERPService
 
 
 class SearchService:

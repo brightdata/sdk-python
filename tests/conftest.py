@@ -1,9 +1,9 @@
 """Shared test fixtures for Bright Data SDK tests."""
 
-import sys
 import os
-from unittest.mock import AsyncMock, MagicMock
+import sys
 from typing import Any, Dict, Optional
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 

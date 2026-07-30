@@ -5,8 +5,8 @@ Provides helpful error messages and guidance for SSL certificate issues,
 particularly common on macOS systems.
 """
 
-import sys
 import ssl
+import sys
 
 try:
     import aiohttp

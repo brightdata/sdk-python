@@ -60,6 +60,12 @@ exclude = [
 ]
 
 [tool.ruff.lint]
+# Pyflakes + pycodestyle errors + isort (import sorting). Explicit, so newer
+# ruff releases that broaden the "no select" default (e.g. datetimez, simplify,
+# pyupgrade, bugbear) don't silently start failing CI with unrelated findings,
+# and don't get auto-"fixed" into rewrites (e.g. Optional[X] -> X | None) that
+# were never asked for.
+select = ["E4", "E7", "E9", "F", "I"]
 ignore = [
     "E402",  # Module level import not at top of file (common in notebooks/scripts)
     "F841",  # Local variable assigned but never used (common in tests)

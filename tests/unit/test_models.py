@@ -3,14 +3,12 @@
 import json
 from datetime import datetime, timezone
 
-
 from brightdata.models import (
     BaseResult,
+    CrawlResult,
     ScrapeResult,
     SearchResult,
-    CrawlResult,
 )
-
 
 # ---------------------------------------------------------------------------
 # BaseResult

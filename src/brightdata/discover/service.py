@@ -7,12 +7,12 @@ with AI-powered relevance ranking based on stated intent.
 
 import asyncio
 import time
-from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 
 from ..core.engine import AsyncEngine
 from ..exceptions import APIError
-from .models import DiscoverResult, DiscoverJob
+from .models import DiscoverJob, DiscoverResult
 
 
 class DiscoverService:
