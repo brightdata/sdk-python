@@ -1,5 +1,12 @@
 # Bright Data Python SDK Changelog
 
+## Version 2.5.0 - CLI-credentials auth + scraper-core dedup
+
+- **CLI-credentials auth fallback**: one `brightdata login` now authenticates the SDK too. With no token given, `BrightDataClient()` / `SyncBrightDataClient()` fall back to the token already saved by the Bright Data CLI. Resolution order: `token=` parameter → `BRIGHTDATA_API_TOKEN` / `BRIGHTDATA_API_KEY` env vars → CLI login → actionable error mentioning `brightdata login`.
+- **Auth-source reporting**: every request now reports how the token was obtained via the `User-Agent` header (`brightdata-sdk-python/{version} (auth=param|env|cli_credentials)`) — the token itself is never logged.
+- **Internal: shared `ScraperCore`**: the 7 search scrapers (Amazon, ChatGPT, Instagram, LinkedIn, Pinterest, TikTok, YouTube) now share one construction core instead of hand-copied `__init__`s, fixing drift where Amazon/ChatGPT/LinkedIn search were missing the `BRIGHTDATA_API_TOKEN` environment fallback that the others already had (−174 lines of duplicated code).
+- Tests: 321 passing (57 new), covering every credential-resolution path, all 3 platform paths (Linux/macOS/Windows), and precedence order.
+
 ## Version 2.4.0 - Sync parity, colorless job verbs, dataset error reporting
 
 - **Sync client parity**: `SyncBrightDataClient` now mirrors the async surface. Added `client.datasets` (fixes the `SyncBrightDataClient` `datasets` `AttributeError`), the 5 missing scrapers (`scrape.tiktok` / `youtube` / `reddit` / `perplexity` / `digikey`), the 2 missing search verticals (`search.tiktok` / `youtube`), Pinterest trigger/status/fetch, and Instagram-search `profiles` / `reels_all`.
