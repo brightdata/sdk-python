@@ -1,7 +1,5 @@
 """Browser API service — builds CDP WebSocket URLs for Playwright/Puppeteer."""
 
-from typing import Optional
-
 
 class BrowserService:
     """
@@ -43,7 +41,7 @@ class BrowserService:
         self._host = host
         self._port = port
 
-    def get_connect_url(self, country: Optional[str] = None) -> str:
+    def get_connect_url(self, country: str | None = None) -> str:
         """
         Return the CDP WebSocket URL for connecting to a remote browser.
 

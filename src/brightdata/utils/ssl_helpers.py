@@ -5,8 +5,8 @@ Provides helpful error messages and guidance for SSL certificate issues,
 particularly common on macOS systems.
 """
 
-import sys
 import ssl
+import sys
 
 try:
     import aiohttp
@@ -125,4 +125,4 @@ For more details, see:
 https://github.com/brightdata/brightdata-python-sdk/blob/main/docs/troubleshooting.md#ssl-certificate-errors
 """
 
-    return base_message + fix_instructions + f"\n\nOriginal error: {str(error)}"
+    return base_message + fix_instructions + f"\n\nOriginal error: {error!s}"

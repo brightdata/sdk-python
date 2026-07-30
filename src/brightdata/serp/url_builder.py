@@ -1,9 +1,9 @@
 """URL builder for SERP search engines."""
 
 from abc import ABC, abstractmethod
-from typing import Optional
 from urllib.parse import quote_plus
-from ..utils.location import LocationService, LocationFormat
+
+from ..utils.location import LocationFormat, LocationService
 
 
 class BaseURLBuilder(ABC):
@@ -13,14 +13,13 @@ class BaseURLBuilder(ABC):
     def build(
         self,
         query: str,
-        location: Optional[str] = None,
+        location: str | None = None,
         language: str = "en",
         device: str = "desktop",
         num_results: int = 10,
         **kwargs,
     ) -> str:
         """Build search URL."""
-        pass
 
 
 class GoogleURLBuilder(BaseURLBuilder):
@@ -29,7 +28,7 @@ class GoogleURLBuilder(BaseURLBuilder):
     def build(
         self,
         query: str,
-        location: Optional[str] = None,
+        location: str | None = None,
         language: str = "en",
         device: str = "desktop",
         num_results: int = 10,
@@ -75,7 +74,7 @@ class BingURLBuilder(BaseURLBuilder):
     def build(
         self,
         query: str,
-        location: Optional[str] = None,
+        location: str | None = None,
         language: str = "en",
         device: str = "desktop",
         num_results: int = 10,
@@ -106,7 +105,7 @@ class YandexURLBuilder(BaseURLBuilder):
     def build(
         self,
         query: str,
-        location: Optional[str] = None,
+        location: str | None = None,
         language: str = "en",
         device: str = "desktop",
         num_results: int = 10,

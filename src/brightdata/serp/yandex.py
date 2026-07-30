@@ -1,10 +1,9 @@
 """Yandex SERP service."""
 
-from typing import Optional
-from .base import BaseSERPService
-from .url_builder import YandexURLBuilder
-from .data_normalizer import YandexDataNormalizer
 from ..core.engine import AsyncEngine
+from .base import BaseSERPService
+from .data_normalizer import YandexDataNormalizer
+from .url_builder import YandexURLBuilder
 
 
 class YandexSERPService(BaseSERPService):
@@ -15,7 +14,7 @@ class YandexSERPService(BaseSERPService):
     def __init__(
         self,
         engine: AsyncEngine,
-        timeout: Optional[int] = None,
+        timeout: int | None = None,
         max_retries: int = 3,
     ):
         """Initialize Yandex SERP service."""

@@ -1,11 +1,11 @@
 """Lazada datasets."""
 
 from .products import LazadaProducts
-from .reviews import LazadaReviews
 from .products_search import LazadaProductsSearch
+from .reviews import LazadaReviews
 
 __all__ = [
     "LazadaProducts",
-    "LazadaReviews",
     "LazadaProductsSearch",
+    "LazadaReviews",
 ]

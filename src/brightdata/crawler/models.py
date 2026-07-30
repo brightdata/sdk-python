@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -16,12 +16,12 @@ class CrawlResult:
     """
 
     success: bool
-    data: List[Dict[str, Any]] = field(default_factory=list)
+    data: list[dict[str, Any]] = field(default_factory=list)
     page_count: int = 0
-    snapshot_id: Optional[str] = None  # None on sync path, set on async path
-    trigger_sent_at: Optional[datetime] = None
-    data_fetched_at: Optional[datetime] = None
-    error: Optional[str] = None
+    snapshot_id: str | None = None  # None on sync path, set on async path
+    trigger_sent_at: datetime | None = None
+    data_fetched_at: datetime | None = None
+    error: str | None = None
 
     def __repr__(self) -> str:
         sid = f" snapshot_id={self.snapshot_id}" if self.snapshot_id else ""

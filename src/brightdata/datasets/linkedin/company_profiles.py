@@ -7,7 +7,7 @@ Records: 58.5M+ companies
 See FIELDS dict for all filterable fields with descriptions.
 """
 
-from typing import TYPE_CHECKING, Dict, Any
+from typing import TYPE_CHECKING, Any
 
 from ..base import BaseDataset
 
@@ -36,7 +36,7 @@ class LinkedInCompanyProfiles(BaseDataset):
 
     # All available fields with metadata
     # Format: field_name -> {"type": str, "description": str}
-    FIELDS: Dict[str, Dict[str, Any]] = {
+    FIELDS: dict[str, dict[str, Any]] = {
         "id": {
             "type": "text",
             "description": "Unique identifier for the company profile (URL slug)",

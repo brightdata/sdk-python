@@ -16,16 +16,16 @@ API Specifications:
 """
 
 import asyncio
-from typing import List, Dict, Any, Optional, Union
+from typing import Any
 
-from ..base import ScraperCore
-from ...models import ScrapeResult
 from ...constants import (
     DEFAULT_COST_PER_RECORD,
-    DEFAULT_TIMEOUT_MEDIUM,
     DEFAULT_POLL_INTERVAL,
+    DEFAULT_TIMEOUT_MEDIUM,
 )
+from ...models import ScrapeResult
 from ...utils.function_detection import get_caller_function_name
+from ..base import ScraperCore
 
 
 class PinterestSearchScraper(ScraperCore):
@@ -72,7 +72,7 @@ class PinterestSearchScraper(ScraperCore):
 
     async def _execute_discovery(
         self,
-        payload: List[Dict[str, Any]],
+        payload: list[dict[str, Any]],
         dataset_id: str,
         discover_by: str,
         timeout: int,
@@ -114,11 +114,11 @@ class PinterestSearchScraper(ScraperCore):
 
     async def posts_by_keyword(
         self,
-        keyword: Union[str, List[str]],
-        videos_only: Optional[bool] = None,
-        new_posts: Optional[bool] = None,
-        top_posts: Optional[bool] = None,
-        food: Optional[bool] = None,
+        keyword: str | list[str],
+        videos_only: bool | None = None,
+        new_posts: bool | None = None,
+        top_posts: bool | None = None,
+        food: bool | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
@@ -147,7 +147,7 @@ class PinterestSearchScraper(ScraperCore):
 
         payload = []
         for kw in keywords:
-            item: Dict[str, Any] = {"keyword": kw}
+            item: dict[str, Any] = {"keyword": kw}
             if videos_only is not None:
                 item["videos_only"] = videos_only
             if new_posts is not None:
@@ -167,11 +167,11 @@ class PinterestSearchScraper(ScraperCore):
 
     def posts_by_keyword_sync(
         self,
-        keyword: Union[str, List[str]],
-        videos_only: Optional[bool] = None,
-        new_posts: Optional[bool] = None,
-        top_posts: Optional[bool] = None,
-        food: Optional[bool] = None,
+        keyword: str | list[str],
+        videos_only: bool | None = None,
+        new_posts: bool | None = None,
+        top_posts: bool | None = None,
+        food: bool | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """Synchronous version of posts_by_keyword()."""
@@ -190,11 +190,11 @@ class PinterestSearchScraper(ScraperCore):
 
     async def posts_by_profile(
         self,
-        url: Union[str, List[str]],
-        num_of_posts: Optional[int] = None,
-        posts_to_not_include: Optional[List[str]] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        url: str | list[str],
+        num_of_posts: int | None = None,
+        posts_to_not_include: list[str] | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
@@ -222,7 +222,7 @@ class PinterestSearchScraper(ScraperCore):
 
         payload = []
         for u in urls:
-            item: Dict[str, Any] = {"url": u}
+            item: dict[str, Any] = {"url": u}
             if num_of_posts is not None:
                 item["num_of_posts"] = num_of_posts
             if posts_to_not_include:
@@ -242,11 +242,11 @@ class PinterestSearchScraper(ScraperCore):
 
     def posts_by_profile_sync(
         self,
-        url: Union[str, List[str]],
-        num_of_posts: Optional[int] = None,
-        posts_to_not_include: Optional[List[str]] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        url: str | list[str],
+        num_of_posts: int | None = None,
+        posts_to_not_include: list[str] | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """Synchronous version of posts_by_profile()."""
@@ -265,7 +265,7 @@ class PinterestSearchScraper(ScraperCore):
 
     async def profiles(
         self,
-        keyword: Union[str, List[str]],
+        keyword: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
@@ -296,7 +296,7 @@ class PinterestSearchScraper(ScraperCore):
 
     def profiles_sync(
         self,
-        keyword: Union[str, List[str]],
+        keyword: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """Synchronous version of profiles()."""

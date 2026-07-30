@@ -8,15 +8,15 @@ Supports:
 """
 
 import asyncio
-from typing import List, Any, Optional, Union
+from typing import Any
 
-from ..base import BaseWebScraper
-from ..registry import register
-from ..job import ScrapeJob
+from ...constants import COST_PER_RECORD_CHATGPT, DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_LONG
+from ...exceptions import ValidationError
 from ...models import ScrapeResult
 from ...utils.function_detection import get_caller_function_name
-from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_LONG, COST_PER_RECORD_CHATGPT
-from ...exceptions import ValidationError
+from ..base import BaseWebScraper
+from ..job import ScrapeJob
+from ..registry import register
 
 
 @register("chatgpt")
@@ -63,9 +63,9 @@ class ChatGPTScraper(BaseWebScraper):
         prompt: str,
         country: str = "us",
         web_search: bool = False,
-        additional_prompt: Optional[str] = None,
+        additional_prompt: str | None = None,
         poll_interval: int = DEFAULT_POLL_INTERVAL,
-        poll_timeout: Optional[int] = None,
+        poll_timeout: int | None = None,
     ) -> ScrapeResult:
         """
         Send single prompt to ChatGPT (async).
@@ -125,9 +125,9 @@ class ChatGPTScraper(BaseWebScraper):
         prompt: str,
         country: str = "us",
         web_search: bool = False,
-        additional_prompt: Optional[str] = None,
+        additional_prompt: str | None = None,
         poll_interval: int = DEFAULT_POLL_INTERVAL,
-        poll_timeout: Optional[int] = None,
+        poll_timeout: int | None = None,
     ) -> ScrapeResult:
         """
         Send prompt to ChatGPT (sync).
@@ -160,7 +160,7 @@ class ChatGPTScraper(BaseWebScraper):
         prompt: str,
         country: str = "us",
         web_search: bool = False,
-        additional_prompt: Optional[str] = None,
+        additional_prompt: str | None = None,
     ) -> "ScrapeJob":
         """Trigger ChatGPT prompt (async - manual control)."""
         from ..job import ScrapeJob
@@ -196,7 +196,7 @@ class ChatGPTScraper(BaseWebScraper):
         prompt: str,
         country: str = "us",
         web_search: bool = False,
-        additional_prompt: Optional[str] = None,
+        additional_prompt: str | None = None,
     ) -> "ScrapeJob":
         """Trigger ChatGPT prompt (sync wrapper)."""
 
@@ -238,12 +238,12 @@ class ChatGPTScraper(BaseWebScraper):
 
     async def prompts(
         self,
-        prompts: List[str],
-        countries: Optional[List[str]] = None,
-        web_searches: Optional[List[bool]] = None,
-        additional_prompts: Optional[List[str]] = None,
+        prompts: list[str],
+        countries: list[str] | None = None,
+        web_searches: list[bool] | None = None,
+        additional_prompts: list[str] | None = None,
         poll_interval: int = DEFAULT_POLL_INTERVAL,
-        poll_timeout: Optional[int] = None,
+        poll_timeout: int | None = None,
     ) -> ScrapeResult:
         """
         Send multiple prompts to ChatGPT in batch (async).
@@ -305,12 +305,12 @@ class ChatGPTScraper(BaseWebScraper):
 
     def prompts_sync(
         self,
-        prompts: List[str],
-        countries: Optional[List[str]] = None,
-        web_searches: Optional[List[bool]] = None,
-        additional_prompts: Optional[List[str]] = None,
+        prompts: list[str],
+        countries: list[str] | None = None,
+        web_searches: list[bool] | None = None,
+        additional_prompts: list[str] | None = None,
         poll_interval: int = DEFAULT_POLL_INTERVAL,
-        poll_timeout: Optional[int] = None,
+        poll_timeout: int | None = None,
     ) -> ScrapeResult:
         """
         Send multiple prompts (sync).
@@ -337,10 +337,10 @@ class ChatGPTScraper(BaseWebScraper):
 
     async def prompts_trigger(
         self,
-        prompts: List[str],
-        countries: Optional[List[str]] = None,
-        web_searches: Optional[List[bool]] = None,
-        additional_prompts: Optional[List[str]] = None,
+        prompts: list[str],
+        countries: list[str] | None = None,
+        web_searches: list[bool] | None = None,
+        additional_prompts: list[str] | None = None,
     ) -> "ScrapeJob":
         """Trigger ChatGPT batch prompts (async - manual control)."""
         from ..job import ScrapeJob
@@ -373,10 +373,10 @@ class ChatGPTScraper(BaseWebScraper):
 
     def prompts_trigger_sync(
         self,
-        prompts: List[str],
-        countries: Optional[List[str]] = None,
-        web_searches: Optional[List[bool]] = None,
-        additional_prompts: Optional[List[str]] = None,
+        prompts: list[str],
+        countries: list[str] | None = None,
+        web_searches: list[bool] | None = None,
+        additional_prompts: list[str] | None = None,
     ) -> "ScrapeJob":
         """Trigger ChatGPT batch prompts (sync wrapper)."""
 
@@ -418,9 +418,7 @@ class ChatGPTScraper(BaseWebScraper):
     # SCRAPE OVERRIDE (ChatGPT doesn't use URL-based scraping)
     # ============================================================================
 
-    async def scrape(
-        self, urls: Union[str, List[str]], **kwargs
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    async def scrape(self, urls: str | list[str], **kwargs) -> ScrapeResult | list[ScrapeResult]:
         """
         ChatGPT doesn't support URL-based scraping.
 
@@ -431,7 +429,7 @@ class ChatGPTScraper(BaseWebScraper):
             "Use prompt() or prompts() methods instead."
         )
 
-    def scrape_sync(self, urls: Union[str, List[str]], **kwargs):
+    def scrape_sync(self, urls: str | list[str], **kwargs):
         """ChatGPT doesn't support URL-based scraping."""
         raise NotImplementedError(
             "ChatGPT scraper doesn't support URL-based scraping. "

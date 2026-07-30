@@ -18,7 +18,6 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Optional
 
 
 def _cli_credentials_path() -> Path:
@@ -32,7 +31,7 @@ def _cli_credentials_path() -> Path:
     return base / "brightdata-cli" / "credentials.json"
 
 
-def read_cli_credentials() -> Optional[str]:
+def read_cli_credentials() -> str | None:
     """
     Return the API key stored by `brightdata login`, or None if unavailable.
 

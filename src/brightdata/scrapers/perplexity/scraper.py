@@ -13,15 +13,15 @@ API Specifications:
 """
 
 import asyncio
-from typing import List, Any, Optional, Union
+from typing import Any
 
-from ..base import BaseWebScraper
-from ..registry import register
-from ..job import ScrapeJob
+from ...constants import COST_PER_RECORD_PERPLEXITY, DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT
+from ...exceptions import ValidationError
 from ...models import ScrapeResult
 from ...utils.function_detection import get_caller_function_name
-from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT, COST_PER_RECORD_PERPLEXITY
-from ...exceptions import ValidationError
+from ..base import BaseWebScraper
+from ..job import ScrapeJob
+from ..registry import register
 
 
 @register("perplexity")
@@ -75,12 +75,12 @@ class PerplexityScraper(BaseWebScraper):
 
     async def search(
         self,
-        prompt: Union[str, List[str]],
-        country: Optional[Union[str, List[str]]] = None,
-        index: Optional[Union[int, List[int]]] = None,
-        export_markdown_file: Optional[Union[bool, List[bool]]] = None,
+        prompt: str | list[str],
+        country: str | list[str] | None = None,
+        index: int | list[int] | None = None,
+        export_markdown_file: bool | list[bool] | None = None,
         poll_interval: int = DEFAULT_POLL_INTERVAL,
-        poll_timeout: Optional[int] = None,
+        poll_timeout: int | None = None,
     ) -> ScrapeResult:
         """
         Search Perplexity AI with prompt(s) (async).
@@ -168,12 +168,12 @@ class PerplexityScraper(BaseWebScraper):
 
     def search_sync(
         self,
-        prompt: Union[str, List[str]],
-        country: Optional[Union[str, List[str]]] = None,
-        index: Optional[Union[int, List[int]]] = None,
-        export_markdown_file: Optional[Union[bool, List[bool]]] = None,
+        prompt: str | list[str],
+        country: str | list[str] | None = None,
+        index: int | list[int] | None = None,
+        export_markdown_file: bool | list[bool] | None = None,
         poll_interval: int = DEFAULT_POLL_INTERVAL,
-        poll_timeout: Optional[int] = None,
+        poll_timeout: int | None = None,
     ) -> ScrapeResult:
         """
         Search Perplexity AI with prompt(s) (sync).
@@ -206,10 +206,10 @@ class PerplexityScraper(BaseWebScraper):
 
     async def search_trigger(
         self,
-        prompt: Union[str, List[str]],
-        country: Optional[Union[str, List[str]]] = None,
-        index: Optional[Union[int, List[int]]] = None,
-        export_markdown_file: Optional[Union[bool, List[bool]]] = None,
+        prompt: str | list[str],
+        country: str | list[str] | None = None,
+        index: int | list[int] | None = None,
+        export_markdown_file: bool | list[bool] | None = None,
     ) -> ScrapeJob:
         """
         Trigger Perplexity search (async - manual control).
@@ -276,10 +276,10 @@ class PerplexityScraper(BaseWebScraper):
 
     def search_trigger_sync(
         self,
-        prompt: Union[str, List[str]],
-        country: Optional[Union[str, List[str]]] = None,
-        index: Optional[Union[int, List[int]]] = None,
-        export_markdown_file: Optional[Union[bool, List[bool]]] = None,
+        prompt: str | list[str],
+        country: str | list[str] | None = None,
+        index: int | list[int] | None = None,
+        export_markdown_file: bool | list[bool] | None = None,
     ) -> ScrapeJob:
         """Trigger Perplexity search (sync wrapper)."""
 
@@ -342,8 +342,8 @@ class PerplexityScraper(BaseWebScraper):
     # ============================================================================
 
     async def scrape_async(
-        self, urls: Union[str, List[str]], **kwargs
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+        self, urls: str | list[str], **kwargs
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Perplexity doesn't support URL-based scraping.
 
@@ -354,7 +354,7 @@ class PerplexityScraper(BaseWebScraper):
             "Use search() or search_sync() methods instead."
         )
 
-    def scrape(self, urls: Union[str, List[str]], **kwargs):
+    def scrape(self, urls: str | list[str], **kwargs):
         """Perplexity doesn't support URL-based scraping."""
         raise NotImplementedError(
             "Perplexity scraper doesn't support URL-based scraping. "
@@ -367,10 +367,10 @@ class PerplexityScraper(BaseWebScraper):
 
     def _normalize_param(
         self,
-        param: Optional[Union[Any, List[Any]]],
+        param: Any | list[Any] | None,
         target_length: int,
         default_value: Any = None,
-    ) -> List[Any]:
+    ) -> list[Any]:
         """
         Normalize parameter to list of specified length.
 

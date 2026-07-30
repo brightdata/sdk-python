@@ -14,13 +14,9 @@ class BrightDataError(Exception):
 class ValidationError(BrightDataError):
     """Input validation failed."""
 
-    pass
-
 
 class AuthenticationError(BrightDataError):
     """Authentication or authorization failed."""
-
-    pass
 
 
 class APIError(BrightDataError):
@@ -42,19 +38,13 @@ class APIError(BrightDataError):
 class DataNotReadyError(BrightDataError):
     """Data is not ready yet (HTTP 202). Should retry."""
 
-    pass
-
 
 class ZoneError(BrightDataError):
     """Zone operation failed."""
 
-    pass
-
 
 class NetworkError(BrightDataError):
     """Network connectivity issue."""
-
-    pass
 
 
 class SSLError(BrightDataError):
@@ -63,5 +53,3 @@ class SSLError(BrightDataError):
 
     Common on macOS where Python doesn't have access to system certificates.
     """
-
-    pass

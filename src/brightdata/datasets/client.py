@@ -6,7 +6,7 @@ IDE autocomplete is provided via the companion client.pyi stub file.
 """
 
 import importlib
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from .models import DatasetInfo
 
@@ -262,7 +262,7 @@ class DatasetsClient:
             f"Available datasets: {', '.join(sorted(_DATASET_REGISTRY))}"
         )
 
-    async def list(self) -> List[DatasetInfo]:
+    async def list(self) -> list[DatasetInfo]:
         """
         List all available datasets.
 

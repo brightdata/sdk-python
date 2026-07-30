@@ -5,7 +5,7 @@ Data models for Scraper Studio API responses.
 import asyncio
 import time
 from dataclasses import dataclass
-from typing import Dict, List, Any, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ..exceptions import DataNotReadyError
 
@@ -41,13 +41,13 @@ class JobStatus:
     fails: int = 0
     success_rate: float = 0.0
     created: str = ""
-    started: Optional[str] = None
-    finished: Optional[str] = None
-    job_time: Optional[int] = None
-    queue_time: Optional[int] = None
+    started: str | None = None
+    finished: str | None = None
+    job_time: int | None = None
+    queue_time: int | None = None
 
     @classmethod
-    def from_api_response(cls, data: Dict[str, Any]) -> "JobStatus":
+    def from_api_response(cls, data: dict[str, Any]) -> "JobStatus":
         """
         Create from API response.
 
@@ -98,12 +98,12 @@ class ScraperStudioJob:
     ):
         self.response_id = response_id
         self._api_client = api_client
-        self._cached_data: Optional[List[Dict[str, Any]]] = None
+        self._cached_data: list[dict[str, Any]] | None = None
 
     def __repr__(self) -> str:
         return f"<ScraperStudioJob response_id={self.response_id}>"
 
-    async def fetch(self) -> List[Dict[str, Any]]:
+    async def fetch(self) -> list[dict[str, Any]]:
         """
         Fetch results via GET /dca/get_result.
 
@@ -120,7 +120,7 @@ class ScraperStudioJob:
         self,
         timeout: int = 300,
         poll_interval: int = 10,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Poll fetch() until data arrives or timeout.
 

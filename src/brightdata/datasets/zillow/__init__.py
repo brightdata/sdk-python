@@ -1,9 +1,9 @@
 """Zillow datasets."""
 
-from .properties import ZillowProperties
 from .price_history import ZillowPriceHistory
+from .properties import ZillowProperties
 
 __all__ = [
-    "ZillowProperties",
     "ZillowPriceHistory",
+    "ZillowProperties",
 ]

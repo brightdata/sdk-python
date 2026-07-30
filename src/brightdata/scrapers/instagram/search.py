@@ -8,17 +8,17 @@ Supports:
 """
 
 import asyncio
-from typing import List, Dict, Any, Optional, Union
+from typing import Any
 
-from ..base import ScraperCore
-from ...models import ScrapeResult
 from ...constants import (
     COST_PER_RECORD_INSTAGRAM,
-    DEFAULT_TIMEOUT_SHORT,
     DEFAULT_POLL_INTERVAL,
+    DEFAULT_TIMEOUT_SHORT,
 )
-from ...utils.validation import validate_url_list, validate_instagram_date
+from ...models import ScrapeResult
 from ...utils.function_detection import get_caller_function_name
+from ...utils.validation import validate_instagram_date, validate_url_list
+from ..base import ScraperCore
 
 
 class InstagramSearchScraper(ScraperCore):
@@ -57,7 +57,7 @@ class InstagramSearchScraper(ScraperCore):
 
     async def _execute_discovery(
         self,
-        payload: List[Dict[str, Any]],
+        payload: list[dict[str, Any]],
         dataset_id: str,
         discover_by: str,
         timeout: int,
@@ -101,7 +101,7 @@ class InstagramSearchScraper(ScraperCore):
 
     async def profiles(
         self,
-        user_name: Union[str, List[str]],
+        user_name: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
@@ -159,7 +159,7 @@ class InstagramSearchScraper(ScraperCore):
 
     def profiles_sync(
         self,
-        user_name: Union[str, List[str]],
+        user_name: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """Synchronous version of profiles()."""
@@ -176,12 +176,12 @@ class InstagramSearchScraper(ScraperCore):
 
     async def posts(
         self,
-        url: Union[str, List[str]],
-        num_of_posts: Optional[int] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        post_type: Optional[str] = None,
-        posts_to_not_include: Optional[List[str]] = None,
+        url: str | list[str],
+        num_of_posts: int | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        post_type: str | None = None,
+        posts_to_not_include: list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
@@ -238,7 +238,7 @@ class InstagramSearchScraper(ScraperCore):
         # Build payload - omit None values (don't send empty strings)
         payload = []
         for u in urls:
-            item: Dict[str, Any] = {"url": u}
+            item: dict[str, Any] = {"url": u}
 
             if num_of_posts is not None:
                 item["num_of_posts"] = num_of_posts
@@ -262,12 +262,12 @@ class InstagramSearchScraper(ScraperCore):
 
     def posts_sync(
         self,
-        url: Union[str, List[str]],
-        num_of_posts: Optional[int] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        post_type: Optional[str] = None,
-        posts_to_not_include: Optional[List[str]] = None,
+        url: str | list[str],
+        num_of_posts: int | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        post_type: str | None = None,
+        posts_to_not_include: list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """Synchronous version of posts()."""
@@ -292,10 +292,10 @@ class InstagramSearchScraper(ScraperCore):
 
     async def reels(
         self,
-        url: Union[str, List[str]],
-        num_of_posts: Optional[int] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        url: str | list[str],
+        num_of_posts: int | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
         timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
@@ -346,7 +346,7 @@ class InstagramSearchScraper(ScraperCore):
         # Build payload
         payload = []
         for u in urls:
-            item: Dict[str, Any] = {"url": u}
+            item: dict[str, Any] = {"url": u}
             if num_of_posts is not None:
                 item["num_of_posts"] = num_of_posts
             if start_date:
@@ -364,10 +364,10 @@ class InstagramSearchScraper(ScraperCore):
 
     def reels_sync(
         self,
-        url: Union[str, List[str]],
-        num_of_posts: Optional[int] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        url: str | list[str],
+        num_of_posts: int | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
         timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """Synchronous version of reels()."""
@@ -384,10 +384,10 @@ class InstagramSearchScraper(ScraperCore):
 
     async def reels_all(
         self,
-        url: Union[str, List[str]],
-        num_of_posts: Optional[int] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        url: str | list[str],
+        num_of_posts: int | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
         timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
@@ -439,7 +439,7 @@ class InstagramSearchScraper(ScraperCore):
         # Build payload
         payload = []
         for u in urls:
-            item: Dict[str, Any] = {"url": u}
+            item: dict[str, Any] = {"url": u}
             if num_of_posts is not None:
                 item["num_of_posts"] = num_of_posts
             if start_date:
@@ -458,10 +458,10 @@ class InstagramSearchScraper(ScraperCore):
 
     def reels_all_sync(
         self,
-        url: Union[str, List[str]],
-        num_of_posts: Optional[int] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        url: str | list[str],
+        num_of_posts: int | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
         timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """Synchronous version of reels_all()."""

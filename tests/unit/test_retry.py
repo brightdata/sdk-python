@@ -4,9 +4,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from brightdata.exceptions import APIError, AuthenticationError, NetworkError, ValidationError
 from brightdata.utils.retry import retry_with_backoff
-from brightdata.exceptions import APIError, NetworkError, AuthenticationError, ValidationError
-
 
 # ---------------------------------------------------------------------------
 # Happy path

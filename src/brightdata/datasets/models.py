@@ -3,7 +3,7 @@ Data models for Datasets API responses.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Optional, Any, Literal
+from typing import Any, Literal
 
 
 @dataclass
@@ -22,7 +22,7 @@ class DatasetField:
     type: str  # "text", "number", "url", "array", "object", "boolean"
     active: bool = True
     required: bool = False
-    description: Optional[str] = None
+    description: str | None = None
 
 
 @dataclass
@@ -30,10 +30,10 @@ class DatasetMetadata:
     """Dataset metadata returned by get_metadata()."""
 
     id: str
-    fields: Dict[str, DatasetField] = field(default_factory=dict)
+    fields: dict[str, DatasetField] = field(default_factory=dict)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "DatasetMetadata":
+    def from_dict(cls, data: dict[str, Any]) -> "DatasetMetadata":
         """Create from API response."""
         fields = {}
         for name, field_data in data.get("fields", {}).items():
@@ -53,15 +53,15 @@ class SnapshotStatus:
 
     id: str
     status: Literal["scheduled", "building", "ready", "failed"]
-    dataset_id: Optional[str] = None
-    dataset_size: Optional[int] = None  # records in snapshot
-    file_size: Optional[int] = None  # bytes
-    cost: Optional[float] = None
-    error: Optional[str] = None
-    raw: Dict[str, Any] = field(default_factory=dict)  # full API response — never lose the reason
+    dataset_id: str | None = None
+    dataset_size: int | None = None  # records in snapshot
+    file_size: int | None = None  # bytes
+    cost: float | None = None
+    error: str | None = None
+    raw: dict[str, Any] = field(default_factory=dict)  # full API response — never lose the reason
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SnapshotStatus":
+    def from_dict(cls, data: dict[str, Any]) -> "SnapshotStatus":
         """Create from API response."""
         return cls(
             id=data.get("id", data.get("snapshot_id", "")),

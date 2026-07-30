@@ -6,21 +6,21 @@ data across different search engines.
 All methods are async-only. For sync usage, use SyncBrightDataClient.
 """
 
-from typing import Optional, Union, List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from ..models import SearchResult
 
 if TYPE_CHECKING:
     from ..client import BrightDataClient
-    from .google import GoogleSERPService
-    from .bing import BingSERPService
-    from .yandex import YandexSERPService
     from ..scrapers.amazon.search import AmazonSearchScraper
-    from ..scrapers.linkedin.search import LinkedInSearchScraper
     from ..scrapers.chatgpt.search import ChatGPTSearchService
     from ..scrapers.instagram.search import InstagramSearchScraper
+    from ..scrapers.linkedin.search import LinkedInSearchScraper
     from ..scrapers.tiktok.search import TikTokSearchScraper
     from ..scrapers.youtube.search import YouTubeSearchScraper
+    from .bing import BingSERPService
+    from .google import GoogleSERPService
+    from .yandex import YandexSERPService
 
 
 class SearchService:
@@ -45,27 +45,27 @@ class SearchService:
     def __init__(self, client: "BrightDataClient"):
         """Initialize search service with client reference."""
         self._client = client
-        self._google_service: Optional["GoogleSERPService"] = None
-        self._bing_service: Optional["BingSERPService"] = None
-        self._yandex_service: Optional["YandexSERPService"] = None
-        self._amazon_search: Optional["AmazonSearchScraper"] = None
-        self._linkedin_search: Optional["LinkedInSearchScraper"] = None
-        self._chatgpt_search: Optional["ChatGPTSearchService"] = None
-        self._instagram_search: Optional["InstagramSearchScraper"] = None
-        self._tiktok_search: Optional["TikTokSearchScraper"] = None
-        self._youtube_search: Optional["YouTubeSearchScraper"] = None
+        self._google_service: GoogleSERPService | None = None
+        self._bing_service: BingSERPService | None = None
+        self._yandex_service: YandexSERPService | None = None
+        self._amazon_search: AmazonSearchScraper | None = None
+        self._linkedin_search: LinkedInSearchScraper | None = None
+        self._chatgpt_search: ChatGPTSearchService | None = None
+        self._instagram_search: InstagramSearchScraper | None = None
+        self._tiktok_search: TikTokSearchScraper | None = None
+        self._youtube_search: YouTubeSearchScraper | None = None
         self._pinterest_search = None
 
     async def google(
         self,
-        query: Union[str, List[str]],
-        location: Optional[str] = None,
+        query: str | list[str],
+        location: str | None = None,
         language: str = "en",
         device: str = "desktop",
         num_results: int = 10,
-        zone: Optional[str] = None,
+        zone: str | None = None,
         **kwargs,
-    ) -> Union[SearchResult, List[SearchResult]]:
+    ) -> SearchResult | list[SearchResult]:
         """
         Search Google asynchronously.
 
@@ -110,13 +110,13 @@ class SearchService:
 
     async def bing(
         self,
-        query: Union[str, List[str]],
-        location: Optional[str] = None,
+        query: str | list[str],
+        location: str | None = None,
         language: str = "en",
         num_results: int = 10,
-        zone: Optional[str] = None,
+        zone: str | None = None,
         **kwargs,
-    ) -> Union[SearchResult, List[SearchResult]]:
+    ) -> SearchResult | list[SearchResult]:
         """Search Bing asynchronously."""
         from .bing import BingSERPService
 
@@ -138,13 +138,13 @@ class SearchService:
 
     async def yandex(
         self,
-        query: Union[str, List[str]],
-        location: Optional[str] = None,
+        query: str | list[str],
+        location: str | None = None,
         language: str = "ru",
         num_results: int = 10,
-        zone: Optional[str] = None,
+        zone: str | None = None,
         **kwargs,
-    ) -> Union[SearchResult, List[SearchResult]]:
+    ) -> SearchResult | list[SearchResult]:
         """Search Yandex asynchronously."""
         from .yandex import YandexSERPService
 

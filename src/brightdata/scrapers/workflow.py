@@ -7,12 +7,13 @@ Handles the complete async workflow for dataset operations:
 3. Fetch results when ready
 """
 
-from typing import List, Dict, Any, Optional, Callable
+from collections.abc import Callable
 from datetime import datetime, timezone
+from typing import Any
 
-from ..models import ScrapeResult
+from ..constants import DEFAULT_COST_PER_RECORD, DEFAULT_POLL_INTERVAL, DEFAULT_POLL_TIMEOUT
 from ..exceptions import APIError
-from ..constants import DEFAULT_POLL_INTERVAL, DEFAULT_POLL_TIMEOUT, DEFAULT_COST_PER_RECORD
+from ..models import ScrapeResult
 from ..utils.polling import poll_until_ready
 from .api_client import DatasetAPIClient
 
@@ -28,7 +29,7 @@ class WorkflowExecutor:
     def __init__(
         self,
         api_client: DatasetAPIClient,
-        platform_name: Optional[str] = None,
+        platform_name: str | None = None,
         cost_per_record: float = DEFAULT_COST_PER_RECORD,
     ):
         """
@@ -45,15 +46,15 @@ class WorkflowExecutor:
 
     async def execute(
         self,
-        payload: List[Dict[str, Any]],
+        payload: list[dict[str, Any]],
         dataset_id: str,
         poll_interval: int = DEFAULT_POLL_INTERVAL,
         poll_timeout: int = DEFAULT_POLL_TIMEOUT,
         include_errors: bool = True,
-        normalize_func: Optional[Callable[[Any], Any]] = None,
-        sdk_function: Optional[str] = None,
-        extra_params: Optional[Dict[str, str]] = None,
-        limit_per_input: Optional[int] = None,
+        normalize_func: Callable[[Any], Any] | None = None,
+        sdk_function: str | None = None,
+        extra_params: dict[str, str] | None = None,
+        limit_per_input: int | None = None,
     ) -> ScrapeResult:
         """
         Execute complete trigger/poll/fetch workflow.
@@ -88,7 +89,7 @@ class WorkflowExecutor:
                 success=False,
                 url="",
                 status="error",
-                error=f"Trigger failed: {str(e)}",
+                error=f"Trigger failed: {e!s}",
                 platform=self.platform_name,
                 method="web_scraper",
                 trigger_sent_at=trigger_sent_at,
@@ -127,7 +128,7 @@ class WorkflowExecutor:
         poll_timeout: int,
         trigger_sent_at: datetime,
         snapshot_id_received_at: datetime,
-        normalize_func: Optional[Callable[[Any], Any]] = None,
+        normalize_func: Callable[[Any], Any] | None = None,
     ) -> ScrapeResult:
         """
         Poll snapshot until ready, then fetch results.

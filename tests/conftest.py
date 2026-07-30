@@ -1,9 +1,9 @@
 """Shared test fixtures for Bright Data SDK tests."""
 
-import sys
 import os
+import sys
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
-from typing import Any, Dict, Optional
 
 import pytest
 
@@ -24,7 +24,7 @@ class MockResponse:
         status: int = 200,
         json_data: Any = None,
         text_data: str = "",
-        headers: Optional[Dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
     ):
         self.status = status
         self._json_data = json_data

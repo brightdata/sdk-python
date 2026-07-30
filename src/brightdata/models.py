@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
-from datetime import datetime
-from typing import Any, Optional, List, Dict, Union, Literal
 import json
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
 from pathlib import Path
+from typing import Any, Literal, Optional, Union
 
 StatusType = Literal["ready", "error", "timeout", "in_progress"]
 PlatformType = Optional[Literal["linkedin", "amazon", "chatgpt", "instagram", "facebook"]]
@@ -30,17 +30,17 @@ class BaseResult:
     """
 
     success: bool
-    cost: Optional[float] = None
-    error: Optional[str] = None
-    trigger_sent_at: Optional[datetime] = None
-    data_fetched_at: Optional[datetime] = None
+    cost: float | None = None
+    error: str | None = None
+    trigger_sent_at: datetime | None = None
+    data_fetched_at: datetime | None = None
 
     def __post_init__(self) -> None:
         """Validate data after initialization."""
         if self.cost is not None and self.cost < 0:
             raise ValueError(f"Cost must be non-negative, got {self.cost}")
 
-    def elapsed_ms(self) -> Optional[float]:
+    def elapsed_ms(self) -> float | None:
         """
         Calculate total elapsed time in milliseconds.
 
@@ -52,7 +52,7 @@ class BaseResult:
             return delta.total_seconds() * 1000
         return None
 
-    def get_timing_breakdown(self) -> Dict[str, Optional[Union[float, str]]]:
+    def get_timing_breakdown(self) -> dict[str, float | str | None]:
         """
         Get detailed timing breakdown for debugging and optimization.
 
@@ -68,7 +68,7 @@ class BaseResult:
             "data_fetched_at": self.data_fetched_at.isoformat() if self.data_fetched_at else None,
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert result to dictionary for serialization.
 
@@ -85,7 +85,7 @@ class BaseResult:
                 result[key] = [v.isoformat() if isinstance(v, datetime) else v for v in value]
         return result
 
-    def to_json(self, indent: Optional[int] = None) -> str:
+    def to_json(self, indent: int | None = None) -> str:
         """
         Serialize result to JSON string.
 
@@ -100,7 +100,7 @@ class BaseResult:
         """
         return json.dumps(self.to_dict(), indent=indent, default=str)
 
-    def save_to_file(self, filepath: Union[str, Path], format: str = "json") -> None:
+    def save_to_file(self, filepath: str | Path, format: str = "json") -> None:
         """
         Save result data to file.
 
@@ -159,16 +159,16 @@ class ScrapeResult(BaseResult):
 
     url: str = ""
     status: StatusType = "ready"
-    data: Optional[Any] = None
-    snapshot_id: Optional[str] = None
+    data: Any | None = None
+    snapshot_id: str | None = None
     platform: PlatformType = None
-    method: Optional[str] = None
-    root_domain: Optional[str] = None
-    snapshot_id_received_at: Optional[datetime] = None
-    snapshot_polled_at: List[datetime] = field(default_factory=list)
-    html_char_size: Optional[int] = None
-    row_count: Optional[int] = None
-    field_count: Optional[int] = None
+    method: str | None = None
+    root_domain: str | None = None
+    snapshot_id_received_at: datetime | None = None
+    snapshot_polled_at: list[datetime] = field(default_factory=list)
+    html_char_size: int | None = None
+    row_count: int | None = None
+    field_count: int | None = None
 
     def __post_init__(self) -> None:
         """Validate ScrapeResult-specific fields."""
@@ -184,7 +184,7 @@ class ScrapeResult(BaseResult):
         if self.field_count is not None and self.field_count < 0:
             raise ValueError(f"field_count must be non-negative, got {self.field_count}")
 
-    def get_timing_breakdown(self) -> Dict[str, Optional[Union[float, str, int]]]:
+    def get_timing_breakdown(self) -> dict[str, float | str | int | None]:
         """
         Get detailed timing breakdown including polling information.
 
@@ -243,17 +243,17 @@ class SearchResult(BaseResult):
         results_per_page: Number of results per page.
     """
 
-    query: Dict[str, Any] = field(default_factory=dict)
-    data: Optional[List[Dict[str, Any]]] = None
-    total_found: Optional[int] = None
+    query: dict[str, Any] = field(default_factory=dict)
+    data: list[dict[str, Any]] | None = None
+    total_found: int | None = None
     search_engine: SearchEngineType = None
-    country: Optional[str] = None
-    page: Optional[int] = None
-    results_per_page: Optional[int] = None
+    country: str | None = None
+    page: int | None = None
+    results_per_page: int | None = None
     # Populated when the underlying API returns raw HTML instead of (or
     # alongside) structured results — e.g. Yandex, which has no parser, or
     # Google/Bing when the zone is misconfigured.
-    raw_html: Optional[str] = None
+    raw_html: str | None = None
 
     def __post_init__(self) -> None:
         """Validate SearchResult-specific fields."""
@@ -293,15 +293,15 @@ class CrawlResult(BaseResult):
         crawl_completed_at: Timestamp when crawl completed.
     """
 
-    domain: Optional[str] = None
-    pages: List[Dict[str, Any]] = field(default_factory=list)
-    total_pages: Optional[int] = None
-    depth: Optional[int] = None
-    start_url: Optional[str] = None
-    filter_pattern: Optional[str] = None
-    exclude_pattern: Optional[str] = None
-    crawl_started_at: Optional[datetime] = None
-    crawl_completed_at: Optional[datetime] = None
+    domain: str | None = None
+    pages: list[dict[str, Any]] = field(default_factory=list)
+    total_pages: int | None = None
+    depth: int | None = None
+    start_url: str | None = None
+    filter_pattern: str | None = None
+    exclude_pattern: str | None = None
+    crawl_started_at: datetime | None = None
+    crawl_completed_at: datetime | None = None
 
     def __post_init__(self) -> None:
         """Validate CrawlResult-specific fields."""
@@ -311,7 +311,7 @@ class CrawlResult(BaseResult):
         if self.depth is not None and self.depth < 0:
             raise ValueError(f"depth must be non-negative, got {self.depth}")
 
-    def get_timing_breakdown(self) -> Dict[str, Optional[Union[float, str]]]:
+    def get_timing_breakdown(self) -> dict[str, float | str | None]:
         """
         Get detailed timing breakdown including crawl duration.
 

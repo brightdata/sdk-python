@@ -19,12 +19,12 @@ import asyncio
 import json
 from datetime import datetime, timezone
 from http import HTTPStatus
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any
 
-from .models import CrawlJob, CrawlResult
 from ..exceptions import APIError, ValidationError
 from ..utils.function_detection import get_caller_function_name
 from ..utils.validation import validate_url, validate_url_list
+from .models import CrawlJob, CrawlResult
 
 if TYPE_CHECKING:
     from ..client import BrightDataClient
@@ -68,7 +68,7 @@ class CrawlerService:
 
     async def crawl(
         self,
-        urls: Union[str, List[str]],
+        urls: str | list[str],
         include_errors: bool = True,
     ) -> CrawlResult:
         """
@@ -106,7 +106,7 @@ class CrawlerService:
 
     async def trigger(
         self,
-        urls: Union[str, List[str]],
+        urls: str | list[str],
         include_errors: bool = True,
     ) -> CrawlJob:
         """
@@ -256,9 +256,9 @@ class CrawlerService:
 
     async def _scrape_sync(
         self,
-        urls: List[str],
+        urls: list[str],
         include_errors: bool,
-        sdk_function: Optional[str],
+        sdk_function: str | None,
     ) -> CrawlResult:
         """POST /scrape and return the inline result wrapped in CrawlResult."""
         trigger_sent_at = datetime.now(timezone.utc)
@@ -350,7 +350,7 @@ class CrawlerService:
             )
 
     @staticmethod
-    def _parse_records(text: str) -> List[Dict[str, Any]]:
+    def _parse_records(text: str) -> list[dict[str, Any]]:
         """
         Parse the response body into a list of crawl records.
 
@@ -365,7 +365,7 @@ class CrawlerService:
         try:
             parsed = json.loads(text)
         except json.JSONDecodeError:
-            records: List[Dict[str, Any]] = []
+            records: list[dict[str, Any]] = []
             for line in text.splitlines():
                 line = line.strip()
                 if not line:
@@ -387,7 +387,7 @@ class CrawlerService:
         return []
 
     @staticmethod
-    def _normalize_urls(urls: Union[str, List[str]]) -> List[str]:
+    def _normalize_urls(urls: str | list[str]) -> list[str]:
         """Validate and normalize input to a non-empty list of URLs."""
         if isinstance(urls, str):
             validate_url(urls)

@@ -3,4 +3,4 @@
 from .models import CrawlJob, CrawlResult
 from .service import CrawlerService
 
-__all__ = ["CrawlerService", "CrawlResult", "CrawlJob"]
+__all__ = ["CrawlJob", "CrawlResult", "CrawlerService"]

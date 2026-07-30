@@ -8,11 +8,11 @@ Philosophy:
 - Follow principle of least surprise - common patterns from other SDKs
 """
 
-import os
 import asyncio
+import os
 import warnings
-from typing import Optional, Dict, Any, Union, List
 from datetime import datetime, timezone
+from typing import Any
 
 try:
     from dotenv import load_dotenv
@@ -21,22 +21,23 @@ try:
 except ImportError:
     pass
 
+from http import HTTPStatus
+
+from .browser.service import BrowserService
+from .cli_credentials import read_cli_credentials
 from .core.engine import AsyncEngine
 from .core.zone_manager import ZoneManager
-from .web_unlocker.service import WebUnlockerService
+from .crawler.service import CrawlerService
+from .datasets import DatasetsClient
+from .discover.models import DiscoverJob, DiscoverResult
+from .discover.service import DiscoverService
+from .exceptions import APIError, AuthenticationError, ValidationError
+from .models import ScrapeResult
+from .scraper_studio.service import ScraperStudioService
 from .scrapers.service import ScrapeService
 from .serp.service import SearchService
-from .crawler.service import CrawlerService
-from .scraper_studio.service import ScraperStudioService
-from .browser.service import BrowserService
-from .discover.service import DiscoverService
-from .discover.models import DiscoverResult, DiscoverJob
-from .datasets import DatasetsClient
-from .models import ScrapeResult
 from .types import AccountInfo
-from .cli_credentials import read_cli_credentials
-from http import HTTPStatus
-from .exceptions import ValidationError, AuthenticationError, APIError
+from .web_unlocker.service import WebUnlockerService
 
 
 class BrightDataClient:
@@ -75,20 +76,20 @@ class BrightDataClient:
 
     def __init__(
         self,
-        token: Optional[str] = None,
+        token: str | None = None,
         timeout: int = DEFAULT_TIMEOUT,
-        web_unlocker_zone: Optional[str] = None,
-        serp_zone: Optional[str] = None,
-        browser_username: Optional[str] = None,
-        browser_password: Optional[str] = None,
-        browser_host: Optional[str] = None,
-        browser_port: Optional[int] = None,
+        web_unlocker_zone: str | None = None,
+        serp_zone: str | None = None,
+        browser_username: str | None = None,
+        browser_password: str | None = None,
+        browser_host: str | None = None,
+        browser_port: int | None = None,
         auto_create_zones: bool = True,
         validate_token: bool = False,
-        rate_limit: Optional[float] = None,
+        rate_limit: float | None = None,
         rate_period: float = 1.0,
         ssl_verify: bool = True,
-        ssl_ca_cert: Optional[str] = None,
+        ssl_ca_cert: str | None = None,
     ):
         """
         Initialize Bright Data client.
@@ -153,17 +154,17 @@ class BrightDataClient:
             auth_source=self.auth_source,
         )
 
-        self._scrape_service: Optional[ScrapeService] = None
-        self._search_service: Optional[SearchService] = None
-        self._crawler_service: Optional[CrawlerService] = None
-        self._web_unlocker_service: Optional[WebUnlockerService] = None
-        self._datasets_client: Optional[DatasetsClient] = None
-        self._scraper_studio_service: Optional[ScraperStudioService] = None
-        self._browser_service: Optional[BrowserService] = None
-        self._discover_service: Optional[DiscoverService] = None
-        self._zone_manager: Optional[ZoneManager] = None
+        self._scrape_service: ScrapeService | None = None
+        self._search_service: SearchService | None = None
+        self._crawler_service: CrawlerService | None = None
+        self._web_unlocker_service: WebUnlockerService | None = None
+        self._datasets_client: DatasetsClient | None = None
+        self._scraper_studio_service: ScraperStudioService | None = None
+        self._browser_service: BrowserService | None = None
+        self._discover_service: DiscoverService | None = None
+        self._zone_manager: ZoneManager | None = None
         self._is_connected = False
-        self._account_info: Optional[Dict[str, Any]] = None
+        self._account_info: dict[str, Any] | None = None
         self._zones_ensured = False
 
         # Store for validation during __aenter__
@@ -182,7 +183,7 @@ class BrightDataClient:
                 "Use: async with BrightDataClient() as client: ..."
             )
 
-    def _load_token(self, token: Optional[str]) -> tuple:
+    def _load_token(self, token: str | None) -> tuple:
         """
         Resolve the API token and record where it came from.
 
@@ -542,9 +543,9 @@ class BrightDataClient:
         except (AuthenticationError, APIError):
             raise
         except Exception as e:
-            raise APIError(f"Unexpected error getting account info: {str(e)}")
+            raise APIError(f"Unexpected error getting account info: {e!s}")
 
-    async def list_zones(self) -> List[Dict[str, Any]]:
+    async def list_zones(self) -> list[dict[str, Any]]:
         """
         List all active zones in your Bright Data account.
 
@@ -597,16 +598,16 @@ class BrightDataClient:
 
     async def scrape_url(
         self,
-        url: Union[str, List[str]],
-        zone: Optional[str] = None,
+        url: str | list[str],
+        zone: str | None = None,
         country: str = "",
         response_format: str = "raw",
         method: str = "GET",
-        timeout: Optional[int] = None,
+        timeout: int | None = None,
         mode: str = "sync",
         poll_interval: int = 2,
         poll_timeout: int = 30,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Direct scraping method (flat API).
 
@@ -644,13 +645,13 @@ class BrightDataClient:
     async def discover(
         self,
         query: str,
-        intent: Optional[str] = None,
+        intent: str | None = None,
         include_content: bool = False,
-        country: Optional[str] = None,
-        city: Optional[str] = None,
-        language: Optional[str] = None,
-        filter_keywords: Optional[List[str]] = None,
-        num_results: Optional[int] = None,
+        country: str | None = None,
+        city: str | None = None,
+        language: str | None = None,
+        filter_keywords: list[str] | None = None,
+        num_results: int | None = None,
         format: str = "json",
         timeout: int = 60,
         poll_interval: int = 2,
@@ -708,13 +709,13 @@ class BrightDataClient:
     async def discover_trigger(
         self,
         query: str,
-        intent: Optional[str] = None,
+        intent: str | None = None,
         include_content: bool = False,
-        country: Optional[str] = None,
-        city: Optional[str] = None,
-        language: Optional[str] = None,
-        filter_keywords: Optional[List[str]] = None,
-        num_results: Optional[int] = None,
+        country: str | None = None,
+        city: str | None = None,
+        language: str | None = None,
+        filter_keywords: list[str] | None = None,
+        num_results: int | None = None,
         format: str = "json",
     ) -> DiscoverJob:
         """

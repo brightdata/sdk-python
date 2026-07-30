@@ -3,26 +3,26 @@
 All methods are async-only. For sync usage, use SyncBrightDataClient.
 """
 
-from typing import Union, List, Optional, Dict, Any
-from datetime import datetime, timezone
 import asyncio
+from datetime import datetime, timezone
+from http import HTTPStatus
+from typing import Any
 
-from .base import BaseAPI
-from .async_client import AsyncUnblockerClient
+from ..exceptions import APIError, ValidationError
 from ..models import ScrapeResult
+from ..utils.function_detection import get_caller_function_name
+from ..utils.url import extract_root_domain
 from ..utils.validation import (
+    validate_country_code,
+    validate_http_method,
+    validate_response_format,
+    validate_timeout,
     validate_url,
     validate_url_list,
     validate_zone_name,
-    validate_country_code,
-    validate_timeout,
-    validate_response_format,
-    validate_http_method,
 )
-from ..utils.url import extract_root_domain
-from ..utils.function_detection import get_caller_function_name
-from http import HTTPStatus
-from ..exceptions import ValidationError, APIError
+from .async_client import AsyncUnblockerClient
+from .base import BaseAPI
 
 
 class WebUnlockerService(BaseAPI):
@@ -58,16 +58,16 @@ class WebUnlockerService(BaseAPI):
 
     async def scrape_async(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         zone: str,
         country: str = "",
         response_format: str = "raw",
         method: str = "GET",
-        timeout: Optional[int] = None,
+        timeout: int | None = None,
         mode: str = "sync",
         poll_interval: int = 2,
         poll_timeout: int = 180,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Scrape URL(s) asynchronously using Web Unlocker API.
 
@@ -161,12 +161,12 @@ class WebUnlockerService(BaseAPI):
         country: str,
         response_format: str,
         method: str,
-        timeout: Optional[int],
+        timeout: int | None,
     ) -> ScrapeResult:
         """Scrape a single URL."""
         trigger_sent_at = datetime.now(timezone.utc)
 
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "zone": zone,
             "url": url,
             "format": response_format,
@@ -192,7 +192,7 @@ class WebUnlockerService(BaseAPI):
                         try:
                             data = await response.json()
                         except (ValueError, TypeError) as e:
-                            raise APIError(f"Failed to parse JSON response: {str(e)}")
+                            raise APIError(f"Failed to parse JSON response: {e!s}")
                     else:
                         data = await response.text()
 
@@ -233,7 +233,7 @@ class WebUnlockerService(BaseAPI):
                 success=False,
                 url=url,
                 status="error",
-                error=f"Unexpected error: {str(e)}",
+                error=f"Unexpected error: {e!s}",
                 method="web_unlocker",
                 trigger_sent_at=trigger_sent_at,
                 data_fetched_at=data_fetched_at,
@@ -241,13 +241,13 @@ class WebUnlockerService(BaseAPI):
 
     async def _scrape_multiple_async(
         self,
-        urls: List[str],
+        urls: list[str],
         zone: str,
         country: str,
         response_format: str,
         method: str,
-        timeout: Optional[int],
-    ) -> List[ScrapeResult]:
+        timeout: int | None,
+    ) -> list[ScrapeResult]:
         """Scrape multiple URLs concurrently."""
         tasks = [
             self._scrape_single_async(
@@ -263,7 +263,7 @@ class WebUnlockerService(BaseAPI):
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        processed_results: List[ScrapeResult] = []
+        processed_results: list[ScrapeResult] = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 processed_results.append(
@@ -271,7 +271,7 @@ class WebUnlockerService(BaseAPI):
                         success=False,
                         url=urls[i],
                         status="error",
-                        error=f"Exception: {str(result)}",
+                        error=f"Exception: {result!s}",
                         trigger_sent_at=datetime.now(timezone.utc),
                         data_fetched_at=datetime.now(timezone.utc),
                     )
@@ -315,7 +315,7 @@ class WebUnlockerService(BaseAPI):
                 success=False,
                 url=url,
                 status="error",
-                error=f"Failed to trigger async request: {str(e)}",
+                error=f"Failed to trigger async request: {e!s}",
                 method="web_unlocker",
                 trigger_sent_at=trigger_sent_at,
                 data_fetched_at=datetime.now(timezone.utc),
@@ -358,7 +358,7 @@ class WebUnlockerService(BaseAPI):
                     success=False,
                     url=url,
                     status="error",
-                    error=f"Failed to check status: {str(e)}",
+                    error=f"Failed to check status: {e!s}",
                     method="web_unlocker",
                     trigger_sent_at=trigger_sent_at,
                     data_fetched_at=datetime.now(timezone.utc),
@@ -393,7 +393,7 @@ class WebUnlockerService(BaseAPI):
                         success=False,
                         url=url,
                         status="error",
-                        error=f"Failed to fetch results: {str(e)}",
+                        error=f"Failed to fetch results: {e!s}",
                         method="web_unlocker",
                         trigger_sent_at=trigger_sent_at,
                         data_fetched_at=data_fetched_at,
@@ -415,14 +415,14 @@ class WebUnlockerService(BaseAPI):
 
     async def _scrape_multiple_async_unblocker(
         self,
-        urls: List[str],
+        urls: list[str],
         zone: str,
         country: str,
         response_format: str,
         method: str,
         poll_interval: int,
         poll_timeout: int,
-    ) -> List[ScrapeResult]:
+    ) -> list[ScrapeResult]:
         """Execute multiple scrapes using async unblocker."""
         tasks = [
             self._scrape_single_async_unblocker(
@@ -441,7 +441,7 @@ class WebUnlockerService(BaseAPI):
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Process results, converting exceptions to ScrapeResult errors
-        processed_results: List[ScrapeResult] = []
+        processed_results: list[ScrapeResult] = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 processed_results.append(
@@ -449,7 +449,7 @@ class WebUnlockerService(BaseAPI):
                         success=False,
                         url=urls[i],
                         status="error",
-                        error=f"Exception: {str(result)}",
+                        error=f"Exception: {result!s}",
                         method="web_unlocker",
                         trigger_sent_at=datetime.now(timezone.utc),
                         data_fetched_at=datetime.now(timezone.utc),

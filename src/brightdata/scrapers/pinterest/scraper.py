@@ -15,15 +15,15 @@ API Specifications:
 """
 
 import asyncio
-from typing import List, Any, Union
+from typing import Any
 
-from ..base import BaseWebScraper
-from ..registry import register
-from ..job import ScrapeJob
+from ...constants import DEFAULT_COST_PER_RECORD, DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM
 from ...models import ScrapeResult
-from ...utils.validation import validate_url, validate_url_list
 from ...utils.function_detection import get_caller_function_name
-from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM, DEFAULT_COST_PER_RECORD
+from ...utils.validation import validate_url, validate_url_list
+from ..base import BaseWebScraper
+from ..job import ScrapeJob
+from ..registry import register
 
 
 @register("pinterest")
@@ -66,9 +66,9 @@ class PinterestScraper(BaseWebScraper):
 
     async def posts(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Collect Pinterest post (pin) data by URL (async).
 
@@ -98,9 +98,9 @@ class PinterestScraper(BaseWebScraper):
 
     def posts_sync(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """Collect Pinterest post data by URL (sync)."""
 
         async def _run():
@@ -113,7 +113,7 @@ class PinterestScraper(BaseWebScraper):
 
     async def posts_trigger(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
     ) -> ScrapeJob:
         """Trigger Pinterest posts collection (manual control)."""
         url_list = [url] if isinstance(url, str) else url
@@ -129,7 +129,7 @@ class PinterestScraper(BaseWebScraper):
             cost_per_record=self.COST_PER_RECORD,
         )
 
-    def posts_trigger_sync(self, url: Union[str, List[str]]) -> ScrapeJob:
+    def posts_trigger_sync(self, url: str | list[str]) -> ScrapeJob:
         """Trigger Pinterest posts collection (sync)."""
         return asyncio.run(self.posts_trigger(url))
 
@@ -155,9 +155,9 @@ class PinterestScraper(BaseWebScraper):
 
     async def profiles(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Collect Pinterest profile data by URL (async).
 
@@ -187,9 +187,9 @@ class PinterestScraper(BaseWebScraper):
 
     def profiles_sync(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """Collect Pinterest profile data by URL (sync)."""
 
         async def _run():
@@ -202,7 +202,7 @@ class PinterestScraper(BaseWebScraper):
 
     async def profiles_trigger(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
     ) -> ScrapeJob:
         """Trigger Pinterest profiles collection (manual control)."""
         url_list = [url] if isinstance(url, str) else url
@@ -218,7 +218,7 @@ class PinterestScraper(BaseWebScraper):
             cost_per_record=self.COST_PER_RECORD,
         )
 
-    def profiles_trigger_sync(self, url: Union[str, List[str]]) -> ScrapeJob:
+    def profiles_trigger_sync(self, url: str | list[str]) -> ScrapeJob:
         """Trigger Pinterest profiles collection (sync)."""
         return asyncio.run(self.profiles_trigger(url))
 
@@ -244,10 +244,10 @@ class PinterestScraper(BaseWebScraper):
 
     async def _scrape_urls(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         dataset_id: str,
         timeout: int,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """Scrape URLs using standard async workflow."""
         is_single = isinstance(url, str)
         url_list = [url] if is_single else url

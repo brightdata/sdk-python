@@ -10,12 +10,12 @@ Uses standard async workflow (trigger/poll/fetch).
 """
 
 import asyncio
-from typing import Union, List, Optional, Dict, Any
+from typing import Any
 
-from ...models import ScrapeResult
+from ...constants import COST_PER_RECORD_CHATGPT, DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT
 from ...exceptions import ValidationError
+from ...models import ScrapeResult
 from ...utils.function_detection import get_caller_function_name
-from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT, COST_PER_RECORD_CHATGPT
 from ..base import ScraperCore
 
 
@@ -61,10 +61,10 @@ class ChatGPTSearchService(ScraperCore):
 
     async def prompt(
         self,
-        prompt: Union[str, List[str]],
-        country: Optional[Union[str, List[str]]] = None,
-        secondaryPrompt: Optional[Union[str, List[str]]] = None,
-        webSearch: Optional[Union[bool, List[bool]]] = None,
+        prompt: str | list[str],
+        country: str | list[str] | None = None,
+        secondaryPrompt: str | list[str] | None = None,
+        webSearch: bool | list[bool] | None = None,
         timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
@@ -120,7 +120,7 @@ class ChatGPTSearchService(ScraperCore):
         # Build payload (URL fixed to https://chatgpt.com per spec)
         payload = []
         for i in range(batch_size):
-            item: Dict[str, Any] = {
+            item: dict[str, Any] = {
                 "url": "https://chatgpt.com",  # Fixed URL per API spec
                 "prompt": prompts[i],
                 "country": countries[i].upper() if countries[i] else "US",
@@ -139,10 +139,10 @@ class ChatGPTSearchService(ScraperCore):
 
     def prompt_sync(
         self,
-        prompt: Union[str, List[str]],
-        country: Optional[Union[str, List[str]]] = None,
-        secondaryPrompt: Optional[Union[str, List[str]]] = None,
-        webSearch: Optional[Union[bool, List[bool]]] = None,
+        prompt: str | list[str],
+        country: str | list[str] | None = None,
+        secondaryPrompt: str | list[str] | None = None,
+        webSearch: bool | list[bool] | None = None,
         timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
@@ -174,8 +174,8 @@ class ChatGPTSearchService(ScraperCore):
     # ============================================================================
 
     def _normalize_param(
-        self, param: Optional[Union[Any, List[Any]]], target_length: int, default_value: Any = None
-    ) -> List[Any]:
+        self, param: Any | list[Any] | None, target_length: int, default_value: Any = None
+    ) -> list[Any]:
         """
         Normalize parameter to list of specified length.
 
@@ -206,7 +206,7 @@ class ChatGPTSearchService(ScraperCore):
 
     async def _execute_async_mode(
         self,
-        payload: List[Dict[str, Any]],
+        payload: list[dict[str, Any]],
         timeout: int,
     ) -> ScrapeResult:
         """Execute using standard async workflow (/trigger endpoint with polling)."""

@@ -9,10 +9,10 @@ Handles all HTTP communication with Bright Data's DCA (Data Collection Automatio
 Follows the same pattern as DatasetAPIClient and AsyncUnblockerClient.
 """
 
-from typing import Dict, List, Any
+from http import HTTPStatus
+from typing import Any
 
 from ..core.engine import AsyncEngine
-from http import HTTPStatus
 from ..exceptions import APIError, DataNotReadyError
 
 BASE_URL = "https://api.brightdata.com"
@@ -43,7 +43,7 @@ class ScraperStudioAPIClient:
     async def trigger_immediate(
         self,
         collector: str,
-        input: Dict[str, Any],
+        input: dict[str, Any],
     ) -> str:
         """
         Trigger a real-time async scrape.
@@ -78,7 +78,7 @@ class ScraperStudioAPIClient:
     async def fetch_immediate_result(
         self,
         response_id: str,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Fetch results from a real-time async scrape.
 
@@ -110,7 +110,7 @@ class ScraperStudioAPIClient:
     async def get_status(
         self,
         job_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Get job status/log.
 

@@ -6,7 +6,7 @@ Dataset ID: gd_l1vikf2h1a4t6x8qzu
 See FIELDS dict for all filterable fields with descriptions.
 """
 
-from typing import TYPE_CHECKING, Dict, Any
+from typing import TYPE_CHECKING, Any
 
 from ..base import BaseDataset
 
@@ -34,7 +34,7 @@ class IMDBMovies(BaseDataset):
     NAME = "imdb_movies"
 
     # All available fields with metadata
-    FIELDS: Dict[str, Dict[str, Any]] = {
+    FIELDS: dict[str, dict[str, Any]] = {
         # Core identification
         "id": {
             "type": "text",

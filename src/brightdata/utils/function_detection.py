@@ -6,10 +6,9 @@ useful for SDK monitoring and analytics.
 """
 
 import inspect
-from typing import Optional
 
 
-def get_caller_function_name(skip_frames: int = 1) -> Optional[str]:
+def get_caller_function_name(skip_frames: int = 1) -> str | None:
     """
     Get the name of the calling function.
 

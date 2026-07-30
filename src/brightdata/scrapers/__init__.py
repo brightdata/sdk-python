@@ -1,8 +1,8 @@
 """Specialized platform scrapers."""
 
 from .base import BaseWebScraper
-from .registry import register, get_scraper_for, get_registered_platforms, is_platform_supported
 from .job import ScrapeJob
+from .registry import get_registered_platforms, get_scraper_for, is_platform_supported, register
 
 # Import scrapers to trigger registration
 try:
@@ -77,24 +77,24 @@ except ImportError:
 
 
 __all__ = [
-    "BaseWebScraper",
-    "ScrapeJob",
-    "register",
-    "get_scraper_for",
-    "get_registered_platforms",
-    "is_platform_supported",
     "AmazonScraper",
-    "LinkedInScraper",
+    "BaseWebScraper",
     "ChatGPTScraper",
+    "DigiKeyScraper",
     "FacebookScraper",
     "InstagramScraper",
     "InstagramSearchScraper",
+    "LinkedInScraper",
     "PerplexityScraper",
+    "RedditScraper",
+    "ScrapeJob",
     "TikTokScraper",
     "TikTokSearchScraper",
+    "XScraper",
     "YouTubeScraper",
     "YouTubeSearchScraper",
-    "DigiKeyScraper",
-    "RedditScraper",
-    "XScraper",
+    "get_registered_platforms",
+    "get_scraper_for",
+    "is_platform_supported",
+    "register",
 ]

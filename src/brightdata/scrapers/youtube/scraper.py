@@ -18,15 +18,15 @@ API Specifications:
 """
 
 import asyncio
-from typing import List, Any, Optional, Union
+from typing import Any
 
-from ..base import BaseWebScraper
-from ..registry import register
-from ..job import ScrapeJob
+from ...constants import COST_PER_RECORD_YOUTUBE, DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM
 from ...models import ScrapeResult
-from ...utils.validation import validate_url, validate_url_list
 from ...utils.function_detection import get_caller_function_name
-from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM, COST_PER_RECORD_YOUTUBE
+from ...utils.validation import validate_url, validate_url_list
+from ..base import BaseWebScraper
+from ..job import ScrapeJob
+from ..registry import register
 
 
 @register("youtube")
@@ -77,11 +77,11 @@ class YouTubeScraper(BaseWebScraper):
 
     async def videos(
         self,
-        url: Union[str, List[str]],
-        country: Optional[str] = None,
-        transcription_language: Optional[str] = None,
+        url: str | list[str],
+        country: str | None = None,
+        transcription_language: str | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Collect YouTube video data by URL (async).
 
@@ -135,11 +135,11 @@ class YouTubeScraper(BaseWebScraper):
 
     def videos_sync(
         self,
-        url: Union[str, List[str]],
-        country: Optional[str] = None,
-        transcription_language: Optional[str] = None,
+        url: str | list[str],
+        country: str | None = None,
+        transcription_language: str | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """Collect YouTube video data by URL (sync)."""
 
         async def _run():
@@ -152,9 +152,9 @@ class YouTubeScraper(BaseWebScraper):
 
     async def videos_trigger(
         self,
-        url: Union[str, List[str]],
-        country: Optional[str] = None,
-        transcription_language: Optional[str] = None,
+        url: str | list[str],
+        country: str | None = None,
+        transcription_language: str | None = None,
     ) -> ScrapeJob:
         """Trigger YouTube videos collection (manual control)."""
         url_list = [url] if isinstance(url, str) else url
@@ -178,9 +178,9 @@ class YouTubeScraper(BaseWebScraper):
 
     def videos_trigger_sync(
         self,
-        url: Union[str, List[str]],
-        country: Optional[str] = None,
-        transcription_language: Optional[str] = None,
+        url: str | list[str],
+        country: str | None = None,
+        transcription_language: str | None = None,
     ) -> ScrapeJob:
         """Trigger YouTube videos collection (sync)."""
         return asyncio.run(self.videos_trigger(url, country, transcription_language))
@@ -207,9 +207,9 @@ class YouTubeScraper(BaseWebScraper):
 
     async def channels(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Collect YouTube channel/profile data by URL (async).
 
@@ -253,9 +253,9 @@ class YouTubeScraper(BaseWebScraper):
 
     def channels_sync(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """Collect YouTube channel data by URL (sync)."""
 
         async def _run():
@@ -266,7 +266,7 @@ class YouTubeScraper(BaseWebScraper):
 
     # --- Channels Trigger/Status/Fetch ---
 
-    async def channels_trigger(self, url: Union[str, List[str]]) -> ScrapeJob:
+    async def channels_trigger(self, url: str | list[str]) -> ScrapeJob:
         """Trigger YouTube channels collection (manual control)."""
         url_list = [url] if isinstance(url, str) else url
         payload = [{"url": u} for u in url_list]
@@ -281,7 +281,7 @@ class YouTubeScraper(BaseWebScraper):
             cost_per_record=self.COST_PER_RECORD,
         )
 
-    def channels_trigger_sync(self, url: Union[str, List[str]]) -> ScrapeJob:
+    def channels_trigger_sync(self, url: str | list[str]) -> ScrapeJob:
         """Trigger YouTube channels collection (sync)."""
         return asyncio.run(self.channels_trigger(url))
 
@@ -307,12 +307,12 @@ class YouTubeScraper(BaseWebScraper):
 
     async def comments(
         self,
-        url: Union[str, List[str]],
-        num_of_comments: Optional[int] = None,
-        load_replies: Optional[bool] = None,
-        sort_by: Optional[str] = None,
+        url: str | list[str],
+        num_of_comments: int | None = None,
+        load_replies: bool | None = None,
+        sort_by: str | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Collect YouTube comments from video URL(s) (async).
 
@@ -370,12 +370,12 @@ class YouTubeScraper(BaseWebScraper):
 
     def comments_sync(
         self,
-        url: Union[str, List[str]],
-        num_of_comments: Optional[int] = None,
-        load_replies: Optional[bool] = None,
-        sort_by: Optional[str] = None,
+        url: str | list[str],
+        num_of_comments: int | None = None,
+        load_replies: bool | None = None,
+        sort_by: str | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """Collect YouTube comments (sync)."""
 
         async def _run():
@@ -388,10 +388,10 @@ class YouTubeScraper(BaseWebScraper):
 
     async def comments_trigger(
         self,
-        url: Union[str, List[str]],
-        num_of_comments: Optional[int] = None,
-        load_replies: Optional[bool] = None,
-        sort_by: Optional[str] = None,
+        url: str | list[str],
+        num_of_comments: int | None = None,
+        load_replies: bool | None = None,
+        sort_by: str | None = None,
     ) -> ScrapeJob:
         """Trigger YouTube comments collection (manual control)."""
         url_list = [url] if isinstance(url, str) else url
@@ -419,10 +419,10 @@ class YouTubeScraper(BaseWebScraper):
 
     def comments_trigger_sync(
         self,
-        url: Union[str, List[str]],
-        num_of_comments: Optional[int] = None,
-        load_replies: Optional[bool] = None,
-        sort_by: Optional[str] = None,
+        url: str | list[str],
+        num_of_comments: int | None = None,
+        load_replies: bool | None = None,
+        sort_by: str | None = None,
     ) -> ScrapeJob:
         """Trigger YouTube comments collection (sync)."""
         return asyncio.run(self.comments_trigger(url, num_of_comments, load_replies, sort_by))

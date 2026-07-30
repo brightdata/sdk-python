@@ -7,12 +7,12 @@ with AI-powered relevance ranking based on stated intent.
 
 import asyncio
 import time
-from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
+from typing import Any
 
 from ..core.engine import AsyncEngine
 from ..exceptions import APIError
-from .models import DiscoverResult, DiscoverJob
+from .models import DiscoverJob, DiscoverResult
 
 
 class DiscoverService:
@@ -39,13 +39,13 @@ class DiscoverService:
     async def search(
         self,
         query: str,
-        intent: Optional[str] = None,
+        intent: str | None = None,
         include_content: bool = False,
-        country: Optional[str] = None,
-        city: Optional[str] = None,
-        language: Optional[str] = None,
-        filter_keywords: Optional[List[str]] = None,
-        num_results: Optional[int] = None,
+        country: str | None = None,
+        city: str | None = None,
+        language: str | None = None,
+        filter_keywords: list[str] | None = None,
+        num_results: int | None = None,
         format: str = "json",
         timeout: int = 60,
         poll_interval: int = 2,
@@ -110,13 +110,13 @@ class DiscoverService:
     async def trigger(
         self,
         query: str,
-        intent: Optional[str] = None,
+        intent: str | None = None,
         include_content: bool = False,
-        country: Optional[str] = None,
-        city: Optional[str] = None,
-        language: Optional[str] = None,
-        filter_keywords: Optional[List[str]] = None,
-        num_results: Optional[int] = None,
+        country: str | None = None,
+        city: str | None = None,
+        language: str | None = None,
+        filter_keywords: list[str] | None = None,
+        num_results: int | None = None,
         format: str = "json",
     ) -> DiscoverJob:
         """
@@ -173,7 +173,7 @@ class DiscoverService:
         response_data = await self._poll_once(task_id)
         return response_data.get("status", "processing")
 
-    async def fetch(self, task_id: str) -> List[Dict[str, Any]]:
+    async def fetch(self, task_id: str) -> list[dict[str, Any]]:
         """Fetch a discover task's results by task_id. Call after status == 'done'."""
         response_data = await self._poll_once(task_id)
         return response_data.get("results", [])
@@ -219,17 +219,17 @@ class DiscoverService:
     async def _trigger(
         self,
         query: str,
-        intent: Optional[str] = None,
+        intent: str | None = None,
         include_content: bool = False,
-        country: Optional[str] = None,
-        city: Optional[str] = None,
-        language: Optional[str] = None,
-        filter_keywords: Optional[List[str]] = None,
-        num_results: Optional[int] = None,
+        country: str | None = None,
+        city: str | None = None,
+        language: str | None = None,
+        filter_keywords: list[str] | None = None,
+        num_results: int | None = None,
         format: str = "json",
     ) -> str:
         """POST /discover, return task_id."""
-        payload: Dict[str, Any] = {"query": query}
+        payload: dict[str, Any] = {"query": query}
 
         if intent:
             payload["intent"] = intent
@@ -262,7 +262,7 @@ class DiscoverService:
                 raise APIError("No task_id in discover response")
             return task_id
 
-    async def _poll_once(self, task_id: str) -> Dict[str, Any]:
+    async def _poll_once(self, task_id: str) -> dict[str, Any]:
         """GET /discover?task_id=<task_id>, return response data."""
         async with self._engine.get("/discover", params={"task_id": task_id}) as response:
             if response.status >= 400:
@@ -275,7 +275,7 @@ class DiscoverService:
 
     async def _poll_until_done(
         self, task_id: str, timeout: int, poll_interval: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Poll GET /discover?task_id=<task_id> until done or timeout."""
         start = time.time()
 

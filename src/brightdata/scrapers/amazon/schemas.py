@@ -6,41 +6,41 @@ These are optional - you can still use dict access via result.data.
 """
 
 from dataclasses import dataclass
-from typing import Optional, List, Dict, Any
+from typing import Any
 
 
 @dataclass
 class SubcategoryRank:
     """Amazon subcategory ranking info."""
 
-    subcategory_name: Optional[str] = None
-    subcategory_rank: Optional[int] = None
+    subcategory_name: str | None = None
+    subcategory_rank: int | None = None
 
 
 @dataclass
 class ProductDetail:
     """Product detail key-value pair."""
 
-    type: Optional[str] = None
-    value: Optional[str] = None
+    type: str | None = None
+    value: str | None = None
 
 
 @dataclass
 class OtherSellerPrice:
     """Price from other sellers."""
 
-    price: Optional[float] = None
-    price_per_unit: Optional[float] = None
-    unit: Optional[str] = None
-    seller_name: Optional[str] = None
-    seller_url: Optional[str] = None
+    price: float | None = None
+    price_per_unit: float | None = None
+    unit: str | None = None
+    seller_name: str | None = None
+    seller_url: str | None = None
 
 
 @dataclass
 class CustomersSay:
     """Customer sentiment keywords."""
 
-    keywords: Optional[Dict[str, Any]] = None
+    keywords: dict[str, Any] | None = None
 
 
 @dataclass
@@ -60,109 +60,109 @@ class AmazonProductResult:
     """
 
     # Basic product info
-    title: Optional[str] = None
-    brand: Optional[str] = None
-    description: Optional[str] = None
-    manufacturer: Optional[str] = None
-    department: Optional[str] = None
-    model_number: Optional[str] = None
+    title: str | None = None
+    brand: str | None = None
+    description: str | None = None
+    manufacturer: str | None = None
+    department: str | None = None
+    model_number: str | None = None
 
     # Identifiers
-    asin: Optional[str] = None
-    parent_asin: Optional[str] = None
-    upc: Optional[str] = None
+    asin: str | None = None
+    parent_asin: str | None = None
+    upc: str | None = None
 
     # URLs
-    url: Optional[str] = None
-    domain: Optional[str] = None
-    image_url: Optional[str] = None
-    image: Optional[str] = None
-    seller_url: Optional[str] = None
-    store_url: Optional[str] = None
+    url: str | None = None
+    domain: str | None = None
+    image_url: str | None = None
+    image: str | None = None
+    seller_url: str | None = None
+    store_url: str | None = None
 
     # Pricing
-    currency: Optional[str] = None
-    final_price_high: Optional[float] = None
-    prices_breakdown: Optional[List[Dict[str, Any]]] = None
-    other_sellers_prices: Optional[List[Dict[str, Any]]] = None
-    coupon: Optional[str] = None
-    coupon_description: Optional[str] = None
+    currency: str | None = None
+    final_price_high: float | None = None
+    prices_breakdown: list[dict[str, Any]] | None = None
+    other_sellers_prices: list[dict[str, Any]] | None = None
+    coupon: str | None = None
+    coupon_description: str | None = None
 
     # Ratings and reviews
-    rating: Optional[float] = None
-    reviews_count: Optional[int] = None
-    top_review: Optional[str] = None
-    customer_says: Optional[str] = None
-    customers_say: Optional[Dict[str, Any]] = None
-    answered_questions: Optional[int] = None
+    rating: float | None = None
+    reviews_count: int | None = None
+    top_review: str | None = None
+    customer_says: str | None = None
+    customers_say: dict[str, Any] | None = None
+    answered_questions: int | None = None
 
     # Seller info
-    seller_name: Optional[str] = None
-    seller_id: Optional[str] = None
-    number_of_sellers: Optional[int] = None
-    ships_from: Optional[str] = None
-    buybox_seller_rating: Optional[float] = None
-    inactive_buy_box: Optional[bool] = None
+    seller_name: str | None = None
+    seller_id: str | None = None
+    number_of_sellers: int | None = None
+    ships_from: str | None = None
+    buybox_seller_rating: float | None = None
+    inactive_buy_box: bool | None = None
 
     # Categories and rankings
-    categories: Optional[List[str]] = None
-    root_bs_category: Optional[str] = None
-    bs_category: Optional[str] = None
-    root_bs_rank: Optional[int] = None
-    bs_rank: Optional[int] = None
-    subcategory_rank: Optional[List[Dict[str, Any]]] = None
+    categories: list[str] | None = None
+    root_bs_category: str | None = None
+    bs_category: str | None = None
+    root_bs_rank: int | None = None
+    bs_rank: int | None = None
+    subcategory_rank: list[dict[str, Any]] | None = None
 
     # Product details
-    features: Optional[List[str]] = None
-    product_details: Optional[List[Dict[str, Any]]] = None
-    product_description: Optional[List[Dict[str, Any]]] = None
-    product_dimensions: Optional[str] = None
-    item_weight: Optional[str] = None
-    country_of_origin: Optional[str] = None
-    date_first_available: Optional[str] = None
-    language: Optional[str] = None
+    features: list[str] | None = None
+    product_details: list[dict[str, Any]] | None = None
+    product_description: list[dict[str, Any]] | None = None
+    product_dimensions: str | None = None
+    item_weight: str | None = None
+    country_of_origin: str | None = None
+    date_first_available: str | None = None
+    language: str | None = None
 
     # Media
-    images: Optional[List[str]] = None
-    images_count: Optional[int] = None
-    video: Optional[bool] = None
-    videos: Optional[List[str]] = None
-    video_count: Optional[int] = None
-    downloadable_videos: Optional[List[str]] = None
+    images: list[str] | None = None
+    images_count: int | None = None
+    video: bool | None = None
+    videos: list[str] | None = None
+    video_count: int | None = None
+    downloadable_videos: list[str] | None = None
 
     # Availability and badges
-    is_available: Optional[bool] = None
-    max_quantity_available: Optional[int] = None
-    amazon_choice: Optional[bool] = None
-    amazon_prime: Optional[bool] = None
-    badge: Optional[str] = None
-    all_badges: Optional[List[str]] = None
-    premium_brand: Optional[bool] = None
-    climate_pledge_friendly: Optional[bool] = None
+    is_available: bool | None = None
+    max_quantity_available: int | None = None
+    amazon_choice: bool | None = None
+    amazon_prime: bool | None = None
+    badge: str | None = None
+    all_badges: list[str] | None = None
+    premium_brand: bool | None = None
+    climate_pledge_friendly: bool | None = None
 
     # Additional content
-    plus_content: Optional[bool] = None
-    from_the_brand: Optional[List[str]] = None
-    editorial_reviews: Optional[str] = None
-    about_the_author: Optional[str] = None
-    sustainability_features: Optional[str] = None
-    return_policy: Optional[str] = None
-    variations_values: Optional[Dict[str, Any]] = None
+    plus_content: bool | None = None
+    from_the_brand: list[str] | None = None
+    editorial_reviews: str | None = None
+    about_the_author: str | None = None
+    sustainability_features: str | None = None
+    return_policy: str | None = None
+    variations_values: dict[str, Any] | None = None
 
     # Location
-    zipcode: Optional[str] = None
-    city: Optional[str] = None
+    zipcode: str | None = None
+    city: str | None = None
 
     # Sponsored/advertising
-    sponsored: Optional[bool] = None
-    sponsered: Optional[bool] = None  # Note: typo exists in API response
+    sponsored: bool | None = None
+    sponsered: bool | None = None  # Note: typo exists in API response
 
     # Metadata
-    timestamp: Optional[str] = None
-    input: Optional[Dict[str, Any]] = None
+    timestamp: str | None = None
+    input: dict[str, Any] | None = None
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "AmazonProductResult":
+    def from_dict(cls, data: dict[str, Any]) -> "AmazonProductResult":
         """
         Create AmazonProductResult from dictionary.
 
@@ -183,7 +183,7 @@ class AmazonProductResult:
 
         return cls(**filtered_data)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert to dictionary, excluding None values.
 

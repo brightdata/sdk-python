@@ -11,26 +11,26 @@ Two kinds of tests:
 """
 
 import asyncio
-
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
 from brightdata import SyncBrightDataClient
-from brightdata.models import ScrapeResult
 from brightdata.discover.models import DiscoverSnapshot
+from brightdata.models import ScrapeResult
 from brightdata.scrapers.service import ScrapeService
 from brightdata.serp.service import SearchService
 from brightdata.sync_client import (
-    SyncDatasetsClient,
     SyncDataset,
+    SyncDatasetsClient,
+    SyncDigiKeyScraper,
+    SyncInstagramSearchScraper,
+    SyncPerplexityScraper,
     SyncRedditScraper,
     SyncTikTokScraper,
-    SyncYouTubeScraper,
-    SyncPerplexityScraper,
-    SyncDigiKeyScraper,
     SyncTikTokSearchScraper,
+    SyncYouTubeScraper,
     SyncYouTubeSearchScraper,
-    SyncInstagramSearchScraper,
 )
 
 

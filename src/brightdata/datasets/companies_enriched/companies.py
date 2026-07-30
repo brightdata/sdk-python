@@ -13,7 +13,7 @@ Multi-source company information combining data from:
 Use get_metadata() to discover all 336+ available fields dynamically.
 """
 
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING
 
 from ..base import BaseDataset
 
@@ -73,9 +73,9 @@ class CompaniesEnriched(BaseDataset):
 
     def __init__(self, engine: "AsyncEngine"):
         super().__init__(engine)
-        self._fields_by_source: Optional[Dict[str, List[str]]] = None
+        self._fields_by_source: dict[str, list[str]] | None = None
 
-    async def get_fields_by_source(self, source: str, include_inactive: bool = False) -> List[str]:
+    async def get_fields_by_source(self, source: str, include_inactive: bool = False) -> list[str]:
         """
         Get field names from a specific data source.
 
@@ -107,7 +107,7 @@ class CompaniesEnriched(BaseDataset):
 
         return sorted(fields)
 
-    async def get_all_sources(self) -> Dict[str, List[str]]:
+    async def get_all_sources(self) -> dict[str, list[str]]:
         """
         Get all fields grouped by data source.
 
@@ -123,7 +123,7 @@ class CompaniesEnriched(BaseDataset):
             return self._fields_by_source
 
         metadata = await self.get_metadata()
-        result: Dict[str, List[str]] = {source: [] for source in SOURCES.values()}
+        result: dict[str, list[str]] = {source: [] for source in SOURCES.values()}
         result["other"] = []  # Fields without recognized suffix
 
         for name, field_info in metadata.fields.items():
@@ -147,7 +147,7 @@ class CompaniesEnriched(BaseDataset):
         self._fields_by_source = result
         return result
 
-    async def get_common_fields(self) -> Dict[str, Dict[str, str]]:
+    async def get_common_fields(self) -> dict[str, dict[str, str]]:
         """
         Get common field types across sources.
 
@@ -232,7 +232,7 @@ class CompaniesEnriched(BaseDataset):
         metadata = await self.get_metadata()
         available_fields = set(metadata.fields.keys())
 
-        result: Dict[str, Dict[str, str]] = {}
+        result: dict[str, dict[str, str]] = {}
         for concept, field_names in common_patterns.items():
             result[concept] = {}
             for field_name in field_names:
@@ -245,7 +245,7 @@ class CompaniesEnriched(BaseDataset):
 
         return result
 
-    async def search_fields(self, keyword: str) -> List[str]:
+    async def search_fields(self, keyword: str) -> list[str]:
         """
         Search for fields containing a keyword.
 
@@ -264,14 +264,16 @@ class CompaniesEnriched(BaseDataset):
 
         matches = []
         for name, field_info in metadata.fields.items():
-            if keyword_lower in name.lower():
-                matches.append(name)
-            elif field_info.description and keyword_lower in field_info.description.lower():
+            if (
+                keyword_lower in name.lower()
+                or field_info.description
+                and keyword_lower in field_info.description.lower()
+            ):
                 matches.append(name)
 
         return sorted(matches)
 
-    def _get_suffix_for_source(self, source: str) -> Optional[str]:
+    def _get_suffix_for_source(self, source: str) -> str | None:
         """Get the field suffix for a source name."""
         source_lower = source.lower()
         for suffix, name in SOURCES.items():
@@ -280,7 +282,7 @@ class CompaniesEnriched(BaseDataset):
         return None
 
     @staticmethod
-    def get_source_for_field(field_name: str) -> Optional[str]:
+    def get_source_for_field(field_name: str) -> str | None:
         """
         Get the data source for a field name.
 
@@ -296,7 +298,7 @@ class CompaniesEnriched(BaseDataset):
         return None
 
     @classmethod
-    def list_sources(cls) -> List[str]:
+    def list_sources(cls) -> list[str]:
         """
         List all available data sources.
 

@@ -23,15 +23,15 @@ For search/discovery operations, see search.py which contains LinkedInSearchScra
 """
 
 import asyncio
-from typing import Union, List, Any
+from typing import Any
 
-from ..base import BaseWebScraper
-from ..registry import register
-from ..job import ScrapeJob
+from ...constants import COST_PER_RECORD_LINKEDIN, DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT
 from ...models import ScrapeResult
-from ...utils.validation import validate_url, validate_url_list
 from ...utils.function_detection import get_caller_function_name
-from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT, COST_PER_RECORD_LINKEDIN
+from ...utils.validation import validate_url, validate_url_list
+from ..base import BaseWebScraper
+from ..job import ScrapeJob
+from ..registry import register
 
 
 @register("linkedin")
@@ -77,9 +77,9 @@ class LinkedInScraper(BaseWebScraper):
 
     async def posts(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_SHORT,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Scrape LinkedIn posts from URLs.
 
@@ -108,9 +108,9 @@ class LinkedInScraper(BaseWebScraper):
 
     def posts_sync(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_SHORT,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Scrape LinkedIn posts from URLs (sync version).
 
@@ -127,14 +127,14 @@ class LinkedInScraper(BaseWebScraper):
     # POSTS TRIGGER/STATUS/FETCH (Manual Control)
     # ============================================================================
 
-    async def posts_trigger(self, url: Union[str, List[str]]) -> ScrapeJob:
+    async def posts_trigger(self, url: str | list[str]) -> ScrapeJob:
         """Trigger LinkedIn posts scrape (manual control)."""
         sdk_function = get_caller_function_name()
         return await self._trigger_scrape_async(
             urls=url, dataset_id=self.DATASET_ID_POSTS, sdk_function=sdk_function or "posts_trigger"
         )
 
-    def posts_trigger_sync(self, url: Union[str, List[str]]) -> ScrapeJob:
+    def posts_trigger_sync(self, url: str | list[str]) -> ScrapeJob:
         """Trigger LinkedIn posts scrape (sync version)."""
         return asyncio.run(self.posts_trigger(url))
 
@@ -160,9 +160,9 @@ class LinkedInScraper(BaseWebScraper):
 
     async def jobs(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_SHORT,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Scrape LinkedIn jobs from URLs.
 
@@ -190,9 +190,9 @@ class LinkedInScraper(BaseWebScraper):
 
     def jobs_sync(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_SHORT,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """Scrape LinkedIn jobs from URLs (sync version)."""
 
         async def _run():
@@ -205,14 +205,14 @@ class LinkedInScraper(BaseWebScraper):
     # JOBS TRIGGER/STATUS/FETCH (Manual Control)
     # ============================================================================
 
-    async def jobs_trigger(self, url: Union[str, List[str]]) -> ScrapeJob:
+    async def jobs_trigger(self, url: str | list[str]) -> ScrapeJob:
         """Trigger LinkedIn jobs scrape (manual control)."""
         sdk_function = get_caller_function_name()
         return await self._trigger_scrape_async(
             urls=url, dataset_id=self.DATASET_ID_JOBS, sdk_function=sdk_function or "jobs_trigger"
         )
 
-    def jobs_trigger_sync(self, url: Union[str, List[str]]) -> ScrapeJob:
+    def jobs_trigger_sync(self, url: str | list[str]) -> ScrapeJob:
         """Trigger LinkedIn jobs scrape (sync version)."""
         return asyncio.run(self.jobs_trigger(url))
 
@@ -238,9 +238,9 @@ class LinkedInScraper(BaseWebScraper):
 
     async def profiles(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_SHORT,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Scrape LinkedIn profiles from URLs.
 
@@ -268,9 +268,9 @@ class LinkedInScraper(BaseWebScraper):
 
     def profiles_sync(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_SHORT,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """Scrape LinkedIn profiles from URLs (sync version)."""
 
         async def _run():
@@ -283,14 +283,14 @@ class LinkedInScraper(BaseWebScraper):
     # PROFILES TRIGGER/STATUS/FETCH (Manual Control)
     # ============================================================================
 
-    async def profiles_trigger(self, url: Union[str, List[str]]) -> ScrapeJob:
+    async def profiles_trigger(self, url: str | list[str]) -> ScrapeJob:
         """Trigger LinkedIn profiles scrape (manual control)."""
         sdk_function = get_caller_function_name()
         return await self._trigger_scrape_async(
             urls=url, sdk_function=sdk_function or "profiles_trigger"
         )
 
-    def profiles_trigger_sync(self, url: Union[str, List[str]]) -> ScrapeJob:
+    def profiles_trigger_sync(self, url: str | list[str]) -> ScrapeJob:
         """Trigger LinkedIn profiles scrape (sync version)."""
         return asyncio.run(self.profiles_trigger(url))
 
@@ -316,9 +316,9 @@ class LinkedInScraper(BaseWebScraper):
 
     async def companies(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_SHORT,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Scrape LinkedIn companies from URLs.
 
@@ -348,9 +348,9 @@ class LinkedInScraper(BaseWebScraper):
 
     def companies_sync(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_SHORT,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """Scrape LinkedIn companies from URLs (sync version)."""
 
         async def _run():
@@ -363,7 +363,7 @@ class LinkedInScraper(BaseWebScraper):
     # COMPANIES TRIGGER/STATUS/FETCH (Manual Control)
     # ============================================================================
 
-    async def companies_trigger(self, url: Union[str, List[str]]) -> ScrapeJob:
+    async def companies_trigger(self, url: str | list[str]) -> ScrapeJob:
         """Trigger LinkedIn companies scrape (manual control)."""
         sdk_function = get_caller_function_name()
         return await self._trigger_scrape_async(
@@ -372,7 +372,7 @@ class LinkedInScraper(BaseWebScraper):
             sdk_function=sdk_function or "companies_trigger",
         )
 
-    def companies_trigger_sync(self, url: Union[str, List[str]]) -> ScrapeJob:
+    def companies_trigger_sync(self, url: str | list[str]) -> ScrapeJob:
         """Trigger LinkedIn companies scrape (sync version)."""
         return asyncio.run(self.companies_trigger(url))
 
@@ -398,10 +398,10 @@ class LinkedInScraper(BaseWebScraper):
 
     async def _scrape_urls(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         dataset_id: str,
         timeout: int,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Scrape URLs using standard async workflow (trigger/poll/fetch).
 

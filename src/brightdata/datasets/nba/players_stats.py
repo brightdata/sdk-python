@@ -6,7 +6,7 @@ Dataset ID: gd_lrqirmftwxxatiorf
 See FIELDS dict for all filterable fields with descriptions.
 """
 
-from typing import TYPE_CHECKING, Dict, Any
+from typing import TYPE_CHECKING, Any
 
 from ..base import BaseDataset
 
@@ -34,7 +34,7 @@ class NBAPlayersStats(BaseDataset):
     NAME = "nba_players_stats"
 
     # All available fields with metadata
-    FIELDS: Dict[str, Dict[str, Any]] = {
+    FIELDS: dict[str, dict[str, Any]] = {
         # Player identification
         "url": {
             "type": "url",

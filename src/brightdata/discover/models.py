@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import time
 from dataclasses import dataclass, field
-from typing import Any, Optional, List, Dict, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ..models import BaseResult
 
@@ -31,11 +31,11 @@ class DiscoverResult(BaseResult):
     """
 
     query: str = ""
-    intent: Optional[str] = None
-    data: Optional[List[Dict[str, Any]]] = None
-    duration_seconds: Optional[float] = None
-    total_results: Optional[int] = None
-    task_id: Optional[str] = None
+    intent: str | None = None
+    data: list[dict[str, Any]] | None = None
+    duration_seconds: float | None = None
+    total_results: int | None = None
+    task_id: str | None = None
 
     def __repr__(self) -> str:
         """String representation with query info."""
@@ -63,7 +63,7 @@ class DiscoverSnapshot:
 
     task_id: str
     query: str = ""
-    intent: Optional[str] = None
+    intent: str | None = None
 
     def __repr__(self) -> str:
         return f"<DiscoverSnapshot task_id={self.task_id[:16]}...>"
@@ -87,9 +87,9 @@ class DiscoverJob:
     """
 
     task_id: str
-    _service: "DiscoverService" = field(repr=False)
+    _service: DiscoverService = field(repr=False)
     query: str = ""
-    intent: Optional[str] = None
+    intent: str | None = None
 
     def __repr__(self) -> str:
         return f"<DiscoverJob task_id={self.task_id[:16]}...>"
@@ -138,7 +138,7 @@ class DiscoverJob:
 
             await asyncio.sleep(poll_interval)
 
-    async def fetch(self) -> List[Dict[str, Any]]:
+    async def fetch(self) -> list[dict[str, Any]]:
         """
         Fetch results. Call after wait() returns 'done'.
 

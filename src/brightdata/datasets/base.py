@@ -4,7 +4,7 @@ Base dataset class - provides common functionality for all datasets.
 
 import asyncio
 import time
-from typing import Dict, List, Any, Optional, Literal, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal
 
 from .models import DatasetMetadata, SnapshotStatus
 
@@ -14,8 +14,6 @@ if TYPE_CHECKING:
 
 class DatasetError(Exception):
     """Error related to dataset operations."""
-
-    pass
 
 
 class BaseDataset:
@@ -33,7 +31,7 @@ class BaseDataset:
 
     def __init__(self, engine: "AsyncEngine"):
         self._engine = engine
-        self._metadata: Optional[DatasetMetadata] = None
+        self._metadata: DatasetMetadata | None = None
 
     @property
     def dataset_id(self) -> str:
@@ -63,8 +61,8 @@ class BaseDataset:
 
     async def __call__(
         self,
-        filter: Dict[str, Any],
-        records_limit: Optional[int] = None,
+        filter: dict[str, Any],
+        records_limit: int | None = None,
     ) -> str:
         """
         Filter dataset records and create a snapshot.
@@ -88,7 +86,7 @@ class BaseDataset:
         Returns:
             snapshot_id (str) - use with download() to get data
         """
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "dataset_id": self.DATASET_ID,
             "filter": filter,
         }
@@ -154,7 +152,7 @@ class BaseDataset:
         format: Literal["json", "jsonl", "csv"] = "jsonl",
         timeout: int = 300,
         poll_interval: int = 5,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Download snapshot data.
 

@@ -14,9 +14,9 @@ All payload classes can be converted to dict via asdict() when needed for API ca
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
-from typing import Optional, List, Dict, Any
 import re
+from dataclasses import asdict, dataclass, field
+from typing import Any
 from urllib.parse import urlparse
 
 # ============================================================================
@@ -28,7 +28,7 @@ from urllib.parse import urlparse
 class BasePayload:
     """Base class for all payloads with common validation."""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert payload to dictionary for API calls.
 
@@ -48,7 +48,6 @@ class BasePayload:
         Raises:
             ValueError: If validation fails.
         """
-        pass
 
 
 @dataclass
@@ -105,8 +104,8 @@ class AmazonProductPayload(URLPayload):
         >>> print(payload.asin)  # "B0CRMZHDG8"
     """
 
-    reviews_count: Optional[int] = None
-    images_count: Optional[int] = None
+    reviews_count: int | None = None
+    images_count: int | None = None
 
     def __post_init__(self):
         """Validate Amazon-specific fields."""
@@ -122,7 +121,7 @@ class AmazonProductPayload(URLPayload):
             raise ValueError(f"images_count must be non-negative, got {self.images_count}")
 
     @property
-    def asin(self) -> Optional[str]:
+    def asin(self) -> str | None:
         """Extract ASIN (Amazon Standard Identification Number) from URL."""
         match = re.search(r"/dp/([A-Z0-9]{10})", self.url)
         return match.group(1) if match else None
@@ -153,9 +152,9 @@ class AmazonReviewPayload(URLPayload):
         ... )
     """
 
-    pastDays: Optional[int] = None
-    keyWord: Optional[str] = None
-    numOfReviews: Optional[int] = None
+    pastDays: int | None = None
+    keyWord: str | None = None
+    numOfReviews: int | None = None
 
     def __post_init__(self):
         """Validate Amazon review fields."""
@@ -308,11 +307,11 @@ class LinkedInProfileSearchPayload(BasePayload):
     """
 
     firstName: str
-    lastName: Optional[str] = None
-    title: Optional[str] = None
-    company: Optional[str] = None
-    location: Optional[str] = None
-    max_results: Optional[int] = None
+    lastName: str | None = None
+    title: str | None = None
+    company: str | None = None
+    location: str | None = None
+    max_results: int | None = None
 
     def __post_init__(self):
         """Validate profile search fields."""
@@ -354,16 +353,16 @@ class LinkedInJobSearchPayload(BasePayload):
         ... )
     """
 
-    url: Optional[str] = None
-    keyword: Optional[str] = None
-    location: Optional[str] = None
-    country: Optional[str] = None
-    timeRange: Optional[str] = None
-    jobType: Optional[str] = None
-    experienceLevel: Optional[str] = None
-    remote: Optional[bool] = None
-    company: Optional[str] = None
-    locationRadius: Optional[str] = None
+    url: str | None = None
+    keyword: str | None = None
+    location: str | None = None
+    country: str | None = None
+    timeRange: str | None = None
+    jobType: str | None = None
+    experienceLevel: str | None = None
+    remote: bool | None = None
+    company: str | None = None
+    locationRadius: str | None = None
 
     def __post_init__(self):
         """Validate job search fields."""
@@ -406,8 +405,8 @@ class LinkedInPostSearchPayload(URLPayload):
         ... )
     """
 
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
+    start_date: str | None = None
+    end_date: str | None = None
 
     def __post_init__(self):
         """Validate post search fields."""
@@ -452,7 +451,7 @@ class ChatGPTPromptPayload(BasePayload):
     prompt: str
     country: str = "US"
     web_search: bool = False
-    additional_prompt: Optional[str] = None
+    additional_prompt: str | None = None
 
     def __post_init__(self):
         """Validate ChatGPT prompt fields."""
@@ -502,10 +501,10 @@ class FacebookPostsProfilePayload(URLPayload):
         ... )
     """
 
-    num_of_posts: Optional[int] = None
-    posts_to_not_include: Optional[List[str]] = field(default_factory=list)
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
+    num_of_posts: int | None = None
+    posts_to_not_include: list[str] | None = field(default_factory=list)
+    start_date: str | None = None
+    end_date: str | None = None
 
     def __post_init__(self):
         """Validate Facebook posts payload."""
@@ -545,10 +544,10 @@ class FacebookPostsGroupPayload(URLPayload):
         ... )
     """
 
-    num_of_posts: Optional[int] = None
-    posts_to_not_include: Optional[List[str]] = field(default_factory=list)
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
+    num_of_posts: int | None = None
+    posts_to_not_include: list[str] | None = field(default_factory=list)
+    start_date: str | None = None
+    end_date: str | None = None
 
     def __post_init__(self):
         """Validate Facebook group payload."""
@@ -605,10 +604,10 @@ class FacebookCommentsPayload(URLPayload):
         ... )
     """
 
-    num_of_comments: Optional[int] = None
-    comments_to_not_include: Optional[List[str]] = field(default_factory=list)
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
+    num_of_comments: int | None = None
+    comments_to_not_include: list[str] | None = field(default_factory=list)
+    start_date: str | None = None
+    end_date: str | None = None
 
     def __post_init__(self):
         """Validate Facebook comments payload."""
@@ -640,10 +639,10 @@ class FacebookReelsPayload(URLPayload):
         ... )
     """
 
-    num_of_posts: Optional[int] = None
-    posts_to_not_include: Optional[List[str]] = field(default_factory=list)
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
+    num_of_posts: int | None = None
+    posts_to_not_include: list[str] | None = field(default_factory=list)
+    start_date: str | None = None
+    end_date: str | None = None
 
     def __post_init__(self):
         """Validate Facebook reels payload."""
@@ -780,11 +779,11 @@ class InstagramPostsDiscoverPayload(URLPayload):
         ... )
     """
 
-    num_of_posts: Optional[int] = None
-    posts_to_not_include: Optional[List[str]] = field(default_factory=list)
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
-    post_type: Optional[str] = None
+    num_of_posts: int | None = None
+    posts_to_not_include: list[str] | None = field(default_factory=list)
+    start_date: str | None = None
+    end_date: str | None = None
+    post_type: str | None = None
 
     def __post_init__(self):
         """Validate Instagram posts discovery payload."""
@@ -816,10 +815,10 @@ class InstagramReelsDiscoverPayload(URLPayload):
         ... )
     """
 
-    num_of_posts: Optional[int] = None
-    posts_to_not_include: Optional[List[str]] = field(default_factory=list)
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
+    num_of_posts: int | None = None
+    posts_to_not_include: list[str] | None = field(default_factory=list)
+    start_date: str | None = None
+    end_date: str | None = None
 
     def __post_init__(self):
         """Validate Instagram reels discovery payload."""
@@ -858,11 +857,11 @@ class DatasetTriggerPayload(BasePayload):
         ... )
     """
 
-    url: Optional[str] = None
-    keyword: Optional[str] = None
-    location: Optional[str] = None
-    country: Optional[str] = None
-    max_results: Optional[int] = None
+    url: str | None = None
+    keyword: str | None = None
+    location: str | None = None
+    country: str | None = None
+    max_results: int | None = None
 
     def __post_init__(self):
         """Validate dataset trigger fields."""

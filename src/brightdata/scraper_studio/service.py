@@ -7,11 +7,11 @@ ScrapeService and SearchService.
 All methods are async-only. For sync usage, use SyncBrightDataClient.
 """
 
-from typing import Dict, List, Any, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from .client import ScraperStudioAPIClient
-from .models import ScraperStudioJob, JobStatus
 from ..constants import SCRAPER_STUDIO_DEFAULT_TIMEOUT, SCRAPER_STUDIO_POLL_INTERVAL
+from .client import ScraperStudioAPIClient
+from .models import JobStatus, ScraperStudioJob
 
 if TYPE_CHECKING:
     from ..client import BrightDataClient
@@ -45,10 +45,10 @@ class ScraperStudioService:
     async def run(
         self,
         collector: str,
-        input: Union[Dict[str, Any], List[Dict[str, Any]]],
+        input: dict[str, Any] | list[dict[str, Any]],
         timeout: int = SCRAPER_STUDIO_DEFAULT_TIMEOUT,
         poll_interval: int = SCRAPER_STUDIO_POLL_INTERVAL,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Trigger a scrape and wait for results.
 
@@ -72,7 +72,7 @@ class ScraperStudioService:
         # Normalize list input to individual triggers
         if isinstance(input, list):
             # Trigger each input separately and collect results
-            all_data: List[Dict[str, Any]] = []
+            all_data: list[dict[str, Any]] = []
             for single_input in input:
                 response_id = await self._api.trigger_immediate(collector, single_input)
                 job = ScraperStudioJob(response_id=response_id, api_client=self._api)
@@ -87,7 +87,7 @@ class ScraperStudioService:
     async def trigger(
         self,
         collector: str,
-        input: Dict[str, Any],
+        input: dict[str, Any],
     ) -> ScraperStudioJob:
         """
         Trigger a scrape and return a job object for manual control.
@@ -130,7 +130,7 @@ class ScraperStudioService:
     async def fetch(
         self,
         response_id: str,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Fetch results of a completed scrape.
 

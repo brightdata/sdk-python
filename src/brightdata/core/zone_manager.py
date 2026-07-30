@@ -5,10 +5,12 @@ Manages zone creation, validation, and listing through the Bright Data API.
 
 import asyncio
 import logging
-import aiohttp
-from typing import List, Dict, Any, Optional, Tuple
 from http import HTTPStatus
-from ..exceptions.errors import ZoneError, APIError, AuthenticationError
+from typing import Any
+
+import aiohttp
+
+from ..exceptions.errors import APIError, AuthenticationError, ZoneError
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +35,7 @@ class ZoneManager:
     async def ensure_required_zones(
         self,
         web_unlocker_zone: str,
-        serp_zone: Optional[str] = None,
+        serp_zone: str | None = None,
         skip_verification: bool = False,
     ) -> None:
         """
@@ -54,7 +56,7 @@ class ZoneManager:
             zone_names = {zone.get("name") for zone in zones}
             logger.info(f"Found {len(zones)} existing zones")
 
-            zones_to_create: List[Tuple[str, str]] = []
+            zones_to_create: list[tuple[str, str]] = []
 
             # Check web unlocker zone
             if web_unlocker_zone not in zone_names:
@@ -114,9 +116,9 @@ class ZoneManager:
             raise
         except Exception as e:
             logger.error(f"Unexpected error while ensuring zones exist: {e}")
-            raise ZoneError(f"Unexpected error during zone creation: {str(e)}")
+            raise ZoneError(f"Unexpected error during zone creation: {e!s}")
 
-    async def _get_zones(self) -> List[Dict[str, Any]]:
+    async def _get_zones(self) -> list[dict[str, Any]]:
         """
         Get list of all active zones.
 
@@ -163,7 +165,7 @@ class ZoneManager:
                     )
                     await asyncio.sleep(retry_delay * (1.5**attempt))
                     continue
-                raise ZoneError(f"Failed to get zones: {str(e)}")
+                raise ZoneError(f"Failed to get zones: {e!s}")
 
         raise ZoneError("Failed to get zones after all retry attempts")
 
@@ -275,11 +277,11 @@ class ZoneManager:
                     )
                     await asyncio.sleep(retry_delay * (1.5**attempt))
                     continue
-                raise ZoneError(f"Failed to create zone '{zone_name}': {str(e)}")
+                raise ZoneError(f"Failed to create zone '{zone_name}': {e!s}")
 
         raise ZoneError(f"Failed to create zone '{zone_name}' after all retry attempts")
 
-    async def _verify_zones_created(self, zone_names: List[str]) -> None:
+    async def _verify_zones_created(self, zone_names: list[str]) -> None:
         """
         Verify that zones were successfully created by checking the zones list.
 
@@ -335,7 +337,7 @@ class ZoneManager:
                 logger.warning(f"Zone verification attempt {attempt + 1} failed, retrying...")
                 await asyncio.sleep(base_delay * (1.5**attempt))
 
-    async def list_zones(self) -> List[Dict[str, Any]]:
+    async def list_zones(self) -> list[dict[str, Any]]:
         """
         List all active zones in your Bright Data account.
 
@@ -357,7 +359,7 @@ class ZoneManager:
             raise
         except Exception as e:
             logger.error(f"Unexpected error listing zones: {e}")
-            raise ZoneError(f"Unexpected error while listing zones: {str(e)}")
+            raise ZoneError(f"Unexpected error while listing zones: {e!s}")
 
     async def delete_zone(self, zone_name: str) -> None:
         """
@@ -438,6 +440,6 @@ class ZoneManager:
                     )
                     await asyncio.sleep(retry_delay * (1.5**attempt))
                     continue
-                raise ZoneError(f"Failed to delete zone '{zone_name}': {str(e)}")
+                raise ZoneError(f"Failed to delete zone '{zone_name}': {e!s}")
 
         raise ZoneError(f"Failed to delete zone '{zone_name}' after all retry attempts")

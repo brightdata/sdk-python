@@ -19,15 +19,15 @@ _trigger/_status/_fetch):
 """
 
 import asyncio
-from typing import List, Any, Union, Optional
+from typing import Any
 
-from ..base import BaseWebScraper
-from ..registry import register
-from ..job import ScrapeJob
+from ...constants import DEFAULT_COST_PER_RECORD, DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM
 from ...models import ScrapeResult
-from ...utils.validation import validate_url, validate_url_list
 from ...utils.function_detection import get_caller_function_name
-from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM, DEFAULT_COST_PER_RECORD
+from ...utils.validation import validate_url, validate_url_list
+from ..base import BaseWebScraper
+from ..job import ScrapeJob
+from ..registry import register
 
 
 @register("x")
@@ -79,10 +79,10 @@ class XScraper(BaseWebScraper):
 
     async def posts(
         self,
-        url: Union[str, List[str]],
-        limit_per_input: Optional[int] = None,
+        url: str | list[str],
+        limit_per_input: int | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Collect X posts by post URL (async).
 
@@ -122,10 +122,10 @@ class XScraper(BaseWebScraper):
 
     def posts_sync(
         self,
-        url: Union[str, List[str]],
-        limit_per_input: Optional[int] = None,
+        url: str | list[str],
+        limit_per_input: int | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """Collect X posts by post URL (sync)."""
 
         async def _run():
@@ -138,8 +138,8 @@ class XScraper(BaseWebScraper):
 
     async def posts_trigger(
         self,
-        url: Union[str, List[str]],
-        limit_per_input: Optional[int] = None,
+        url: str | list[str],
+        limit_per_input: int | None = None,
     ) -> ScrapeJob:
         """Trigger X posts collection by URL (manual control)."""
         url_list = [url] if isinstance(url, str) else url
@@ -159,8 +159,8 @@ class XScraper(BaseWebScraper):
 
     def posts_trigger_sync(
         self,
-        url: Union[str, List[str]],
-        limit_per_input: Optional[int] = None,
+        url: str | list[str],
+        limit_per_input: int | None = None,
     ) -> ScrapeJob:
         """Trigger X posts collection by URL (sync)."""
         return asyncio.run(self.posts_trigger(url, limit_per_input=limit_per_input))
@@ -187,10 +187,10 @@ class XScraper(BaseWebScraper):
 
     async def posts_by_profile(
         self,
-        url: Union[str, List[str]],
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        limit_per_input: Optional[int] = None,
+        url: str | list[str],
+        start_date: str | None = None,
+        end_date: str | None = None,
+        limit_per_input: int | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
@@ -231,10 +231,10 @@ class XScraper(BaseWebScraper):
 
     def posts_by_profile_sync(
         self,
-        url: Union[str, List[str]],
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        limit_per_input: Optional[int] = None,
+        url: str | list[str],
+        start_date: str | None = None,
+        end_date: str | None = None,
+        limit_per_input: int | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """Discover X posts from a profile URL (sync)."""
@@ -255,10 +255,10 @@ class XScraper(BaseWebScraper):
 
     async def posts_by_profile_trigger(
         self,
-        url: Union[str, List[str]],
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        limit_per_input: Optional[int] = None,
+        url: str | list[str],
+        start_date: str | None = None,
+        end_date: str | None = None,
+        limit_per_input: int | None = None,
     ) -> ScrapeJob:
         """Trigger X posts discovery by profile URL (manual control)."""
         url_list = [url] if isinstance(url, str) else url
@@ -281,10 +281,10 @@ class XScraper(BaseWebScraper):
 
     def posts_by_profile_trigger_sync(
         self,
-        url: Union[str, List[str]],
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        limit_per_input: Optional[int] = None,
+        url: str | list[str],
+        start_date: str | None = None,
+        end_date: str | None = None,
+        limit_per_input: int | None = None,
     ) -> ScrapeJob:
         """Trigger X posts discovery by profile URL (sync)."""
         return asyncio.run(
@@ -315,10 +315,10 @@ class XScraper(BaseWebScraper):
 
     async def posts_by_profiles_array(
         self,
-        urls: List[str],
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        limit_per_input: Optional[int] = None,
+        urls: list[str],
+        start_date: str | None = None,
+        end_date: str | None = None,
+        limit_per_input: int | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
@@ -356,10 +356,10 @@ class XScraper(BaseWebScraper):
 
     def posts_by_profiles_array_sync(
         self,
-        urls: List[str],
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        limit_per_input: Optional[int] = None,
+        urls: list[str],
+        start_date: str | None = None,
+        end_date: str | None = None,
+        limit_per_input: int | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """Discover X posts from several profile URLs in one request (sync)."""
@@ -380,10 +380,10 @@ class XScraper(BaseWebScraper):
 
     async def posts_by_profiles_array_trigger(
         self,
-        urls: List[str],
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        limit_per_input: Optional[int] = None,
+        urls: list[str],
+        start_date: str | None = None,
+        end_date: str | None = None,
+        limit_per_input: int | None = None,
     ) -> ScrapeJob:
         """Trigger X posts discovery by profiles array (manual control)."""
         validate_url_list(urls)
@@ -404,10 +404,10 @@ class XScraper(BaseWebScraper):
 
     def posts_by_profiles_array_trigger_sync(
         self,
-        urls: List[str],
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        limit_per_input: Optional[int] = None,
+        urls: list[str],
+        start_date: str | None = None,
+        end_date: str | None = None,
+        limit_per_input: int | None = None,
     ) -> ScrapeJob:
         """Trigger X posts discovery by profiles array (sync)."""
         return asyncio.run(
@@ -438,11 +438,11 @@ class XScraper(BaseWebScraper):
 
     async def profiles(
         self,
-        url: Union[str, List[str]],
-        max_number_of_posts: Optional[int] = None,
-        limit_per_input: Optional[int] = None,
+        url: str | list[str],
+        max_number_of_posts: int | None = None,
+        limit_per_input: int | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Collect X profile data by profile URL (async).
 
@@ -488,11 +488,11 @@ class XScraper(BaseWebScraper):
 
     def profiles_sync(
         self,
-        url: Union[str, List[str]],
-        max_number_of_posts: Optional[int] = None,
-        limit_per_input: Optional[int] = None,
+        url: str | list[str],
+        max_number_of_posts: int | None = None,
+        limit_per_input: int | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """Collect X profile data by profile URL (sync)."""
 
         async def _run():
@@ -510,9 +510,9 @@ class XScraper(BaseWebScraper):
 
     async def profiles_trigger(
         self,
-        url: Union[str, List[str]],
-        max_number_of_posts: Optional[int] = None,
-        limit_per_input: Optional[int] = None,
+        url: str | list[str],
+        max_number_of_posts: int | None = None,
+        limit_per_input: int | None = None,
     ) -> ScrapeJob:
         """Trigger X profiles collection by URL (manual control)."""
         url_list = [url] if isinstance(url, str) else url
@@ -537,9 +537,9 @@ class XScraper(BaseWebScraper):
 
     def profiles_trigger_sync(
         self,
-        url: Union[str, List[str]],
-        max_number_of_posts: Optional[int] = None,
-        limit_per_input: Optional[int] = None,
+        url: str | list[str],
+        max_number_of_posts: int | None = None,
+        limit_per_input: int | None = None,
     ) -> ScrapeJob:
         """Trigger X profiles collection by URL (sync)."""
         return asyncio.run(
@@ -570,10 +570,10 @@ class XScraper(BaseWebScraper):
 
     async def profiles_by_username(
         self,
-        user_name: Union[str, List[str]],
-        limit_per_input: Optional[int] = None,
+        user_name: str | list[str],
+        limit_per_input: int | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Discover an X profile by handle / user name (async).
 
@@ -608,10 +608,10 @@ class XScraper(BaseWebScraper):
 
     def profiles_by_username_sync(
         self,
-        user_name: Union[str, List[str]],
-        limit_per_input: Optional[int] = None,
+        user_name: str | list[str],
+        limit_per_input: int | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """Discover an X profile by handle / user name (sync)."""
 
         async def _run():
@@ -626,8 +626,8 @@ class XScraper(BaseWebScraper):
 
     async def profiles_by_username_trigger(
         self,
-        user_name: Union[str, List[str]],
-        limit_per_input: Optional[int] = None,
+        user_name: str | list[str],
+        limit_per_input: int | None = None,
     ) -> ScrapeJob:
         """Trigger X profile discovery by user name (manual control)."""
         name_list = [user_name] if isinstance(user_name, str) else user_name
@@ -648,8 +648,8 @@ class XScraper(BaseWebScraper):
 
     def profiles_by_username_trigger_sync(
         self,
-        user_name: Union[str, List[str]],
-        limit_per_input: Optional[int] = None,
+        user_name: str | list[str],
+        limit_per_input: int | None = None,
     ) -> ScrapeJob:
         """Trigger X profile discovery by user name (sync)."""
         return asyncio.run(

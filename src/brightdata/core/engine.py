@@ -1,14 +1,16 @@
 """Async HTTP engine for Bright Data API operations."""
 
 import asyncio
-import aiohttp
 import ssl
 import warnings
-from typing import Optional, Dict, Any
+from http import HTTPStatus
+from typing import Any
+
+import aiohttp
+
 from .. import __version__
 from ..exceptions import AuthenticationError, NetworkError, SSLError
-from http import HTTPStatus
-from ..utils.ssl_helpers import is_ssl_certificate_error, get_ssl_error_message
+from ..utils.ssl_helpers import get_ssl_error_message, is_ssl_certificate_error
 
 # Rate limiting support
 try:
@@ -48,11 +50,11 @@ class AsyncEngine:
         self,
         bearer_token: str,
         timeout: int = 30,
-        rate_limit: Optional[float] = None,
+        rate_limit: float | None = None,
         rate_period: float = 1.0,
         ssl_verify: bool = True,
-        ssl_ca_cert: Optional[str] = None,
-        auth_source: Optional[str] = None,
+        ssl_ca_cert: str | None = None,
+        auth_source: str | None = None,
     ):
         """
         Initialize async engine.
@@ -74,7 +76,7 @@ class AsyncEngine:
         """
         self.bearer_token = bearer_token
         self.timeout = aiohttp.ClientTimeout(total=timeout)
-        self._session: Optional[aiohttp.ClientSession] = None
+        self._session: aiohttp.ClientSession | None = None
         self._ssl_verify = ssl_verify
         self._ssl_ca_cert = ssl_ca_cert
         self._auth_source = auth_source
@@ -85,7 +87,7 @@ class AsyncEngine:
 
         self._rate_limit = rate_limit
         self._rate_period = rate_period
-        self._rate_limiter: Optional[AsyncLimiter] = None
+        self._rate_limiter: AsyncLimiter | None = None
 
     async def __aenter__(self):
         """Context manager entry - idempotent (safe to call multiple times)."""
@@ -179,9 +181,9 @@ class AsyncEngine:
         self,
         method: str,
         endpoint: str,
-        json_data: Optional[Dict[str, Any]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
+        json_data: dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ):
         """
         Make an async HTTP request.
@@ -226,9 +228,9 @@ class AsyncEngine:
     def post(
         self,
         endpoint: str,
-        json_data: Optional[Dict[str, Any]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
+        json_data: dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ):
         """Make POST request. Returns context manager."""
         return self.request("POST", endpoint, json_data=json_data, params=params, headers=headers)
@@ -236,8 +238,8 @@ class AsyncEngine:
     def get(
         self,
         endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ):
         """Make GET request. Returns context manager."""
         return self.request("GET", endpoint, params=params, headers=headers)
@@ -245,9 +247,9 @@ class AsyncEngine:
     def delete(
         self,
         endpoint: str,
-        json_data: Optional[Dict[str, Any]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
+        json_data: dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ):
         """Make DELETE request. Returns context manager."""
         return self.request("DELETE", endpoint, json_data=json_data, params=params, headers=headers)
@@ -255,10 +257,10 @@ class AsyncEngine:
     def post_to_url(
         self,
         url: str,
-        json_data: Optional[Dict[str, Any]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
-        timeout: Optional[aiohttp.ClientTimeout] = None,
+        json_data: dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        timeout: aiohttp.ClientTimeout | None = None,
     ):
         """
         Make POST request to arbitrary URL.
@@ -304,9 +306,9 @@ class AsyncEngine:
     def get_from_url(
         self,
         url: str,
-        params: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
-        timeout: Optional[aiohttp.ClientTimeout] = None,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        timeout: aiohttp.ClientTimeout | None = None,
     ):
         """
         Make GET request to arbitrary URL.
@@ -351,11 +353,11 @@ class AsyncEngine:
         self,
         method: str,
         url: str,
-        json_data: Optional[Dict[str, Any]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
-        timeout: Optional[aiohttp.ClientTimeout] = None,
-        rate_limiter: Optional[Any] = None,
+        json_data: dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        timeout: aiohttp.ClientTimeout | None = None,
+        rate_limiter: Any | None = None,
     ):
         """
         Internal method to make HTTP request with error handling.
@@ -436,7 +438,7 @@ class AsyncEngine:
                         error_message = get_ssl_error_message(e)
                         raise SSLError(error_message) from e
                     # Other network errors
-                    raise NetworkError(f"Network error: {str(e)}") from e
+                    raise NetworkError(f"Network error: {e!s}") from e
 
             async def __aexit__(self, exc_type, exc_val, exc_tb):
                 if self._response:

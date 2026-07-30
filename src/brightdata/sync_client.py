@@ -6,14 +6,14 @@ Provides sync interface using persistent event loop for optimal performance.
 
 import asyncio
 import logging
-from typing import Optional, List, Dict, Any
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
-from .client import BrightDataClient
 from .browser.service import BrowserService
-from .models import ScrapeResult, SearchResult
+from .client import BrightDataClient
 from .discover.models import DiscoverResult, DiscoverSnapshot
+from .models import ScrapeResult, SearchResult
 from .types import AccountInfo
 
 
@@ -35,20 +35,20 @@ class SyncBrightDataClient:
 
     def __init__(
         self,
-        token: Optional[str] = None,
+        token: str | None = None,
         timeout: int = 30,
-        web_unlocker_zone: Optional[str] = None,
-        serp_zone: Optional[str] = None,
-        browser_username: Optional[str] = None,
-        browser_password: Optional[str] = None,
-        browser_host: Optional[str] = None,
-        browser_port: Optional[int] = None,
+        web_unlocker_zone: str | None = None,
+        serp_zone: str | None = None,
+        browser_username: str | None = None,
+        browser_password: str | None = None,
+        browser_host: str | None = None,
+        browser_port: int | None = None,
         auto_create_zones: bool = True,
         validate_token: bool = False,
-        rate_limit: Optional[float] = None,
+        rate_limit: float | None = None,
         rate_period: float = 1.0,
         ssl_verify: bool = True,
-        ssl_ca_cert: Optional[str] = None,
+        ssl_ca_cert: str | None = None,
     ):
         """
         Initialize sync client.
@@ -102,12 +102,12 @@ class SyncBrightDataClient:
             ssl_ca_cert=ssl_ca_cert,
         )
         self._validate_token = validate_token
-        self._loop: Optional[asyncio.AbstractEventLoop] = None
-        self._scrape: Optional["SyncScrapeService"] = None
-        self._search: Optional["SyncSearchService"] = None
-        self._crawler: Optional["SyncCrawlerService"] = None
-        self._scraper_studio: Optional["SyncScraperStudioService"] = None
-        self._datasets: Optional["SyncDatasetsClient"] = None
+        self._loop: asyncio.AbstractEventLoop | None = None
+        self._scrape: SyncScrapeService | None = None
+        self._search: SyncSearchService | None = None
+        self._crawler: SyncCrawlerService | None = None
+        self._scraper_studio: SyncScraperStudioService | None = None
+        self._datasets: SyncDatasetsClient | None = None
 
     def __enter__(self):
         """Initialize persistent event loop and async client."""
@@ -173,7 +173,7 @@ class SyncBrightDataClient:
     # Utility Methods
     # ========================================
 
-    def list_zones(self) -> List[Dict[str, Any]]:
+    def list_zones(self) -> list[dict[str, Any]]:
         """List all active zones."""
         return self._run(self._async_client.list_zones())
 

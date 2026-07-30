@@ -1,7 +1,9 @@
 """Retry logic with exponential backoff."""
 
 import asyncio
-from typing import Callable, Awaitable, TypeVar, Optional, List, Type
+from collections.abc import Awaitable, Callable
+from typing import TypeVar
+
 from ..exceptions import APIError, NetworkError
 
 T = TypeVar("T")
@@ -13,7 +15,7 @@ async def retry_with_backoff(
     initial_delay: float = 1.0,
     max_delay: float = 60.0,
     backoff_factor: float = 2.0,
-    retryable_exceptions: Optional[List[Type[Exception]]] = None,
+    retryable_exceptions: list[type[Exception]] | None = None,
 ) -> T:
     """
     Retry function with exponential backoff.

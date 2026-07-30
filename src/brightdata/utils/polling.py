@@ -11,12 +11,13 @@ Provides shared polling logic for:
 from __future__ import annotations
 
 import asyncio
-from typing import Any, List, Callable, Awaitable
+from collections.abc import Awaitable, Callable
 from datetime import datetime, timezone
+from typing import Any
 
-from ..models import ScrapeResult
 from ..constants import DEFAULT_POLL_INTERVAL, DEFAULT_POLL_TIMEOUT
 from ..exceptions import DataNotReadyError
+from ..models import ScrapeResult
 
 
 async def poll_until_ready(
@@ -71,7 +72,7 @@ async def poll_until_ready(
         ... )
     """
     start_time = datetime.now(timezone.utc)
-    snapshot_polled_at: List[datetime] = []
+    snapshot_polled_at: list[datetime] = []
 
     # Use provided timestamps or create new ones
     trigger_sent = trigger_sent_at or start_time
@@ -107,7 +108,7 @@ async def poll_until_ready(
                 success=False,
                 url="",
                 status="error",
-                error=f"Failed to get status: {str(e)}",
+                error=f"Failed to get status: {e!s}",
                 snapshot_id=snapshot_id,
                 platform=platform,
                 method=method or "web_scraper",
@@ -134,7 +135,7 @@ async def poll_until_ready(
                     success=False,
                     url="",
                     status="error",
-                    error=f"Failed to fetch results: {str(e)}",
+                    error=f"Failed to fetch results: {e!s}",
                     snapshot_id=snapshot_id,
                     platform=platform,
                     method=method or "web_scraper",

@@ -6,7 +6,7 @@ Dataset ID: gd_lreq6ho72fhvovjj7a
 See FIELDS dict for all filterable fields with descriptions.
 """
 
-from typing import TYPE_CHECKING, Dict, Any
+from typing import TYPE_CHECKING, Any
 
 from ..base import BaseDataset
 
@@ -34,7 +34,7 @@ class GoodreadsBooks(BaseDataset):
     NAME = "goodreads_books"
 
     # All available fields with metadata
-    FIELDS: Dict[str, Dict[str, Any]] = {
+    FIELDS: dict[str, dict[str, Any]] = {
         # Book identification
         "id": {
             "type": "text",

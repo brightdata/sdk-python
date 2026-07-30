@@ -2,7 +2,7 @@
 
 import re
 from urllib.parse import urlparse
-from typing import List
+
 from ..exceptions import ValidationError
 
 
@@ -31,7 +31,7 @@ def validate_url(url: str) -> None:
         raise ValidationError(f"Invalid URL format: {url}") from e
 
 
-def validate_url_list(urls: List[str]) -> None:
+def validate_url_list(urls: list[str]) -> None:
     """
     Validate list of URLs.
 

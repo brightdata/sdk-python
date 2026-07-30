@@ -3,6 +3,7 @@
 import warnings
 from abc import ABC, abstractmethod
 from typing import Any
+
 from ..types import NormalizedSERPData
 
 
@@ -12,7 +13,6 @@ class BaseDataNormalizer(ABC):
     @abstractmethod
     def normalize(self, data: Any) -> NormalizedSERPData:
         """Normalize SERP data to consistent format."""
-        pass
 
 
 class GoogleDataNormalizer(BaseDataNormalizer):

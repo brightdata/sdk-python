@@ -7,12 +7,11 @@ boundary — no network.
 """
 
 import asyncio
-
 from unittest.mock import AsyncMock, MagicMock
 
-from brightdata.scrapers.x.scraper import XScraper
-from brightdata.scrapers.registry import get_scraper_for
 from brightdata.models import ScrapeResult
+from brightdata.scrapers.registry import get_scraper_for
+from brightdata.scrapers.x.scraper import XScraper
 from brightdata.sync_client import SyncXScraper
 
 POSTS = "gd_lwxkxvnf1cynvib9co"

@@ -14,15 +14,15 @@ Sync methods use asyncio.run() internally.
 """
 
 import asyncio
-from typing import Union, List, Optional, Any
+from typing import Any
 
-from ..base import BaseWebScraper
-from ..registry import register
-from ..job import ScrapeJob
+from ...constants import DEFAULT_COST_PER_RECORD, DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM
 from ...models import ScrapeResult
-from ...utils.validation import validate_url, validate_url_list
 from ...utils.function_detection import get_caller_function_name
-from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM, DEFAULT_COST_PER_RECORD
+from ...utils.validation import validate_url, validate_url_list
+from ..base import BaseWebScraper
+from ..job import ScrapeJob
+from ..registry import register
 
 
 @register("amazon")
@@ -60,9 +60,9 @@ class AmazonScraper(BaseWebScraper):
 
     async def products(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Scrape Amazon products from URLs.
 
@@ -92,9 +92,9 @@ class AmazonScraper(BaseWebScraper):
 
     def products_sync(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Scrape Amazon products from URLs (sync version).
 
@@ -113,7 +113,7 @@ class AmazonScraper(BaseWebScraper):
 
     async def products_trigger(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
     ) -> ScrapeJob:
         """
         Trigger Amazon products scrape (manual control).
@@ -140,7 +140,7 @@ class AmazonScraper(BaseWebScraper):
             urls=url, sdk_function=sdk_function or "products_trigger"
         )
 
-    def products_trigger_sync(self, url: Union[str, List[str]]) -> ScrapeJob:
+    def products_trigger_sync(self, url: str | list[str]) -> ScrapeJob:
         """Trigger Amazon products scrape (sync version)."""
         return asyncio.run(self.products_trigger(url))
 
@@ -188,12 +188,12 @@ class AmazonScraper(BaseWebScraper):
 
     async def reviews(
         self,
-        url: Union[str, List[str]],
-        pastDays: Optional[int] = None,
-        keyWord: Optional[str] = None,
-        numOfReviews: Optional[int] = None,
+        url: str | list[str],
+        pastDays: int | None = None,
+        keyWord: str | None = None,
+        numOfReviews: int | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Scrape Amazon product reviews from URLs.
 
@@ -276,12 +276,12 @@ class AmazonScraper(BaseWebScraper):
 
     def reviews_sync(
         self,
-        url: Union[str, List[str]],
-        pastDays: Optional[int] = None,
-        keyWord: Optional[str] = None,
-        numOfReviews: Optional[int] = None,
+        url: str | list[str],
+        pastDays: int | None = None,
+        keyWord: str | None = None,
+        numOfReviews: int | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Scrape Amazon product reviews from URLs (sync version).
 
@@ -300,10 +300,10 @@ class AmazonScraper(BaseWebScraper):
 
     async def reviews_trigger(
         self,
-        url: Union[str, List[str]],
-        pastDays: Optional[int] = None,
-        keyWord: Optional[str] = None,
-        numOfReviews: Optional[int] = None,
+        url: str | list[str],
+        pastDays: int | None = None,
+        keyWord: str | None = None,
+        numOfReviews: int | None = None,
     ) -> ScrapeJob:
         """
         Trigger Amazon reviews scrape (manual control).
@@ -333,10 +333,10 @@ class AmazonScraper(BaseWebScraper):
 
     def reviews_trigger_sync(
         self,
-        url: Union[str, List[str]],
-        pastDays: Optional[int] = None,
-        keyWord: Optional[str] = None,
-        numOfReviews: Optional[int] = None,
+        url: str | list[str],
+        pastDays: int | None = None,
+        keyWord: str | None = None,
+        numOfReviews: int | None = None,
     ) -> ScrapeJob:
         """Trigger Amazon reviews scrape (sync version)."""
         return asyncio.run(self.reviews_trigger(url, pastDays, keyWord, numOfReviews))
@@ -363,9 +363,9 @@ class AmazonScraper(BaseWebScraper):
 
     async def sellers(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Scrape Amazon seller information from URLs.
 
@@ -395,9 +395,9 @@ class AmazonScraper(BaseWebScraper):
 
     def sellers_sync(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Scrape Amazon seller information from URLs (sync version).
 
@@ -416,7 +416,7 @@ class AmazonScraper(BaseWebScraper):
 
     async def sellers_trigger(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
     ) -> ScrapeJob:
         """
         Trigger Amazon sellers scrape (manual control).
@@ -441,7 +441,7 @@ class AmazonScraper(BaseWebScraper):
             sdk_function=sdk_function or "sellers_trigger",
         )
 
-    def sellers_trigger_sync(self, url: Union[str, List[str]]) -> ScrapeJob:
+    def sellers_trigger_sync(self, url: str | list[str]) -> ScrapeJob:
         """Trigger Amazon sellers scrape (sync version)."""
         return asyncio.run(self.sellers_trigger(url))
 
@@ -467,10 +467,10 @@ class AmazonScraper(BaseWebScraper):
 
     async def _scrape_urls(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         dataset_id: str,
         timeout: int,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Scrape URLs using standard async workflow (trigger/poll/fetch).
 

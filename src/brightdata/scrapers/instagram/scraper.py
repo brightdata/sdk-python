@@ -9,19 +9,19 @@ Supports:
 """
 
 import asyncio
-from typing import List, Any, Union
+from typing import Any
 
-from ..base import BaseWebScraper
-from ..registry import register
-from ..job import ScrapeJob
-from ...models import ScrapeResult
 from ...constants import (
     COST_PER_RECORD_INSTAGRAM,
-    DEFAULT_TIMEOUT_SHORT,
     DEFAULT_POLL_INTERVAL,
+    DEFAULT_TIMEOUT_SHORT,
 )
-from ...utils.validation import validate_url, validate_url_list
+from ...models import ScrapeResult
 from ...utils.function_detection import get_caller_function_name
+from ...utils.validation import validate_url, validate_url_list
+from ..base import BaseWebScraper
+from ..job import ScrapeJob
+from ..registry import register
 
 
 @register("instagram")
@@ -55,10 +55,10 @@ class InstagramScraper(BaseWebScraper):
 
     async def _scrape_urls(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         dataset_id: str,
         timeout: int,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Internal method to scrape URLs with specified dataset.
 
@@ -132,9 +132,9 @@ class InstagramScraper(BaseWebScraper):
 
     async def profiles(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_SHORT,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Extract profile data from Instagram profile URLs.
 
@@ -158,9 +158,9 @@ class InstagramScraper(BaseWebScraper):
 
     def profiles_sync(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_SHORT,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """Synchronous version of profiles(). See profiles() for documentation."""
 
         async def _run():
@@ -169,7 +169,7 @@ class InstagramScraper(BaseWebScraper):
 
         return asyncio.run(_run())
 
-    async def profiles_trigger(self, url: Union[str, List[str]]) -> ScrapeJob:
+    async def profiles_trigger(self, url: str | list[str]) -> ScrapeJob:
         """
         Trigger profile extraction job without waiting for results.
 
@@ -192,7 +192,7 @@ class InstagramScraper(BaseWebScraper):
             sdk_function=sdk_function,
         )
 
-    def profiles_trigger_sync(self, url: Union[str, List[str]]) -> ScrapeJob:
+    def profiles_trigger_sync(self, url: str | list[str]) -> ScrapeJob:
         """Synchronous version of profiles_trigger()."""
 
         async def _run():
@@ -233,9 +233,9 @@ class InstagramScraper(BaseWebScraper):
 
     async def posts(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_SHORT,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Extract post data from Instagram post URLs.
 
@@ -279,9 +279,9 @@ class InstagramScraper(BaseWebScraper):
 
     def posts_sync(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_SHORT,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """Synchronous version of posts()."""
 
         async def _run():
@@ -290,7 +290,7 @@ class InstagramScraper(BaseWebScraper):
 
         return asyncio.run(_run())
 
-    async def posts_trigger(self, url: Union[str, List[str]]) -> ScrapeJob:
+    async def posts_trigger(self, url: str | list[str]) -> ScrapeJob:
         """Trigger post extraction job without waiting for results."""
         sdk_function = get_caller_function_name()
         return await self._trigger_scrape_async(
@@ -299,7 +299,7 @@ class InstagramScraper(BaseWebScraper):
             sdk_function=sdk_function,
         )
 
-    def posts_trigger_sync(self, url: Union[str, List[str]]) -> ScrapeJob:
+    def posts_trigger_sync(self, url: str | list[str]) -> ScrapeJob:
         """Synchronous version of posts_trigger()."""
 
         async def _run():
@@ -340,9 +340,9 @@ class InstagramScraper(BaseWebScraper):
 
     async def reels(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_SHORT,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Extract reel data from Instagram reel URLs.
 
@@ -390,9 +390,9 @@ class InstagramScraper(BaseWebScraper):
 
     def reels_sync(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_SHORT,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """Synchronous version of reels()."""
 
         async def _run():
@@ -401,7 +401,7 @@ class InstagramScraper(BaseWebScraper):
 
         return asyncio.run(_run())
 
-    async def reels_trigger(self, url: Union[str, List[str]]) -> ScrapeJob:
+    async def reels_trigger(self, url: str | list[str]) -> ScrapeJob:
         """Trigger reel extraction job without waiting for results."""
         sdk_function = get_caller_function_name()
         return await self._trigger_scrape_async(
@@ -410,7 +410,7 @@ class InstagramScraper(BaseWebScraper):
             sdk_function=sdk_function,
         )
 
-    def reels_trigger_sync(self, url: Union[str, List[str]]) -> ScrapeJob:
+    def reels_trigger_sync(self, url: str | list[str]) -> ScrapeJob:
         """Synchronous version of reels_trigger()."""
 
         async def _run():
@@ -451,9 +451,9 @@ class InstagramScraper(BaseWebScraper):
 
     async def comments(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_SHORT,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Extract comments from Instagram post or reel URLs.
 
@@ -492,9 +492,9 @@ class InstagramScraper(BaseWebScraper):
 
     def comments_sync(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_SHORT,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """Synchronous version of comments()."""
 
         async def _run():
@@ -503,7 +503,7 @@ class InstagramScraper(BaseWebScraper):
 
         return asyncio.run(_run())
 
-    async def comments_trigger(self, url: Union[str, List[str]]) -> ScrapeJob:
+    async def comments_trigger(self, url: str | list[str]) -> ScrapeJob:
         """Trigger comment extraction job without waiting for results."""
         sdk_function = get_caller_function_name()
         return await self._trigger_scrape_async(
@@ -512,7 +512,7 @@ class InstagramScraper(BaseWebScraper):
             sdk_function=sdk_function,
         )
 
-    def comments_trigger_sync(self, url: Union[str, List[str]]) -> ScrapeJob:
+    def comments_trigger_sync(self, url: str | list[str]) -> ScrapeJob:
         """Synchronous version of comments_trigger()."""
 
         async def _run():

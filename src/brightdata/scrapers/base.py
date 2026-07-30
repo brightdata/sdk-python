@@ -10,26 +10,26 @@ Philosophy:
 """
 
 import asyncio
+import concurrent.futures
 import os
 import time
-import concurrent.futures
 from abc import ABC
 from datetime import datetime, timezone
-from typing import List, Dict, Any, Optional, Union
+from typing import Any
 
-from ..core.engine import AsyncEngine
-from ..models import ScrapeResult
-from ..exceptions import ValidationError, APIError
-from ..utils.validation import validate_url, validate_url_list
-from ..utils.function_detection import get_caller_function_name
 from ..constants import (
-    DEFAULT_POLL_INTERVAL,
-    DEFAULT_MIN_POLL_TIMEOUT,
     DEFAULT_COST_PER_RECORD,
+    DEFAULT_MIN_POLL_TIMEOUT,
+    DEFAULT_POLL_INTERVAL,
 )
+from ..core.engine import AsyncEngine
+from ..exceptions import APIError, ValidationError
+from ..models import ScrapeResult
+from ..utils.function_detection import get_caller_function_name
+from ..utils.validation import validate_url, validate_url_list
 from .api_client import DatasetAPIClient
-from .workflow import WorkflowExecutor
 from .job import ScrapeJob
+from .workflow import WorkflowExecutor
 
 
 class ScraperCore:
@@ -50,7 +50,7 @@ class ScraperCore:
     MIN_POLL_TIMEOUT: int = DEFAULT_MIN_POLL_TIMEOUT
     COST_PER_RECORD: float = DEFAULT_COST_PER_RECORD
 
-    def __init__(self, bearer_token: Optional[str] = None, engine: Optional[AsyncEngine] = None):
+    def __init__(self, bearer_token: str | None = None, engine: AsyncEngine | None = None):
         """
         Initialize scraper core.
 
@@ -131,7 +131,7 @@ class BaseWebScraper(ScraperCore, ABC):
 
     DATASET_ID: str = ""
 
-    def __init__(self, bearer_token: Optional[str] = None, engine: Optional[AsyncEngine] = None):
+    def __init__(self, bearer_token: str | None = None, engine: AsyncEngine | None = None):
         """
         Initialize platform scraper.
 
@@ -153,12 +153,12 @@ class BaseWebScraper(ScraperCore, ABC):
 
     async def scrape_async(
         self,
-        urls: Union[str, List[str]],
+        urls: str | list[str],
         include_errors: bool = True,
         poll_interval: int = DEFAULT_POLL_INTERVAL,
-        poll_timeout: Optional[int] = None,
+        poll_timeout: int | None = None,
         **kwargs,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Scrape one or more URLs asynchronously.
 
@@ -238,9 +238,7 @@ class BaseWebScraper(ScraperCore, ABC):
 
         return result
 
-    def scrape(
-        self, urls: Union[str, List[str]], **kwargs
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    def scrape(self, urls: str | list[str], **kwargs) -> ScrapeResult | list[ScrapeResult]:
         """
         Scrape URLs synchronously.
 
@@ -275,7 +273,7 @@ class BaseWebScraper(ScraperCore, ABC):
         """
         return data
 
-    def _build_scrape_payload(self, urls: List[str], **kwargs) -> List[Dict[str, Any]]:
+    def _build_scrape_payload(self, urls: list[str], **kwargs) -> list[dict[str, Any]]:
         """
         Build payload for scrape operation.
 
@@ -302,9 +300,9 @@ class BaseWebScraper(ScraperCore, ABC):
 
     async def _trigger_scrape_async(
         self,
-        urls: Union[str, List[str]],
-        dataset_id: Optional[str] = None,
-        sdk_function: Optional[str] = None,
+        urls: str | list[str],
+        dataset_id: str | None = None,
+        sdk_function: str | None = None,
         **kwargs,
     ) -> ScrapeJob:
         """
@@ -359,9 +357,9 @@ class BaseWebScraper(ScraperCore, ABC):
 
     def _trigger_scrape(
         self,
-        urls: Union[str, List[str]],
-        dataset_id: Optional[str] = None,
-        sdk_function: Optional[str] = None,
+        urls: str | list[str],
+        dataset_id: str | None = None,
+        sdk_function: str | None = None,
         **kwargs,
     ) -> ScrapeJob:
         """Trigger scrape job (internal sync wrapper)."""
@@ -437,7 +435,7 @@ class BaseWebScraper(ScraperCore, ABC):
     async def wait(
         self,
         snapshot_id: str,
-        timeout: Optional[int] = None,
+        timeout: int | None = None,
         poll_interval: int = DEFAULT_POLL_INTERVAL,
         verbose: bool = False,
     ) -> str:
@@ -495,7 +493,7 @@ class BaseWebScraper(ScraperCore, ABC):
     async def to_result(
         self,
         snapshot_id: str,
-        timeout: Optional[int] = None,
+        timeout: int | None = None,
         poll_interval: int = DEFAULT_POLL_INTERVAL,
     ) -> ScrapeResult:
         """

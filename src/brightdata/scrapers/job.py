@@ -9,12 +9,12 @@ All methods are async-only. For sync usage, use SyncBrightDataClient.
 
 import asyncio
 import time
-from typing import Optional, Any
 from datetime import datetime, timezone
+from typing import Any
 
-from ..models import ScrapeResult
-from ..exceptions import APIError
 from ..constants import DEFAULT_POLL_INTERVAL
+from ..exceptions import APIError
+from ..models import ScrapeResult
 from .api_client import DatasetAPIClient
 
 
@@ -46,9 +46,9 @@ class ScrapeJob:
         self,
         snapshot_id: str,
         api_client: DatasetAPIClient,
-        platform_name: Optional[str] = None,
+        platform_name: str | None = None,
         cost_per_record: float = 0.001,
-        triggered_at: Optional[datetime] = None,
+        triggered_at: datetime | None = None,
     ):
         """
         Initialize scrape job.
@@ -65,8 +65,8 @@ class ScrapeJob:
         self.platform_name = platform_name
         self.cost_per_record = cost_per_record
         self.triggered_at = triggered_at or datetime.now(timezone.utc)
-        self._cached_status: Optional[str] = None
-        self._cached_data: Optional[Any] = None
+        self._cached_status: str | None = None
+        self._cached_data: Any | None = None
 
     def __repr__(self) -> str:
         """String representation."""

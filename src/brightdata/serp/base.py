@@ -1,24 +1,25 @@
 """Base SERP service with separated responsibilities."""
 
 import asyncio
-import aiohttp
 import json
 import re
 import time
 import warnings
-from typing import Union, List, Optional, Dict, Any, Tuple
 from datetime import datetime, timezone
-
-from .url_builder import BaseURLBuilder
-from .data_normalizer import BaseDataNormalizer
-from ..core.engine import AsyncEngine
-from ..models import SearchResult
 from http import HTTPStatus
+from typing import Any
+
+import aiohttp
+
+from ..core.engine import AsyncEngine
 from ..exceptions import ValidationError
-from ..utils.validation import validate_zone_name
-from ..utils.retry import retry_with_backoff
+from ..models import SearchResult
 from ..utils.function_detection import get_caller_function_name
+from ..utils.retry import retry_with_backoff
+from ..utils.validation import validate_zone_name
 from ..web_unlocker.async_client import AsyncUnblockerClient
+from .data_normalizer import BaseDataNormalizer
+from .url_builder import BaseURLBuilder
 
 
 class BaseSERPService:
@@ -39,14 +40,14 @@ class BaseSERPService:
     # opts in to engine-specific server-side parsing via the payload field
     # instead of (or in addition to) the URL-level brd_json=1 flag. Leave None
     # for engines that use brd_json=1 (Google) or have no parser (Yandex).
-    DATA_FORMAT: Optional[str] = None
+    DATA_FORMAT: str | None = None
 
     def __init__(
         self,
         engine: AsyncEngine,
         url_builder: BaseURLBuilder,
         data_normalizer: BaseDataNormalizer,
-        timeout: Optional[int] = None,
+        timeout: int | None = None,
         max_retries: int = 3,
     ):
         """
@@ -70,9 +71,9 @@ class BaseSERPService:
 
     async def search(
         self,
-        query: Union[str, List[str]],
+        query: str | list[str],
         zone: str,
-        location: Optional[str] = None,
+        location: str | None = None,
         language: str = "en",
         device: str = "desktop",
         num_results: int = 10,
@@ -80,7 +81,7 @@ class BaseSERPService:
         poll_interval: int = 2,
         poll_timeout: int = 30,
         **kwargs,
-    ) -> Union[SearchResult, List[SearchResult]]:
+    ) -> SearchResult | list[SearchResult]:
         """
         Perform search asynchronously.
 
@@ -178,7 +179,7 @@ class BaseSERPService:
         self,
         query: str,
         zone: str,
-        location: Optional[str],
+        location: str | None,
         language: str,
         device: str,
         num_results: int,
@@ -245,7 +246,7 @@ class BaseSERPService:
         search_url: str,
         zone: str,
         trigger_sent_at: datetime,
-    ) -> Tuple[Dict[str, Any], datetime, Optional[str]]:
+    ) -> tuple[dict[str, Any], datetime, str | None]:
         """
         Execute a single SERP request and parse response.
 
@@ -333,13 +334,13 @@ class BaseSERPService:
         try:
             return await retry_with_backoff(_make_request, max_retries=self.max_retries)
         except Exception as e:
-            return ({}, datetime.now(timezone.utc), f"Request error: {str(e)}")
+            return ({}, datetime.now(timezone.utc), f"Request error: {e!s}")
 
     async def _search_with_pagination(
         self,
         query: str,
         zone: str,
-        location: Optional[str],
+        location: str | None,
         language: str,
         device: str,
         num_results: int,
@@ -353,7 +354,7 @@ class BaseSERPService:
         trigger_sent_at = datetime.now(timezone.utc)
         pagination_start_time = time.time()
 
-        all_results: List[Dict[str, Any]] = []
+        all_results: list[dict[str, Any]] = []
         pages_fetched = 0
         current_start = 0
         google_total_results = None
@@ -447,14 +448,14 @@ class BaseSERPService:
 
     async def _search_multiple_async(
         self,
-        queries: List[str],
+        queries: list[str],
         zone: str,
-        location: Optional[str],
+        location: str | None,
         language: str,
         device: str,
         num_results: int,
         **kwargs,
-    ) -> List[SearchResult]:
+    ) -> list[SearchResult]:
         """Execute multiple search queries concurrently."""
         tasks = [
             self._search_single_async(
@@ -478,7 +479,7 @@ class BaseSERPService:
                     SearchResult(
                         success=False,
                         query={"q": queries[i]},
-                        error=f"Exception: {str(result)}",
+                        error=f"Exception: {result!s}",
                         search_engine=self.SEARCH_ENGINE,
                         trigger_sent_at=datetime.now(timezone.utc),
                         data_fetched_at=datetime.now(timezone.utc),
@@ -493,7 +494,7 @@ class BaseSERPService:
         self,
         query: str,
         zone: str,
-        location: Optional[str],
+        location: str | None,
         language: str,
         device: str,
         num_results: int,
@@ -586,7 +587,7 @@ class BaseSERPService:
                     return SearchResult(
                         success=False,
                         query={"q": query},
-                        error=f"Failed to fetch results: {str(e)}",
+                        error=f"Failed to fetch results: {e!s}",
                         search_engine=self.SEARCH_ENGINE,
                         trigger_sent_at=trigger_sent_at,
                         data_fetched_at=data_fetched_at,
@@ -607,16 +608,16 @@ class BaseSERPService:
 
     async def _search_multiple_async_unblocker(
         self,
-        queries: List[str],
+        queries: list[str],
         zone: str,
-        location: Optional[str],
+        location: str | None,
         language: str,
         device: str,
         num_results: int,
         poll_interval: int,
         poll_timeout: int,
         **kwargs,
-    ) -> List[SearchResult]:
+    ) -> list[SearchResult]:
         """
         Execute multiple searches using async unblocker.
 
@@ -649,7 +650,7 @@ class BaseSERPService:
                     SearchResult(
                         success=False,
                         query={"q": queries[i]},
-                        error=f"Exception: {str(result)}",
+                        error=f"Exception: {result!s}",
                         search_engine=self.SEARCH_ENGINE,
                         trigger_sent_at=datetime.now(timezone.utc),
                         data_fetched_at=datetime.now(timezone.utc),
@@ -660,7 +661,7 @@ class BaseSERPService:
 
         return processed_results
 
-    def _validate_queries(self, queries: List[str]) -> None:
+    def _validate_queries(self, queries: list[str]) -> None:
         """Validate search queries."""
         if not queries:
             raise ValidationError("Query list cannot be empty")

@@ -1,6 +1,5 @@
 """Location parsing utilities for SERP services."""
 
-from typing import Dict
 from enum import Enum
 
 
@@ -16,7 +15,7 @@ class LocationService:
     """Unified location parsing service for all SERP engines."""
 
     # Common country mappings
-    COUNTRY_MAP: Dict[str, str] = {
+    COUNTRY_MAP: dict[str, str] = {
         "united states": "us",
         "usa": "us",
         "united kingdom": "gb",
@@ -49,7 +48,7 @@ class LocationService:
     }
 
     # Yandex-specific numeric region IDs
-    YANDEX_REGION_MAP: Dict[str, str] = {
+    YANDEX_REGION_MAP: dict[str, str] = {
         "russia": "225",
         "ukraine": "187",
         "belarus": "149",

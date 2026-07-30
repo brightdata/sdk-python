@@ -16,16 +16,16 @@ API Specifications:
 """
 
 import asyncio
-from typing import List, Dict, Any, Optional, Union
+from typing import Any
 
-from ..base import ScraperCore
-from ...models import ScrapeResult
 from ...constants import (
     COST_PER_RECORD_TIKTOK,
-    DEFAULT_TIMEOUT_MEDIUM,
     DEFAULT_POLL_INTERVAL,
+    DEFAULT_TIMEOUT_MEDIUM,
 )
+from ...models import ScrapeResult
 from ...utils.function_detection import get_caller_function_name
+from ..base import ScraperCore
 
 
 class TikTokSearchScraper(ScraperCore):
@@ -74,7 +74,7 @@ class TikTokSearchScraper(ScraperCore):
 
     async def _execute_discovery(
         self,
-        payload: List[Dict[str, Any]],
+        payload: list[dict[str, Any]],
         dataset_id: str,
         discover_by: str,
         timeout: int,
@@ -112,10 +112,10 @@ class TikTokSearchScraper(ScraperCore):
 
     def _normalize_param(
         self,
-        param: Optional[Union[Any, List[Any]]],
+        param: Any | list[Any] | None,
         target_length: int,
         default_value: Any = None,
-    ) -> List[Any]:
+    ) -> list[Any]:
         """Normalize parameter to list of specified length."""
         if param is None:
             return [default_value] * target_length
@@ -137,8 +137,8 @@ class TikTokSearchScraper(ScraperCore):
 
     async def profiles(
         self,
-        search_url: Union[str, List[str]],
-        country: Optional[Union[str, List[str]]] = None,
+        search_url: str | list[str],
+        country: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
@@ -176,8 +176,8 @@ class TikTokSearchScraper(ScraperCore):
 
     def profiles_sync(
         self,
-        search_url: Union[str, List[str]],
-        country: Optional[Union[str, List[str]]] = None,
+        search_url: str | list[str],
+        country: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """Synchronous version of profiles()."""
@@ -194,10 +194,10 @@ class TikTokSearchScraper(ScraperCore):
 
     async def posts_by_keyword(
         self,
-        keyword: Union[str, List[str]],
-        num_of_posts: Optional[int] = None,
-        posts_to_not_include: Optional[List[str]] = None,
-        country: Optional[Union[str, List[str]]] = None,
+        keyword: str | list[str],
+        num_of_posts: int | None = None,
+        posts_to_not_include: list[str] | None = None,
+        country: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
@@ -229,7 +229,7 @@ class TikTokSearchScraper(ScraperCore):
 
         payload = []
         for i in range(batch_size):
-            item: Dict[str, Any] = {
+            item: dict[str, Any] = {
                 "search_keyword": keywords[i],
                 "country": countries[i],
             }
@@ -248,10 +248,10 @@ class TikTokSearchScraper(ScraperCore):
 
     def posts_by_keyword_sync(
         self,
-        keyword: Union[str, List[str]],
-        num_of_posts: Optional[int] = None,
-        posts_to_not_include: Optional[List[str]] = None,
-        country: Optional[Union[str, List[str]]] = None,
+        keyword: str | list[str],
+        num_of_posts: int | None = None,
+        posts_to_not_include: list[str] | None = None,
+        country: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """Synchronous version of posts_by_keyword()."""
@@ -270,15 +270,15 @@ class TikTokSearchScraper(ScraperCore):
 
     async def posts_by_profile(
         self,
-        url: Union[str, List[str]],
-        num_of_posts: Optional[int] = None,
-        posts_to_not_include: Optional[List[str]] = None,
-        what_to_collect: Optional[str] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        post_type: Optional[str] = None,
-        country: Optional[str] = None,
-        sort_by: Optional[str] = None,
+        url: str | list[str],
+        num_of_posts: int | None = None,
+        posts_to_not_include: list[str] | None = None,
+        what_to_collect: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        post_type: str | None = None,
+        country: str | None = None,
+        sort_by: str | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
@@ -310,7 +310,7 @@ class TikTokSearchScraper(ScraperCore):
 
         payload = []
         for u in urls:
-            item: Dict[str, Any] = {"url": u}
+            item: dict[str, Any] = {"url": u}
             if num_of_posts is not None:
                 item["num_of_posts"] = num_of_posts
             if posts_to_not_include:
@@ -338,15 +338,15 @@ class TikTokSearchScraper(ScraperCore):
 
     def posts_by_profile_sync(
         self,
-        url: Union[str, List[str]],
-        num_of_posts: Optional[int] = None,
-        posts_to_not_include: Optional[List[str]] = None,
-        what_to_collect: Optional[str] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        post_type: Optional[str] = None,
-        country: Optional[str] = None,
-        sort_by: Optional[str] = None,
+        url: str | list[str],
+        num_of_posts: int | None = None,
+        posts_to_not_include: list[str] | None = None,
+        what_to_collect: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        post_type: str | None = None,
+        country: str | None = None,
+        sort_by: str | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """Synchronous version of posts_by_profile()."""
@@ -374,7 +374,7 @@ class TikTokSearchScraper(ScraperCore):
 
     async def posts_by_url(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
@@ -406,7 +406,7 @@ class TikTokSearchScraper(ScraperCore):
 
     def posts_by_url_sync(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """Synchronous version of posts_by_url()."""

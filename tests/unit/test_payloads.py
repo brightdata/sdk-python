@@ -1,27 +1,27 @@
 """Tests for payload dataclasses — Validation, defaults, and serialization."""
 
 import pytest
+
 from brightdata.payloads import (
     # Amazon
     AmazonProductPayload,
     AmazonReviewPayload,
-    LinkedInProfilePayload,
-    LinkedInProfileSearchPayload,
-    LinkedInJobSearchPayload,
-    LinkedInPostSearchPayload,
     # ChatGPT
     ChatGPTPromptPayload,
+    FacebookCommentsPayload,
+    FacebookPostPayload,
+    FacebookPostsGroupPayload,
     # Facebook
     FacebookPostsProfilePayload,
-    FacebookPostsGroupPayload,
-    FacebookPostPayload,
-    FacebookCommentsPayload,
-    InstagramProfilePayload,
     InstagramPostPayload,
-    InstagramReelPayload,
     InstagramPostsDiscoverPayload,
+    InstagramProfilePayload,
+    InstagramReelPayload,
+    LinkedInJobSearchPayload,
+    LinkedInPostSearchPayload,
+    LinkedInProfilePayload,
+    LinkedInProfileSearchPayload,
 )
-
 
 # ---------------------------------------------------------------------------
 # Amazon

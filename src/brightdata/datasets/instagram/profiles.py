@@ -6,7 +6,7 @@ Instagram user profiles with follower counts, bio, posts, and engagement data.
 Use get_metadata() to discover all available fields dynamically.
 """
 
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING
 
 from ..base import BaseDataset
 
@@ -36,4 +36,4 @@ class InstagramProfiles(BaseDataset):
 
     def __init__(self, engine: "AsyncEngine"):
         super().__init__(engine)
-        self._fields_by_category: Optional[Dict[str, List[str]]] = None
+        self._fields_by_category: dict[str, list[str]] | None = None

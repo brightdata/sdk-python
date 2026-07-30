@@ -2,15 +2,15 @@
 Dataset utilities - helpers for exporting and processing dataset results.
 """
 
-import json
 import csv
+import json
 from pathlib import Path
-from typing import List, Dict, Any, Union, Optional
+from typing import Any
 
 
 def export_json(
-    data: List[Dict[str, Any]],
-    filepath: Union[str, Path],
+    data: list[dict[str, Any]],
+    filepath: str | Path,
     indent: int = 2,
 ) -> Path:
     """
@@ -31,8 +31,8 @@ def export_json(
 
 
 def export_jsonl(
-    data: List[Dict[str, Any]],
-    filepath: Union[str, Path],
+    data: list[dict[str, Any]],
+    filepath: str | Path,
 ) -> Path:
     """
     Export dataset results to JSONL (newline-delimited JSON) file.
@@ -46,15 +46,14 @@ def export_jsonl(
     """
     filepath = Path(filepath)
     with open(filepath, "w", encoding="utf-8") as f:
-        for record in data:
-            f.write(json.dumps(record, default=str, ensure_ascii=False) + "\n")
+        f.writelines(json.dumps(record, default=str, ensure_ascii=False) + "\n" for record in data)
     return filepath
 
 
 def export_csv(
-    data: List[Dict[str, Any]],
-    filepath: Union[str, Path],
-    fields: Optional[List[str]] = None,
+    data: list[dict[str, Any]],
+    filepath: str | Path,
+    fields: list[str] | None = None,
     flatten_nested: bool = True,
 ) -> Path:
     """
@@ -101,8 +100,8 @@ def export_csv(
 
 
 def export(
-    data: List[Dict[str, Any]],
-    filepath: Union[str, Path],
+    data: list[dict[str, Any]],
+    filepath: str | Path,
     **kwargs,
 ) -> Path:
     """

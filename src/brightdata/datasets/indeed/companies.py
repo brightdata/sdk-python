@@ -7,7 +7,7 @@ salaries, and company details.
 Use get_metadata() to discover all available fields dynamically.
 """
 
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING
 
 from ..base import BaseDataset
 
@@ -100,40 +100,40 @@ class IndeedCompanies(BaseDataset):
 
     def __init__(self, engine: "AsyncEngine"):
         super().__init__(engine)
-        self._fields_by_category: Optional[Dict[str, List[str]]] = None
+        self._fields_by_category: dict[str, list[str]] | None = None
 
     @staticmethod
-    def get_company_fields() -> List[str]:
+    def get_company_fields() -> list[str]:
         """Get company-related field names."""
         return COMPANY_FIELDS.copy()
 
     @staticmethod
-    def get_work_culture_fields() -> List[str]:
+    def get_work_culture_fields() -> list[str]:
         """Get work culture field names."""
         return WORK_CULTURE_FIELDS.copy()
 
     @staticmethod
-    def get_reviews_fields() -> List[str]:
+    def get_reviews_fields() -> list[str]:
         """Get reviews-related field names."""
         return REVIEWS_FIELDS.copy()
 
     @staticmethod
-    def get_salaries_fields() -> List[str]:
+    def get_salaries_fields() -> list[str]:
         """Get salaries-related field names."""
         return SALARIES_FIELDS.copy()
 
     @staticmethod
-    def get_jobs_fields() -> List[str]:
+    def get_jobs_fields() -> list[str]:
         """Get jobs-related field names."""
         return JOBS_FIELDS.copy()
 
-    async def get_fields_by_category(self) -> Dict[str, List[str]]:
+    async def get_fields_by_category(self) -> dict[str, list[str]]:
         """Get all fields grouped by category."""
         if self._fields_by_category is not None:
             return self._fields_by_category
 
         metadata = await self.get_metadata()
-        result: Dict[str, List[str]] = {
+        result: dict[str, list[str]] = {
             "company": [],
             "work_culture": [],
             "reviews": [],
@@ -174,22 +174,24 @@ class IndeedCompanies(BaseDataset):
         self._fields_by_category = result
         return result
 
-    async def search_fields(self, keyword: str) -> List[str]:
+    async def search_fields(self, keyword: str) -> list[str]:
         """Search for fields containing a keyword."""
         metadata = await self.get_metadata()
         keyword_lower = keyword.lower()
 
         matches = []
         for name, field_info in metadata.fields.items():
-            if keyword_lower in name.lower():
-                matches.append(name)
-            elif field_info.description and keyword_lower in field_info.description.lower():
+            if (
+                keyword_lower in name.lower()
+                or field_info.description
+                and keyword_lower in field_info.description.lower()
+            ):
                 matches.append(name)
 
         return sorted(matches)
 
     @staticmethod
-    def get_identifier_fields() -> List[str]:
+    def get_identifier_fields() -> list[str]:
         """Get fields that can be used as unique identifiers."""
         return [
             "company_id",

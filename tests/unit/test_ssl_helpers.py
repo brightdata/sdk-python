@@ -3,8 +3,7 @@
 import ssl
 from unittest.mock import Mock, patch
 
-from brightdata.utils.ssl_helpers import is_macos, is_ssl_certificate_error, get_ssl_error_message
-
+from brightdata.utils.ssl_helpers import get_ssl_error_message, is_macos, is_ssl_certificate_error
 
 # ---------------------------------------------------------------------------
 # Platform detection

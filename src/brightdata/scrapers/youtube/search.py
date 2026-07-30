@@ -19,16 +19,16 @@ API Specifications:
 """
 
 import asyncio
-from typing import List, Dict, Any, Optional, Union
+from typing import Any
 
-from ..base import ScraperCore
-from ...models import ScrapeResult
 from ...constants import (
     COST_PER_RECORD_YOUTUBE,
-    DEFAULT_TIMEOUT_MEDIUM,
     DEFAULT_POLL_INTERVAL,
+    DEFAULT_TIMEOUT_MEDIUM,
 )
+from ...models import ScrapeResult
 from ...utils.function_detection import get_caller_function_name
+from ..base import ScraperCore
 
 
 class YouTubeSearchScraper(ScraperCore):
@@ -78,7 +78,7 @@ class YouTubeSearchScraper(ScraperCore):
 
     async def _execute_discovery(
         self,
-        payload: List[Dict[str, Any]],
+        payload: list[dict[str, Any]],
         dataset_id: str,
         discover_by: str,
         timeout: int,
@@ -105,10 +105,10 @@ class YouTubeSearchScraper(ScraperCore):
 
     def _normalize_param(
         self,
-        param: Optional[Union[Any, List[Any]]],
+        param: Any | list[Any] | None,
         target_length: int,
         default_value: Any = None,
-    ) -> List[Any]:
+    ) -> list[Any]:
         """Normalize parameter to list of specified length."""
         if param is None:
             return [default_value] * target_length
@@ -130,9 +130,9 @@ class YouTubeSearchScraper(ScraperCore):
 
     async def videos_by_explore(
         self,
-        url: Union[str, List[str]],
-        all_tabs: Optional[bool] = None,
-        country: Optional[Union[str, List[str]]] = None,
+        url: str | list[str],
+        all_tabs: bool | None = None,
+        country: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
@@ -161,7 +161,7 @@ class YouTubeSearchScraper(ScraperCore):
         payload = []
         for i in range(batch_size):
             # API expects empty strings for optional fields
-            item: Dict[str, Any] = {
+            item: dict[str, Any] = {
                 "url": urls[i],
                 "country": countries[i],
             }
@@ -178,9 +178,9 @@ class YouTubeSearchScraper(ScraperCore):
 
     def videos_by_explore_sync(
         self,
-        url: Union[str, List[str]],
-        all_tabs: Optional[bool] = None,
-        country: Optional[Union[str, List[str]]] = None,
+        url: str | list[str],
+        all_tabs: bool | None = None,
+        country: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """Synchronous version of videos_by_explore()."""
@@ -197,12 +197,12 @@ class YouTubeSearchScraper(ScraperCore):
 
     async def videos_by_hashtag(
         self,
-        hashtag: Union[str, List[str]],
-        num_of_posts: Optional[int] = None,
-        posts_to_not_include: Optional[List[str]] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        country: Optional[Union[str, List[str]]] = None,
+        hashtag: str | list[str],
+        num_of_posts: int | None = None,
+        posts_to_not_include: list[str] | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        country: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
@@ -235,7 +235,7 @@ class YouTubeSearchScraper(ScraperCore):
         payload = []
         for i in range(batch_size):
             # API expects empty strings for optional fields
-            item: Dict[str, Any] = {
+            item: dict[str, Any] = {
                 "hashtag": hashtags[i],
                 "start_date": start_date or "",
                 "end_date": end_date or "",
@@ -256,12 +256,12 @@ class YouTubeSearchScraper(ScraperCore):
 
     def videos_by_hashtag_sync(
         self,
-        hashtag: Union[str, List[str]],
-        num_of_posts: Optional[int] = None,
-        posts_to_not_include: Optional[List[str]] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        country: Optional[Union[str, List[str]]] = None,
+        hashtag: str | list[str],
+        num_of_posts: int | None = None,
+        posts_to_not_include: list[str] | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        country: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """Synchronous version of videos_by_hashtag()."""
@@ -286,11 +286,11 @@ class YouTubeSearchScraper(ScraperCore):
 
     async def videos_by_keyword(
         self,
-        keyword: Union[str, List[str]],
-        num_of_posts: Optional[int] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        country: Optional[Union[str, List[str]]] = None,
+        keyword: str | list[str],
+        num_of_posts: int | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        country: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
@@ -323,7 +323,7 @@ class YouTubeSearchScraper(ScraperCore):
         payload = []
         for i in range(batch_size):
             # API expects empty strings for optional fields
-            item: Dict[str, Any] = {
+            item: dict[str, Any] = {
                 "keyword": keywords[i],
                 "start_date": start_date or "",
                 "end_date": end_date or "",
@@ -342,11 +342,11 @@ class YouTubeSearchScraper(ScraperCore):
 
     def videos_by_keyword_sync(
         self,
-        keyword: Union[str, List[str]],
-        num_of_posts: Optional[int] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        country: Optional[Union[str, List[str]]] = None,
+        keyword: str | list[str],
+        num_of_posts: int | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        country: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """Synchronous version of videos_by_keyword()."""
@@ -365,13 +365,13 @@ class YouTubeSearchScraper(ScraperCore):
 
     async def videos_by_search_filters(
         self,
-        keyword_search: Union[str, List[str]],
-        upload_date: Optional[str] = None,
-        video_type: Optional[str] = None,
-        duration: Optional[str] = None,
-        features: Optional[str] = None,
-        sort_by: Optional[str] = None,
-        country: Optional[Union[str, List[str]]] = None,
+        keyword_search: str | list[str],
+        upload_date: str | None = None,
+        video_type: str | None = None,
+        duration: str | None = None,
+        features: str | None = None,
+        sort_by: str | None = None,
+        country: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
@@ -409,7 +409,7 @@ class YouTubeSearchScraper(ScraperCore):
         payload = []
         for i in range(batch_size):
             # API expects empty strings for optional fields
-            item: Dict[str, Any] = {
+            item: dict[str, Any] = {
                 "keyword_search": keywords[i],
                 "upload_date": upload_date or "",
                 "type": video_type or "",
@@ -429,13 +429,13 @@ class YouTubeSearchScraper(ScraperCore):
 
     def videos_by_search_filters_sync(
         self,
-        keyword_search: Union[str, List[str]],
-        upload_date: Optional[str] = None,
-        video_type: Optional[str] = None,
-        duration: Optional[str] = None,
-        features: Optional[str] = None,
-        sort_by: Optional[str] = None,
-        country: Optional[Union[str, List[str]]] = None,
+        keyword_search: str | list[str],
+        upload_date: str | None = None,
+        video_type: str | None = None,
+        duration: str | None = None,
+        features: str | None = None,
+        sort_by: str | None = None,
+        country: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """Synchronous version of videos_by_search_filters()."""
@@ -461,14 +461,14 @@ class YouTubeSearchScraper(ScraperCore):
 
     async def videos_by_channel(
         self,
-        url: Union[str, List[str]],
-        num_of_posts: Optional[int] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        order_by: Optional[str] = None,
-        time_period: Optional[str] = None,
-        country: Optional[str] = None,
-        transcription_language: Optional[str] = None,
+        url: str | list[str],
+        num_of_posts: int | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        order_by: str | None = None,
+        time_period: str | None = None,
+        country: str | None = None,
+        transcription_language: str | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
@@ -503,7 +503,7 @@ class YouTubeSearchScraper(ScraperCore):
         payload = []
         for u in urls:
             # API expects empty strings for optional fields
-            item: Dict[str, Any] = {
+            item: dict[str, Any] = {
                 "url": u,
                 "start_date": start_date or "",
                 "end_date": end_date or "",
@@ -525,14 +525,14 @@ class YouTubeSearchScraper(ScraperCore):
 
     def videos_by_channel_sync(
         self,
-        url: Union[str, List[str]],
-        num_of_posts: Optional[int] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        order_by: Optional[str] = None,
-        time_period: Optional[str] = None,
-        country: Optional[str] = None,
-        transcription_language: Optional[str] = None,
+        url: str | list[str],
+        num_of_posts: int | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        order_by: str | None = None,
+        time_period: str | None = None,
+        country: str | None = None,
+        transcription_language: str | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """Synchronous version of videos_by_channel()."""
@@ -559,7 +559,7 @@ class YouTubeSearchScraper(ScraperCore):
 
     async def channels_by_keyword(
         self,
-        keyword: Union[str, List[str]],
+        keyword: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
@@ -592,7 +592,7 @@ class YouTubeSearchScraper(ScraperCore):
 
     def channels_by_keyword_sync(
         self,
-        keyword: Union[str, List[str]],
+        keyword: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """Synchronous version of channels_by_keyword()."""

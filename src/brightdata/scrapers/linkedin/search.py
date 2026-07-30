@@ -11,12 +11,12 @@ Implements:
 """
 
 import asyncio
-from typing import Union, List, Optional, Dict, Any
+from typing import Any
 
-from ...models import ScrapeResult
+from ...constants import COST_PER_RECORD_LINKEDIN, DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT
 from ...exceptions import ValidationError
+from ...models import ScrapeResult
 from ...utils.function_detection import get_caller_function_name
-from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT, COST_PER_RECORD_LINKEDIN
 from ..base import ScraperCore
 
 
@@ -66,9 +66,9 @@ class LinkedInSearchScraper(ScraperCore):
 
     async def posts(
         self,
-        url: Union[str, List[str]],
-        start_date: Optional[Union[str, List[str]]] = None,
-        end_date: Optional[Union[str, List[str]]] = None,
+        url: str | list[str],
+        start_date: str | list[str] | None = None,
+        end_date: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
@@ -98,7 +98,7 @@ class LinkedInSearchScraper(ScraperCore):
         # Build payload - API requires "url" field, not "profile_url"
         payload = []
         for i, profile_url in enumerate(profile_urls):
-            item: Dict[str, Any] = {"url": profile_url}
+            item: dict[str, Any] = {"url": profile_url}
 
             if start_dates and i < len(start_dates):
                 item["start_date"] = start_dates[i]
@@ -117,9 +117,9 @@ class LinkedInSearchScraper(ScraperCore):
 
     def posts_sync(
         self,
-        url: Union[str, List[str]],
-        start_date: Optional[Union[str, List[str]]] = None,
-        end_date: Optional[Union[str, List[str]]] = None,
+        url: str | list[str],
+        start_date: str | list[str] | None = None,
+        end_date: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
@@ -140,8 +140,8 @@ class LinkedInSearchScraper(ScraperCore):
 
     async def profiles(
         self,
-        first_name: Union[str, List[str]],
-        last_name: Optional[Union[str, List[str]]] = None,
+        first_name: str | list[str],
+        last_name: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
@@ -168,7 +168,7 @@ class LinkedInSearchScraper(ScraperCore):
         # Build payload - API requires url + first_name + last_name
         payload = []
         for i, fname in enumerate(first_names):
-            item: Dict[str, Any] = {
+            item: dict[str, Any] = {
                 "url": "https://www.linkedin.com",
                 "first_name": fname,
             }
@@ -184,8 +184,8 @@ class LinkedInSearchScraper(ScraperCore):
 
     def profiles_sync(
         self,
-        first_name: Union[str, List[str]],
-        last_name: Optional[Union[str, List[str]]] = None,
+        first_name: str | list[str],
+        last_name: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
@@ -206,16 +206,16 @@ class LinkedInSearchScraper(ScraperCore):
 
     async def jobs(
         self,
-        url: Optional[Union[str, List[str]]] = None,
-        location: Optional[Union[str, List[str]]] = None,
-        keyword: Optional[Union[str, List[str]]] = None,
-        country: Optional[Union[str, List[str]]] = None,
-        timeRange: Optional[Union[str, List[str]]] = None,
-        jobType: Optional[Union[str, List[str]]] = None,
-        experienceLevel: Optional[Union[str, List[str]]] = None,
-        remote: Optional[bool] = None,
-        company: Optional[Union[str, List[str]]] = None,
-        locationRadius: Optional[Union[str, List[str]]] = None,
+        url: str | list[str] | None = None,
+        location: str | list[str] | None = None,
+        keyword: str | list[str] | None = None,
+        country: str | list[str] | None = None,
+        timeRange: str | list[str] | None = None,
+        jobType: str | list[str] | None = None,
+        experienceLevel: str | list[str] | None = None,
+        remote: bool | None = None,
+        company: str | list[str] | None = None,
+        locationRadius: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
@@ -285,7 +285,7 @@ class LinkedInSearchScraper(ScraperCore):
             else:
                 # Use discovery dataset with keyword/location parameters
                 use_discovery = True
-                item: Dict[str, Any] = {}
+                item: dict[str, Any] = {}
 
                 if keywords and i < len(keywords):
                     item["keyword"] = keywords[i]
@@ -321,16 +321,16 @@ class LinkedInSearchScraper(ScraperCore):
 
     def jobs_sync(
         self,
-        url: Optional[Union[str, List[str]]] = None,
-        location: Optional[Union[str, List[str]]] = None,
-        keyword: Optional[Union[str, List[str]]] = None,
-        country: Optional[Union[str, List[str]]] = None,
-        timeRange: Optional[Union[str, List[str]]] = None,
-        jobType: Optional[Union[str, List[str]]] = None,
-        experienceLevel: Optional[Union[str, List[str]]] = None,
-        remote: Optional[bool] = None,
-        company: Optional[Union[str, List[str]]] = None,
-        locationRadius: Optional[Union[str, List[str]]] = None,
+        url: str | list[str] | None = None,
+        location: str | list[str] | None = None,
+        keyword: str | list[str] | None = None,
+        country: str | list[str] | None = None,
+        timeRange: str | list[str] | None = None,
+        jobType: str | list[str] | None = None,
+        experienceLevel: str | list[str] | None = None,
+        remote: bool | None = None,
+        company: str | list[str] | None = None,
+        locationRadius: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_SHORT,
     ) -> ScrapeResult:
         """
@@ -362,8 +362,8 @@ class LinkedInSearchScraper(ScraperCore):
     # ============================================================================
 
     def _normalize_param(
-        self, param: Optional[Union[str, List[str]]], target_length: int
-    ) -> Optional[List[str]]:
+        self, param: str | list[str] | None, target_length: int
+    ) -> list[str] | None:
         """
         Normalize parameter to list.
 
@@ -385,15 +385,15 @@ class LinkedInSearchScraper(ScraperCore):
 
     def _build_linkedin_jobs_search_url(
         self,
-        keyword: Optional[str] = None,
-        location: Optional[str] = None,
-        country: Optional[str] = None,
-        time_range: Optional[str] = None,
-        job_type: Optional[str] = None,
-        experience_level: Optional[str] = None,
-        remote: Optional[bool] = None,
-        company: Optional[str] = None,
-        location_radius: Optional[str] = None,
+        keyword: str | None = None,
+        location: str | None = None,
+        country: str | None = None,
+        time_range: str | None = None,
+        job_type: str | None = None,
+        experience_level: str | None = None,
+        remote: bool | None = None,
+        company: str | None = None,
+        location_radius: str | None = None,
     ) -> str:
         """
         Build LinkedIn job search URL from parameters.
@@ -498,10 +498,10 @@ class LinkedInSearchScraper(ScraperCore):
 
     async def _execute_search(
         self,
-        payload: List[Dict[str, Any]],
+        payload: list[dict[str, Any]],
         dataset_id: str,
         timeout: int,
-        extra_params: Optional[Dict[str, str]] = None,
+        extra_params: dict[str, str] | None = None,
     ) -> ScrapeResult:
         """
         Execute search operation via trigger/poll/fetch.

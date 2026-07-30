@@ -12,7 +12,7 @@ import importlib
 import logging
 import pkgutil
 from functools import lru_cache
-from typing import Dict, Type, Optional, List
+
 import tldextract
 
 # Configure logger for registry operations
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 # Global registry mapping domain → scraper class
-_SCRAPER_REGISTRY: Dict[str, Type] = {}
+_SCRAPER_REGISTRY: dict[str, type] = {}
 
 
 def register(domain: str):
@@ -51,7 +51,7 @@ def register(domain: str):
         >>> # Returns AmazonScraper class
     """
 
-    def decorator(cls: Type) -> Type:
+    def decorator(cls: type) -> type:
         _SCRAPER_REGISTRY[domain.lower()] = cls
         return cls
 
@@ -94,7 +94,7 @@ def _import_all_scrapers():
                 )
 
 
-def get_scraper_for(url: str) -> Optional[Type]:
+def get_scraper_for(url: str) -> type | None:
     """
     Get scraper class for a URL based on domain.
 
@@ -133,7 +133,7 @@ def get_scraper_for(url: str) -> Optional[Type]:
     return _SCRAPER_REGISTRY.get(domain)
 
 
-def get_registered_platforms() -> List[str]:
+def get_registered_platforms() -> list[str]:
     """
     Get list of all registered platform domains.
 
@@ -169,7 +169,7 @@ def is_platform_supported(url: str) -> bool:
 
 
 # For backward compatibility and explicit access
-def get_registry() -> Dict[str, Type]:
+def get_registry() -> dict[str, type]:
     """
     Get the complete scraper registry.
 

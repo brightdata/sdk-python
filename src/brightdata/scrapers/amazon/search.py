@@ -9,12 +9,12 @@ Async methods are the default. Sync methods use asyncio.run() internally.
 """
 
 import asyncio
-from typing import Union, List, Optional, Dict, Any
+from typing import Any
 
-from ...models import ScrapeResult
+from ...constants import DEFAULT_COST_PER_RECORD, DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM
 from ...exceptions import ValidationError
+from ...models import ScrapeResult
 from ...utils.function_detection import get_caller_function_name
-from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM, DEFAULT_COST_PER_RECORD
 from ..base import ScraperCore
 
 
@@ -50,14 +50,14 @@ class AmazonSearchScraper(ScraperCore):
 
     async def products(
         self,
-        keyword: Optional[Union[str, List[str]]] = None,
-        url: Optional[Union[str, List[str]]] = None,
-        category: Optional[Union[str, List[str]]] = None,
-        min_price: Optional[Union[int, List[int]]] = None,
-        max_price: Optional[Union[int, List[int]]] = None,
-        condition: Optional[Union[str, List[str]]] = None,
-        prime_eligible: Optional[bool] = None,
-        country: Optional[Union[str, List[str]]] = None,
+        keyword: str | list[str] | None = None,
+        url: str | list[str] | None = None,
+        category: str | list[str] | None = None,
+        min_price: int | list[int] | None = None,
+        max_price: int | list[int] | None = None,
+        condition: str | list[str] | None = None,
+        prime_eligible: bool | None = None,
+        country: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
@@ -154,14 +154,14 @@ class AmazonSearchScraper(ScraperCore):
 
     def products_sync(
         self,
-        keyword: Optional[Union[str, List[str]]] = None,
-        url: Optional[Union[str, List[str]]] = None,
-        category: Optional[Union[str, List[str]]] = None,
-        min_price: Optional[Union[int, List[int]]] = None,
-        max_price: Optional[Union[int, List[int]]] = None,
-        condition: Optional[Union[str, List[str]]] = None,
-        prime_eligible: Optional[bool] = None,
-        country: Optional[Union[str, List[str]]] = None,
+        keyword: str | list[str] | None = None,
+        url: str | list[str] | None = None,
+        category: str | list[str] | None = None,
+        min_price: int | list[int] | None = None,
+        max_price: int | list[int] | None = None,
+        condition: str | list[str] | None = None,
+        prime_eligible: bool | None = None,
+        country: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
@@ -191,8 +191,8 @@ class AmazonSearchScraper(ScraperCore):
     # ============================================================================
 
     def _normalize_param(
-        self, param: Optional[Union[str, int, List[str], List[int]]], target_length: int
-    ) -> Optional[List]:
+        self, param: str | int | list[str] | list[int] | None, target_length: int
+    ) -> list | None:
         """
         Normalize parameter to list.
 
@@ -214,13 +214,13 @@ class AmazonSearchScraper(ScraperCore):
 
     def _build_amazon_search_url(
         self,
-        keyword: Optional[str] = None,
-        category: Optional[str] = None,
-        min_price: Optional[int] = None,
-        max_price: Optional[int] = None,
-        condition: Optional[str] = None,
-        prime_eligible: Optional[bool] = None,
-        country: Optional[str] = None,
+        keyword: str | None = None,
+        category: str | None = None,
+        min_price: int | None = None,
+        max_price: int | None = None,
+        condition: str | None = None,
+        prime_eligible: bool | None = None,
+        country: str | None = None,
     ) -> str:
         """
         Build Amazon search URL from parameters.
@@ -315,7 +315,7 @@ class AmazonSearchScraper(ScraperCore):
 
     async def _execute_search(
         self,
-        payload: List[Dict[str, Any]],
+        payload: list[dict[str, Any]],
         dataset_id: str,
         timeout: int,
     ) -> ScrapeResult:

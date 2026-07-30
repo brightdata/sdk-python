@@ -1,10 +1,9 @@
 """Bing SERP service."""
 
-from typing import Optional
-from .base import BaseSERPService
-from .url_builder import BingURLBuilder
-from .data_normalizer import BingDataNormalizer
 from ..core.engine import AsyncEngine
+from .base import BaseSERPService
+from .data_normalizer import BingDataNormalizer
+from .url_builder import BingURLBuilder
 
 
 class BingSERPService(BaseSERPService):
@@ -16,7 +15,7 @@ class BingSERPService(BaseSERPService):
     def __init__(
         self,
         engine: AsyncEngine,
-        timeout: Optional[int] = None,
+        timeout: int | None = None,
         max_retries: int = 3,
     ):
         """Initialize Bing SERP service."""

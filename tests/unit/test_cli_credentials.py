@@ -13,8 +13,8 @@ from pathlib import Path
 import pytest
 
 import brightdata.client as client_module
-from brightdata.client import BrightDataClient
 from brightdata.cli_credentials import _cli_credentials_path, read_cli_credentials
+from brightdata.client import BrightDataClient
 from brightdata.core.engine import AsyncEngine
 from brightdata.exceptions import ValidationError
 

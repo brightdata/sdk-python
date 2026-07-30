@@ -7,12 +7,13 @@ and had drifted (Amazon/ChatGPT/LinkedIn lacked the env-token fallback). These
 tests pin the consolidated behavior.
 """
 
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
+
 from brightdata.exceptions import ValidationError
-from brightdata.scrapers.base import BaseWebScraper, ScraperCore
 from brightdata.scrapers.amazon.search import AmazonSearchScraper
+from brightdata.scrapers.base import BaseWebScraper, ScraperCore
 from brightdata.scrapers.chatgpt.search import ChatGPTSearchService
 from brightdata.scrapers.instagram.search import InstagramSearchScraper
 from brightdata.scrapers.linkedin.search import LinkedInSearchScraper

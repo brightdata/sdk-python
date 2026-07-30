@@ -6,7 +6,7 @@ Dataset ID: gd_l7q7dkf244hwjntr0
 See FIELDS dict for all filterable fields with descriptions.
 """
 
-from typing import TYPE_CHECKING, Dict, Any
+from typing import TYPE_CHECKING, Any
 
 from ..base import BaseDataset
 
@@ -35,7 +35,7 @@ class AmazonProducts(BaseDataset):
 
     # All available fields with metadata
     # Format: field_name -> {"type": str, "description": str}
-    FIELDS: Dict[str, Dict[str, Any]] = {
+    FIELDS: dict[str, dict[str, Any]] = {
         # Core product identification
         "title": {
             "type": "text",

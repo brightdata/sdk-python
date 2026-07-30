@@ -1,10 +1,9 @@
 """URL utilities."""
 
 from urllib.parse import urlparse
-from typing import Optional
 
 
-def extract_root_domain(url: str) -> Optional[str]:
+def extract_root_domain(url: str) -> str | None:
     """
     Extract root domain from URL.
 
@@ -21,8 +20,7 @@ def extract_root_domain(url: str) -> Optional[str]:
         if ":" in netloc:
             netloc = netloc.split(":")[0]
 
-        if netloc.startswith("www."):
-            netloc = netloc[4:]
+        netloc = netloc.removeprefix("www.")
 
         return netloc if netloc else None
     except Exception:

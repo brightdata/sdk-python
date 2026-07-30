@@ -13,15 +13,15 @@ API Specifications:
 """
 
 import asyncio
-from typing import List, Any, Union
+from typing import Any
 
-from ..base import BaseWebScraper
-from ..registry import register
-from ..job import ScrapeJob
+from ...constants import DEFAULT_COST_PER_RECORD, DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM
 from ...models import ScrapeResult
-from ...utils.validation import validate_url, validate_url_list
 from ...utils.function_detection import get_caller_function_name
-from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM, DEFAULT_COST_PER_RECORD
+from ...utils.validation import validate_url, validate_url_list
+from ..base import BaseWebScraper
+from ..job import ScrapeJob
+from ..registry import register
 
 
 @register("digikey")
@@ -60,9 +60,9 @@ class DigiKeyScraper(BaseWebScraper):
 
     async def products(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Collect DigiKey product data by URL (async).
 
@@ -106,9 +106,9 @@ class DigiKeyScraper(BaseWebScraper):
 
     def products_sync(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """Collect DigiKey product data by URL (sync)."""
 
         async def _run():
@@ -119,7 +119,7 @@ class DigiKeyScraper(BaseWebScraper):
 
     # --- Products Trigger/Status/Fetch ---
 
-    async def products_trigger(self, url: Union[str, List[str]]) -> ScrapeJob:
+    async def products_trigger(self, url: str | list[str]) -> ScrapeJob:
         """Trigger DigiKey products collection (manual control)."""
         url_list = [url] if isinstance(url, str) else url
         payload = [{"url": u} for u in url_list]
@@ -132,7 +132,7 @@ class DigiKeyScraper(BaseWebScraper):
             cost_per_record=self.COST_PER_RECORD,
         )
 
-    def products_trigger_sync(self, url: Union[str, List[str]]) -> ScrapeJob:
+    def products_trigger_sync(self, url: str | list[str]) -> ScrapeJob:
         """Trigger DigiKey products collection (sync)."""
         return asyncio.run(self.products_trigger(url))
 
@@ -158,7 +158,7 @@ class DigiKeyScraper(BaseWebScraper):
 
     async def discover_by_category(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
@@ -201,7 +201,7 @@ class DigiKeyScraper(BaseWebScraper):
 
     def discover_by_category_sync(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """Discover DigiKey products by category URL (sync)."""
@@ -214,7 +214,7 @@ class DigiKeyScraper(BaseWebScraper):
 
     # --- Discover Trigger/Status/Fetch ---
 
-    async def discover_by_category_trigger(self, url: Union[str, List[str]]) -> ScrapeJob:
+    async def discover_by_category_trigger(self, url: str | list[str]) -> ScrapeJob:
         """Trigger DigiKey category discovery (manual control)."""
         url_list = [url] if isinstance(url, str) else url
         payload = [{"category_url": u} for u in url_list]
@@ -231,7 +231,7 @@ class DigiKeyScraper(BaseWebScraper):
             cost_per_record=self.COST_PER_RECORD,
         )
 
-    def discover_by_category_trigger_sync(self, url: Union[str, List[str]]) -> ScrapeJob:
+    def discover_by_category_trigger_sync(self, url: str | list[str]) -> ScrapeJob:
         """Trigger DigiKey category discovery (sync)."""
         return asyncio.run(self.discover_by_category_trigger(url))
 

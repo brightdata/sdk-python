@@ -7,7 +7,7 @@ Records: 620M+ profiles
 See FIELDS dict for all filterable fields with descriptions and fill rates.
 """
 
-from typing import TYPE_CHECKING, Dict, Any
+from typing import TYPE_CHECKING, Any
 
 from ..base import BaseDataset
 
@@ -36,7 +36,7 @@ class LinkedInPeopleProfiles(BaseDataset):
 
     # All available fields with metadata
     # Format: field_name -> {"type": str, "description": str, "fill_rate": float}
-    FIELDS: Dict[str, Dict[str, Any]] = {
+    FIELDS: dict[str, dict[str, Any]] = {
         "id": {
             "type": "text",
             "description": "A unique identifier for the person's LinkedIn profile",

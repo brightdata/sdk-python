@@ -19,15 +19,15 @@ API Specifications:
 """
 
 import asyncio
-from typing import List, Any, Optional, Union, Dict
+from typing import Any
 
-from ..base import BaseWebScraper
-from ..registry import register
-from ..job import ScrapeJob
+from ...constants import DEFAULT_COST_PER_RECORD, DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM
 from ...models import ScrapeResult
-from ...utils.validation import validate_url, validate_url_list
 from ...utils.function_detection import get_caller_function_name
-from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_MEDIUM, DEFAULT_COST_PER_RECORD
+from ...utils.validation import validate_url, validate_url_list
+from ..base import BaseWebScraper
+from ..job import ScrapeJob
+from ..registry import register
 
 
 @register("reddit")
@@ -83,9 +83,9 @@ class RedditScraper(BaseWebScraper):
 
     async def posts(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Collect Reddit post data by URL (async).
 
@@ -129,9 +129,9 @@ class RedditScraper(BaseWebScraper):
 
     def posts_sync(
         self,
-        url: Union[str, List[str]],
+        url: str | list[str],
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """Collect Reddit post data by URL (sync)."""
 
         async def _run():
@@ -142,7 +142,7 @@ class RedditScraper(BaseWebScraper):
 
     # --- Posts Trigger/Status/Fetch ---
 
-    async def posts_trigger(self, url: Union[str, List[str]]) -> ScrapeJob:
+    async def posts_trigger(self, url: str | list[str]) -> ScrapeJob:
         """Trigger Reddit posts collection (manual control)."""
         url_list = [url] if isinstance(url, str) else url
         payload = [{"url": u} for u in url_list]
@@ -157,7 +157,7 @@ class RedditScraper(BaseWebScraper):
             cost_per_record=self.COST_PER_RECORD,
         )
 
-    def posts_trigger_sync(self, url: Union[str, List[str]]) -> ScrapeJob:
+    def posts_trigger_sync(self, url: str | list[str]) -> ScrapeJob:
         """Trigger Reddit posts collection (sync)."""
         return asyncio.run(self.posts_trigger(url))
 
@@ -183,10 +183,10 @@ class RedditScraper(BaseWebScraper):
 
     async def posts_by_keyword(
         self,
-        keyword: Union[str, List[str]],
-        date: Optional[Union[str, List[str]]] = None,
-        num_of_posts: Optional[Union[int, List[int]]] = None,
-        sort_by: Optional[Union[str, List[str]]] = None,
+        keyword: str | list[str],
+        date: str | list[str] | None = None,
+        num_of_posts: int | list[int] | None = None,
+        sort_by: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
@@ -219,7 +219,7 @@ class RedditScraper(BaseWebScraper):
 
         payload = []
         for i in range(batch_size):
-            item: Dict[str, Any] = {"keyword": keywords[i]}
+            item: dict[str, Any] = {"keyword": keywords[i]}
             if dates[i] is not None:
                 item["date"] = dates[i]
             if nums[i] is not None:
@@ -243,10 +243,10 @@ class RedditScraper(BaseWebScraper):
 
     def posts_by_keyword_sync(
         self,
-        keyword: Union[str, List[str]],
-        date: Optional[Union[str, List[str]]] = None,
-        num_of_posts: Optional[Union[int, List[int]]] = None,
-        sort_by: Optional[Union[str, List[str]]] = None,
+        keyword: str | list[str],
+        date: str | list[str] | None = None,
+        num_of_posts: int | list[int] | None = None,
+        sort_by: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """Discover Reddit posts by keyword search (sync)."""
@@ -263,9 +263,9 @@ class RedditScraper(BaseWebScraper):
 
     async def posts_by_subreddit(
         self,
-        url: Union[str, List[str]],
-        sort_by: Optional[Union[str, List[str]]] = None,
-        sort_by_time: Optional[Union[str, List[str]]] = None,
+        url: str | list[str],
+        sort_by: str | list[str] | None = None,
+        sort_by_time: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """
@@ -300,7 +300,7 @@ class RedditScraper(BaseWebScraper):
 
         payload = []
         for i in range(batch_size):
-            item: Dict[str, Any] = {"url": urls[i]}
+            item: dict[str, Any] = {"url": urls[i]}
             if sorts[i] is not None:
                 item["sort_by"] = sorts[i]
             if sort_times[i] is not None:
@@ -322,9 +322,9 @@ class RedditScraper(BaseWebScraper):
 
     def posts_by_subreddit_sync(
         self,
-        url: Union[str, List[str]],
-        sort_by: Optional[Union[str, List[str]]] = None,
-        sort_by_time: Optional[Union[str, List[str]]] = None,
+        url: str | list[str],
+        sort_by: str | list[str] | None = None,
+        sort_by_time: str | list[str] | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
     ) -> ScrapeResult:
         """Discover Reddit posts from subreddit URL (sync)."""
@@ -341,12 +341,12 @@ class RedditScraper(BaseWebScraper):
 
     async def comments(
         self,
-        url: Union[str, List[str]],
-        days_back: Optional[int] = None,
-        load_all_replies: Optional[bool] = None,
-        comment_limit: Optional[int] = None,
+        url: str | list[str],
+        days_back: int | None = None,
+        load_all_replies: bool | None = None,
+        comment_limit: int | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """
         Collect Reddit comments by URL (async).
 
@@ -378,7 +378,7 @@ class RedditScraper(BaseWebScraper):
 
         payload = []
         for u in url_list:
-            item: Dict[str, Any] = {"url": u}
+            item: dict[str, Any] = {"url": u}
             if days_back is not None:
                 item["days_back"] = days_back
             if load_all_replies is not None:
@@ -405,12 +405,12 @@ class RedditScraper(BaseWebScraper):
 
     def comments_sync(
         self,
-        url: Union[str, List[str]],
-        days_back: Optional[int] = None,
-        load_all_replies: Optional[bool] = None,
-        comment_limit: Optional[int] = None,
+        url: str | list[str],
+        days_back: int | None = None,
+        load_all_replies: bool | None = None,
+        comment_limit: int | None = None,
         timeout: int = DEFAULT_TIMEOUT_MEDIUM,
-    ) -> Union[ScrapeResult, List[ScrapeResult]]:
+    ) -> ScrapeResult | list[ScrapeResult]:
         """Collect Reddit comments by URL (sync)."""
 
         async def _run():
@@ -423,17 +423,17 @@ class RedditScraper(BaseWebScraper):
 
     async def comments_trigger(
         self,
-        url: Union[str, List[str]],
-        days_back: Optional[int] = None,
-        load_all_replies: Optional[bool] = None,
-        comment_limit: Optional[int] = None,
+        url: str | list[str],
+        days_back: int | None = None,
+        load_all_replies: bool | None = None,
+        comment_limit: int | None = None,
     ) -> ScrapeJob:
         """Trigger Reddit comments collection (manual control)."""
         url_list = [url] if isinstance(url, str) else url
 
         payload = []
         for u in url_list:
-            item: Dict[str, Any] = {"url": u}
+            item: dict[str, Any] = {"url": u}
             if days_back is not None:
                 item["days_back"] = days_back
             if load_all_replies is not None:
@@ -454,10 +454,10 @@ class RedditScraper(BaseWebScraper):
 
     def comments_trigger_sync(
         self,
-        url: Union[str, List[str]],
-        days_back: Optional[int] = None,
-        load_all_replies: Optional[bool] = None,
-        comment_limit: Optional[int] = None,
+        url: str | list[str],
+        days_back: int | None = None,
+        load_all_replies: bool | None = None,
+        comment_limit: int | None = None,
     ) -> ScrapeJob:
         """Trigger Reddit comments collection (sync)."""
         return asyncio.run(self.comments_trigger(url, days_back, load_all_replies, comment_limit))
@@ -484,10 +484,10 @@ class RedditScraper(BaseWebScraper):
 
     def _normalize_param(
         self,
-        param: Optional[Union[Any, List[Any]]],
+        param: Any | list[Any] | None,
         target_length: int,
         default_value: Any = None,
-    ) -> List[Any]:
+    ) -> list[Any]:
         """Normalize parameter to list of specified length."""
         if param is None:
             return [default_value] * target_length

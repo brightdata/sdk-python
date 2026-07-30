@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 from typing import Any
+
 from ..core.engine import AsyncEngine
 
 
@@ -30,4 +31,3 @@ class BaseAPI(ABC):
         This method should be implemented by subclasses to perform
         the actual async API operation.
         """
-        pass

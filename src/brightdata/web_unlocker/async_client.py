@@ -19,7 +19,8 @@ Performance Note:
 - See devdocs/web_unlocker_async_inspection.md for details
 """
 
-from typing import Optional, Any
+from typing import Any
+
 from ..core.engine import AsyncEngine
 from ..exceptions import APIError
 
@@ -69,9 +70,9 @@ class AsyncUnblockerClient:
         self,
         zone: str,
         url: str,
-        customer: Optional[str] = None,
+        customer: str | None = None,
         **kwargs,  # Additional params like country, format, etc.
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Trigger async unblocker request.
 
@@ -112,7 +113,7 @@ class AsyncUnblockerClient:
             response_id = response.headers.get("x-response-id")
             return response_id
 
-    async def get_status(self, zone: str, response_id: str, customer: Optional[str] = None) -> str:
+    async def get_status(self, zone: str, response_id: str, customer: str | None = None) -> str:
         """
         Check if response is ready.
 
@@ -157,7 +158,7 @@ class AsyncUnblockerClient:
         zone: str,
         response_id: str,
         response_format: str = "json",
-        customer: Optional[str] = None,
+        customer: str | None = None,
     ) -> Any:
         """
         Fetch results when ready.

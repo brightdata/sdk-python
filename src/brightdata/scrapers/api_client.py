@@ -7,10 +7,10 @@ Handles all HTTP communication with Bright Data's Datasets API v3:
 - Fetching snapshot results
 """
 
-from typing import List, Dict, Any, Optional
+from http import HTTPStatus
+from typing import Any
 
 from ..core.engine import AsyncEngine
-from http import HTTPStatus
 from ..exceptions import APIError, DataNotReadyError
 
 
@@ -41,13 +41,13 @@ class DatasetAPIClient:
 
     async def trigger(
         self,
-        payload: List[Dict[str, Any]],
+        payload: list[dict[str, Any]],
         dataset_id: str,
         include_errors: bool = True,
-        sdk_function: Optional[str] = None,
-        extra_params: Optional[Dict[str, str]] = None,
-        limit_per_input: Optional[int] = None,
-    ) -> Optional[str]:
+        sdk_function: str | None = None,
+        extra_params: dict[str, str] | None = None,
+        limit_per_input: int | None = None,
+    ) -> str | None:
         """
         Trigger dataset collection and get snapshot_id.
 
