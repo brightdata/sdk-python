@@ -32,7 +32,77 @@ from .workflow import WorkflowExecutor
 from .job import ScrapeJob
 
 
-class BaseWebScraper(ABC):
+class ScraperCore:
+    """
+    Shared construction core for all scraper classes (collect + search).
+
+    Owns what every scraper needs regardless of its verbs: bearer-token
+    resolution (parameter or BRIGHTDATA_API_TOKEN), engine reuse-or-create,
+    DatasetAPIClient, WorkflowExecutor, and async context-manager support
+    for standalone usage.
+
+    BaseWebScraper builds the URL-scrape workflow on top of this core; the
+    per-platform search classes (parameter-based discovery) inherit the core
+    directly, since they have no single DATASET_ID or generic scrape method.
+    """
+
+    PLATFORM_NAME: str = ""
+    MIN_POLL_TIMEOUT: int = DEFAULT_MIN_POLL_TIMEOUT
+    COST_PER_RECORD: float = DEFAULT_COST_PER_RECORD
+
+    def __init__(self, bearer_token: Optional[str] = None, engine: Optional[AsyncEngine] = None):
+        """
+        Initialize scraper core.
+
+        Args:
+            bearer_token: Bright Data API token. If None, loads from environment.
+            engine: Optional AsyncEngine instance. If provided, reuses the existing engine
+                   (recommended when using via client to share connection pool and rate limiter).
+                   If None, creates a new engine (for standalone usage).
+
+        Raises:
+            ValidationError: If token not provided and not in environment
+        """
+        self.bearer_token = bearer_token or os.getenv("BRIGHTDATA_API_TOKEN")
+        if not self.bearer_token:
+            raise ValidationError(
+                f"Bearer token required for {self.PLATFORM_NAME or 'scraper'}. "
+                f"Provide bearer_token parameter or set BRIGHTDATA_API_TOKEN environment variable."
+            )
+
+        # Reuse engine if provided (for resource efficiency), otherwise create new one
+        self.engine = engine if engine is not None else AsyncEngine(self.bearer_token)
+        self.api_client = DatasetAPIClient(self.engine)
+        self.workflow_executor = WorkflowExecutor(
+            api_client=self.api_client,
+            platform_name=self.PLATFORM_NAME or None,
+            cost_per_record=self.COST_PER_RECORD,
+        )
+
+    # ============================================================================
+    # CONTEXT MANAGER SUPPORT (for standalone usage)
+    # ============================================================================
+
+    async def __aenter__(self):
+        """
+        Async context manager entry for standalone scraper usage.
+
+        When using a scraper directly (not through BrightDataClient),
+        use the context manager to ensure proper engine lifecycle management.
+
+        Example:
+            >>> async with AmazonScraper(token="...") as scraper:
+            ...     result = await scraper.products(url)
+        """
+        await self.engine.__aenter__()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit - cleanup engine."""
+        await self.engine.__aexit__(exc_type, exc_val, exc_tb)
+
+
+class BaseWebScraper(ScraperCore, ABC):
     """
     Base class for all platform-specific scrapers.
 
@@ -60,9 +130,6 @@ class BaseWebScraper(ABC):
     """
 
     DATASET_ID: str = ""
-    PLATFORM_NAME: str = ""
-    MIN_POLL_TIMEOUT: int = DEFAULT_MIN_POLL_TIMEOUT
-    COST_PER_RECORD: float = DEFAULT_COST_PER_RECORD
 
     def __init__(self, bearer_token: Optional[str] = None, engine: Optional[AsyncEngine] = None):
         """
@@ -77,21 +144,7 @@ class BaseWebScraper(ABC):
         Raises:
             ValidationError: If token not provided and not in environment
         """
-        self.bearer_token = bearer_token or os.getenv("BRIGHTDATA_API_TOKEN")
-        if not self.bearer_token:
-            raise ValidationError(
-                f"Bearer token required for {self.PLATFORM_NAME or 'scraper'}. "
-                f"Provide bearer_token parameter or set BRIGHTDATA_API_TOKEN environment variable."
-            )
-
-        # Reuse engine if provided (for resource efficiency), otherwise create new one
-        self.engine = engine if engine is not None else AsyncEngine(self.bearer_token)
-        self.api_client = DatasetAPIClient(self.engine)
-        self.workflow_executor = WorkflowExecutor(
-            api_client=self.api_client,
-            platform_name=self.PLATFORM_NAME or None,
-            cost_per_record=self.COST_PER_RECORD,
-        )
+        super().__init__(bearer_token=bearer_token, engine=engine)
 
         if not self.DATASET_ID:
             raise NotImplementedError(
@@ -488,28 +541,6 @@ class BaseWebScraper(ABC):
                 trigger_sent_at=start_time,
                 data_fetched_at=datetime.now(timezone.utc),
             )
-
-    # ============================================================================
-    # CONTEXT MANAGER SUPPORT (for standalone usage)
-    # ============================================================================
-
-    async def __aenter__(self):
-        """
-        Async context manager entry for standalone scraper usage.
-
-        When using a scraper directly (not through BrightDataClient),
-        use the context manager to ensure proper engine lifecycle management.
-
-        Example:
-            >>> async with AmazonScraper(token="...") as scraper:
-            ...     result = await scraper.products(url)
-        """
-        await self.engine.__aenter__()
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Async context manager exit - cleanup engine."""
-        await self.engine.__aexit__(exc_type, exc_val, exc_tb)
 
     def __repr__(self) -> str:
         """String representation for debugging."""

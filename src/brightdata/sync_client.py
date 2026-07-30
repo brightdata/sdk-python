@@ -54,7 +54,8 @@ class SyncBrightDataClient:
         Initialize sync client.
 
         Args:
-            token: Bright Data API token (or set BRIGHTDATA_API_TOKEN env var)
+            token: Bright Data API token (or set BRIGHTDATA_API_TOKEN env var, or
+                   log in once with the Bright Data CLI: `brightdata login`)
             timeout: Default request timeout in seconds
             web_unlocker_zone: Zone name for Web Unlocker API
             serp_zone: Zone name for SERP API

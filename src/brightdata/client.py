@@ -34,6 +34,7 @@ from .discover.models import DiscoverResult, DiscoverJob
 from .datasets import DatasetsClient
 from .models import ScrapeResult
 from .types import AccountInfo
+from .cli_credentials import read_cli_credentials
 from http import HTTPStatus
 from .exceptions import ValidationError, AuthenticationError, APIError
 
@@ -68,8 +69,9 @@ class BrightDataClient:
     DEFAULT_WEB_UNLOCKER_ZONE = "sdk_unlocker"
     DEFAULT_SERP_ZONE = "sdk_serp"
 
-    # Environment variable name for API token
+    # Environment variable names for API token (checked in this order)
     TOKEN_ENV_VAR = "BRIGHTDATA_API_TOKEN"
+    TOKEN_ENV_VAR_ALT = "BRIGHTDATA_API_KEY"
 
     def __init__(
         self,
@@ -95,8 +97,10 @@ class BrightDataClient:
         Supports loading from .env files (requires python-dotenv package).
 
         Args:
-            token: API token. If None, loads from BRIGHTDATA_API_TOKEN environment variable
-                  (supports .env files via python-dotenv)
+            token: API token. If None, loads from the BRIGHTDATA_API_TOKEN /
+                  BRIGHTDATA_API_KEY environment variables (supports .env files via
+                  python-dotenv), then falls back to the credentials stored by the
+                  Bright Data CLI (`brightdata login`)
             timeout: Default timeout in seconds for all requests (default: 30)
             web_unlocker_zone: Zone name for web unlocker (default: "sdk_unlocker")
             serp_zone: Zone name for SERP API (default: "sdk_serp")
@@ -129,7 +133,7 @@ class BrightDataClient:
             ...     validate_token=True
             ... )
         """
-        self.token = self._load_token(token)
+        self.token, self.auth_source = self._load_token(token)
         self.timeout = timeout
         self.web_unlocker_zone = web_unlocker_zone or self.DEFAULT_WEB_UNLOCKER_ZONE
         self.serp_zone = serp_zone or self.DEFAULT_SERP_ZONE
@@ -146,6 +150,7 @@ class BrightDataClient:
             rate_period=rate_period,
             ssl_verify=ssl_verify,
             ssl_ca_cert=ssl_ca_cert,
+            auth_source=self.auth_source,
         )
 
         self._scrape_service: Optional[ScrapeService] = None
@@ -177,9 +182,13 @@ class BrightDataClient:
                 "Use: async with BrightDataClient() as client: ..."
             )
 
-    def _load_token(self, token: Optional[str]) -> str:
+    def _load_token(self, token: Optional[str]) -> tuple:
         """
-        Load token from parameter or environment variable.
+        Resolve the API token and record where it came from.
+
+        Resolution order: explicit parameter → environment variables
+        (BRIGHTDATA_API_TOKEN, then BRIGHTDATA_API_KEY) → the credentials
+        stored by the Bright Data CLI (`brightdata login`).
 
         Fails fast with clear error message if no token found.
 
@@ -187,7 +196,9 @@ class BrightDataClient:
             token: Explicit token (takes precedence)
 
         Returns:
-            Valid token string
+            Tuple of (token, auth_source) where auth_source is "param",
+            "env", or "cli_credentials" — reported in the User-Agent so
+            SDK onboarding is measurable. The token itself is never logged.
 
         Raises:
             ValidationError: If no token found
@@ -198,19 +209,25 @@ class BrightDataClient:
                     f"Invalid token format. Token must be a string with at least 10 characters. "
                     f"Got: {type(token).__name__} with length {len(str(token))}"
                 )
-            return token.strip()
+            return token.strip(), "param"
 
-        # Try loading from environment variable
-        env_token = os.getenv(self.TOKEN_ENV_VAR)
+        # Try loading from environment variables
+        env_token = os.getenv(self.TOKEN_ENV_VAR) or os.getenv(self.TOKEN_ENV_VAR_ALT)
         if env_token:
-            return env_token.strip()
+            return env_token.strip(), "env"
+
+        # Fall back to the CLI's stored credentials (read-only)
+        cli_token = read_cli_credentials()
+        if cli_token:
+            return cli_token, "cli_credentials"
 
         # No token found - fail fast with helpful message
         raise ValidationError(
             f"API token required but not found.\n\n"
             f"Provide token in one of these ways:\n"
             f"  1. Pass as parameter: BrightDataClient(token='your_token')\n"
-            f"  2. Set environment variable: {self.TOKEN_ENV_VAR}\n\n"
+            f"  2. Set environment variable: {self.TOKEN_ENV_VAR}\n"
+            f"  3. Log in with the Bright Data CLI: brightdata login\n\n"
             f"Get your API token from: https://brightdata.com/cp/setting/users"
         )
 

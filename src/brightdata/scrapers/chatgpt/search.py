@@ -12,16 +12,14 @@ Uses standard async workflow (trigger/poll/fetch).
 import asyncio
 from typing import Union, List, Optional, Dict, Any
 
-from ...core.engine import AsyncEngine
 from ...models import ScrapeResult
 from ...exceptions import ValidationError
 from ...utils.function_detection import get_caller_function_name
 from ...constants import DEFAULT_POLL_INTERVAL, DEFAULT_TIMEOUT_SHORT, COST_PER_RECORD_CHATGPT
-from ..api_client import DatasetAPIClient
-from ..workflow import WorkflowExecutor
+from ..base import ScraperCore
 
 
-class ChatGPTSearchService:
+class ChatGPTSearchService(ScraperCore):
     """
     ChatGPT Search Service for prompt-based discovery.
 
@@ -50,23 +48,12 @@ class ChatGPTSearchService:
 
     DATASET_ID = "gd_m7aof0k82r803d5bjm"  # ChatGPT dataset
 
-    def __init__(self, bearer_token: str, engine: Optional[AsyncEngine] = None):
-        """
-        Initialize ChatGPT search service.
+    # Platform configuration (consumed by ScraperCore.__init__)
+    PLATFORM_NAME = "chatgpt"
+    COST_PER_RECORD = COST_PER_RECORD_CHATGPT
 
-        Args:
-            bearer_token: Bright Data API token
-            engine: Optional AsyncEngine instance. If not provided, creates a new one.
-                    Allows dependency injection for testing and flexibility.
-        """
-        self.bearer_token = bearer_token
-        self.engine = engine if engine is not None else AsyncEngine(bearer_token)
-        self.api_client = DatasetAPIClient(self.engine)
-        self.workflow_executor = WorkflowExecutor(
-            api_client=self.api_client,
-            platform_name="chatgpt",
-            cost_per_record=COST_PER_RECORD_CHATGPT,
-        )
+    # Construction (token/engine/api_client/workflow_executor) and async
+    # context-manager support are inherited from ScraperCore.
 
     # ============================================================================
     # CHATGPT PROMPT DISCOVERY

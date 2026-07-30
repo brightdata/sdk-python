@@ -19,6 +19,9 @@ Get your API Token from the [Bright Data Control Panel](https://brightdata.com/c
 export BRIGHTDATA_API_TOKEN="your_api_token_here"
 ```
 
+**Already logged in with the CLI?** The SDK works with no configuration — it automatically
+falls back to the credentials stored by `brightdata login`.
+
 ## Quick Start
 
 This SDK is **async-native**. A sync client is also available (see [Sync Client](#sync-client)).
