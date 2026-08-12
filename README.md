@@ -184,31 +184,6 @@ async with async_playwright() as pw:
 
 **When to use:** sites that require full browser automation — JS rendering, login flows, interactive clicks. For plain HTML fetches, prefer `client.scrape_url()`.
 
-### Discover API
-
-AI-ranked web search. Unlike SERP (which returns engine-ordered results), Discover takes a `query` plus an `intent` phrase and re-ranks by relevance. Optionally extracts full page content as markdown.
-
-```python
-async with BrightDataClient() as client:
-    result = await client.discover(
-        query="artificial intelligence trends 2026",
-        intent="latest AI technology developments",
-        country="us",
-        num_results=10,
-    )
-    for item in result.data:
-        print(f"[{item['relevance_score']:.2f}] {item['title']}  {item['link']}")
-```
-
-For long-running discoveries, trigger and poll separately:
-
-```python
-job = await client.discover_trigger(query="...", intent="...")
-result = await job.wait_and_fetch(timeout=60)
-```
-
-**When to use Discover vs SERP:** Discover when you want *entity-level* relevance ranking driven by a natural-language intent (e.g. "find sustainability-focused AI companies"). SERP when you want raw search engine results.
-
 ### Scraper Studio
 
 Run custom collectors built in [Bright Data's Scraper Studio](https://brightdata.com/cp/scrapers). One call triggers the job, polls until ready, and returns the records:

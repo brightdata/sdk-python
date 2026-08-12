@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 from .browser.service import BrowserService
 from .client import BrightDataClient
-from .discover.models import DiscoverResult, DiscoverSnapshot
 from .models import ScrapeResult, SearchResult
 from .types import AccountInfo
 
@@ -192,50 +191,6 @@ class SyncBrightDataClient:
     def scrape_url(self, url, **kwargs):
         """Scrape URL using Web Unlocker."""
         return self._run(self._async_client.scrape_url(url, **kwargs))
-
-    def discover(self, query: str, **kwargs) -> DiscoverResult:
-        """Search the web with AI-powered relevance ranking."""
-        return self._run(self._async_client.discover(query, **kwargs))
-
-    def discover_trigger(self, query: str, **kwargs) -> DiscoverSnapshot:
-        """Trigger a discover search; returns a colorless DiscoverSnapshot.
-
-        Poll/fetch with discover_status / discover_wait / discover_fetch /
-        discover_to_result (by task_id). (Previously returned the async-only
-        DiscoverJob, which could not be driven from sync.)
-        """
-        job = self._run(self._async_client.discover_trigger(query, **kwargs))
-        return DiscoverSnapshot(
-            task_id=job.task_id,
-            query=getattr(job, "query", "") or "",
-            intent=getattr(job, "intent", None),
-        )
-
-    def _discover_service(self):
-        """The async DiscoverService, ensured to exist (lazy, same as the async client)."""
-        svc = self._async_client._discover_service
-        if svc is None:
-            from .discover.service import DiscoverService
-
-            svc = DiscoverService(self._async_client.engine)
-            self._async_client._discover_service = svc
-        return svc
-
-    def discover_status(self, task_id: str) -> str:
-        """Check a triggered discover search's status by task_id ('processing'/'done')."""
-        return self._run(self._discover_service().status(task_id))
-
-    def discover_wait(self, task_id: str, **kwargs) -> str:
-        """Poll a triggered discover search until done, by task_id."""
-        return self._run(self._discover_service().wait(task_id, **kwargs))
-
-    def discover_fetch(self, task_id: str):
-        """Fetch a triggered discover search's results by task_id."""
-        return self._run(self._discover_service().fetch(task_id))
-
-    def discover_to_result(self, task_id: str, **kwargs) -> DiscoverResult:
-        """Wait + fetch + wrap a triggered discover search as DiscoverResult, by task_id."""
-        return self._run(self._discover_service().to_result(task_id, **kwargs))
 
     # ========================================
     # Service Properties

@@ -16,7 +16,6 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from brightdata import SyncBrightDataClient
-from brightdata.discover.models import DiscoverSnapshot
 from brightdata.models import ScrapeResult
 from brightdata.scrapers.service import ScrapeService
 from brightdata.serp.service import SearchService
@@ -170,39 +169,3 @@ class TestSearchWrappers:
         s = SyncInstagramSearchScraper(api, loop)
         assert s.profiles("u") == "P"
         assert s.reels_all("u") == "R"
-
-
-class TestDiscoverSyncPath:
-    """Discover's sync manual path — the one subsystem that had none before."""
-
-    def _client(self, loop):
-        c = SyncBrightDataClient(token="x" * 12)
-        c._loop = loop  # inject the loop; do NOT enter the context (no network)
-        return c
-
-    def test_discover_trigger_returns_colorless_snapshot(self, loop):
-        c = self._client(loop)
-        fake_job = MagicMock(task_id="t1", query="q", intent="i")
-        c._async_client.discover_trigger = AsyncMock(return_value=fake_job)
-        snap = c.discover_trigger("q", intent="i")
-        assert isinstance(snap, DiscoverSnapshot)
-        assert (snap.task_id, snap.query, snap.intent) == ("t1", "q", "i")
-        # colorless: no I/O methods on the handle
-        assert not hasattr(snap, "fetch")
-
-    def test_discover_status_wait_fetch_by_task_id(self, loop):
-        c = self._client(loop)
-        svc = MagicMock()
-        svc.status = AsyncMock(return_value="done")
-        svc.wait = AsyncMock(return_value="done")
-        svc.fetch = AsyncMock(return_value=[{"r": 1}])
-        c._async_client._discover_service = svc
-        assert c.discover_status("t1") == "done"
-        assert c.discover_wait("t1") == "done"
-        assert c.discover_fetch("t1") == [{"r": 1}]
-
-    def test_discover_service_is_ensured_when_missing(self, loop):
-        c = self._client(loop)
-        c._async_client._discover_service = None  # not yet created
-        svc = c._discover_service()
-        assert svc is not None and c._async_client._discover_service is svc
