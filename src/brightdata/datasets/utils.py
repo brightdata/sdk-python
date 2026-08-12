@@ -7,6 +7,9 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
+# Leading characters spreadsheet apps treat as the start of a formula.
+_FORMULA_TRIGGER_CHARS = ("=", "+", "-", "@", "\t", "\r")
+
 
 def export_json(
     data: List[Dict[str, Any]],
@@ -51,11 +54,26 @@ def export_jsonl(
     return filepath
 
 
+def _sanitize_csv_cell(value: Any) -> Any:
+    """
+    Neutralize spreadsheet formula injection (CWE-1236) in a single CSV cell.
+
+    Strings starting with '=', '+', '-', '@', a tab, or a carriage return are
+    prefixed with a leading single quote, which spreadsheet applications
+    treat as an explicit "text" marker instead of executing the value as a
+    formula (e.g. HYPERLINK/WEBSERVICE/IMPORTXML/DDE payloads).
+    """
+    if isinstance(value, str) and value.startswith(_FORMULA_TRIGGER_CHARS):
+        return "'" + value
+    return value
+
+
 def export_csv(
     data: List[Dict[str, Any]],
     filepath: Union[str, Path],
     fields: Optional[List[str]] = None,
     flatten_nested: bool = True,
+    sanitize: bool = True,
 ) -> Path:
     """
     Export dataset results to CSV file.
@@ -65,6 +83,9 @@ def export_csv(
         filepath: Output file path
         fields: Specific fields to export (default: all fields from first record)
         flatten_nested: Convert nested objects/arrays to JSON strings (default: True)
+        sanitize: Escape cell values that would be interpreted as formulas by
+            spreadsheet applications (leading '=', '+', '-', '@', tab, or CR),
+            preventing CSV/formula injection (CWE-1236). Default: True.
 
     Returns:
         Path to the created file
@@ -88,6 +109,8 @@ def export_csv(
             value = record.get(field)
             if flatten_nested and isinstance(value, (dict, list)):
                 value = json.dumps(value, default=str, ensure_ascii=False)
+            if sanitize:
+                value = _sanitize_csv_cell(value)
             row[field] = value
         processed_data.append(row)
 
