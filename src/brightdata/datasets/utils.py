@@ -7,11 +7,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-# Leading characters that spreadsheet applications (Excel, Google Sheets,
-# LibreOffice) interpret as the start of a formula. Values starting with any
-# of these are prefixed with a single quote when `sanitize=True` to prevent
-# CSV/formula injection (CWE-1236) when scraped, attacker-influenced data is
-# exported and later opened in a spreadsheet.
+# Leading characters spreadsheet apps treat as the start of a formula.
 _FORMULA_TRIGGER_CHARS = ("=", "+", "-", "@", "\t", "\r")
 
 
