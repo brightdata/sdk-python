@@ -1,5 +1,10 @@
 # Bright Data Python SDK Changelog
 
+## Version 2.5.2 - Safer CSV exports
+
+- **Security fix**: `export_csv()` (and `export()` for `.csv` files) now automatically escapes cell values that spreadsheet apps like Excel, Google Sheets, or LibreOffice could otherwise misinterpret as formulas, so scraped data can't unexpectedly trigger links or formulas when the exported file is opened.
+- **New `sanitize` option**: enabled by default (`sanitize=True`). Pass `sanitize=False` to `export_csv()` if you need the previous raw export behavior.
+
 ## Version 2.5.1 - Lint cleanup
 
 - **Chore**: pinned an explicit `ruff` lint rule scope (`select`) and sorted imports repo-wide. No behavior changes.
