@@ -30,8 +30,14 @@ class TestExportCsvSanitization:
         filepath = export_csv(data, tmp_path / "out.csv")
 
         with open(filepath, newline="", encoding="utf-8") as f:
-            rows = list(csv.DictReader(f))
+            reader = csv.DictReader(f)
+            assert reader.fieldnames == ["name"]
+            rows = list(reader)
 
+        # Sanitization must not drop, merge, or duplicate rows/columns even
+        # though several payloads contain commas and embedded quotes that
+        # exercise the CSV module's own quoting.
+        assert len(rows) == len(FORMULA_PAYLOADS)
         for row, payload in zip(rows, FORMULA_PAYLOADS):
             # Reader gives us the value with the CSV-level quoting already
             # stripped, so a leading "'" means our sanitizer ran.
@@ -106,3 +112,26 @@ class TestExportCsvSanitization:
         filepath = export_csv([], tmp_path / "out.csv")
         assert filepath.exists()
         assert filepath.read_text(encoding="utf-8") == ""
+
+    def test_output_is_well_formed_csv_across_multiple_rows_and_columns(self, tmp_path):
+        # Mixes sanitized and unsanitized values across several rows/columns
+        # to make sure escaping one cell doesn't corrupt column alignment,
+        # row count, or the header for the rest of the file.
+        data = [
+            {"name": '=HYPERLINK("https://x","y")', "price": "9.99", "note": "ok"},
+            {"name": "Regular Item", "price": "-1.00", "note": "@mention in review"},
+            {"name": "Another Item", "price": "5.00", "note": "plain text"},
+        ]
+        filepath = export_csv(data, tmp_path / "out.csv")
+
+        with open(filepath, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            assert reader.fieldnames == ["name", "price", "note"]
+            rows = list(reader)
+
+        assert len(rows) == len(data)
+        assert rows[0]["name"] == '\'=HYPERLINK("https://x","y")'
+        assert rows[0]["price"] == "9.99"
+        assert rows[1]["price"] == "'-1.00"
+        assert rows[1]["note"] == "'@mention in review"
+        assert rows[2] == {"name": "Another Item", "price": "5.00", "note": "plain text"}
