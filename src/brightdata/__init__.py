@@ -13,9 +13,6 @@ from .browser.service import BrowserService
 from .client import BrightDataClient
 from .core.zone_manager import ZoneManager
 
-# Export Discover API models
-from .discover.models import DiscoverJob, DiscoverResult, DiscoverSnapshot
-
 # Export exceptions
 from .exceptions import (
     APIError,
@@ -134,10 +131,6 @@ __all__ = [
     "ScraperStudioJob",
     "JobStatus",
     "ScraperStudioService",
-    # Discover API
-    "DiscoverResult",
-    "DiscoverJob",
-    "DiscoverSnapshot",
     # Services
     "WebUnlockerService",
     "BrowserService",

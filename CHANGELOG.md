@@ -1,5 +1,20 @@
 # Bright Data Python SDK Changelog
 
+## Version 3.0.0 - Discover API removed
+
+### 🚨 Breaking Changes
+
+The Bright Data Discover API integration is removed from the SDK. Everything below is gone:
+
+- **Async client**: `BrightDataClient.discover()` and `BrightDataClient.discover_trigger()`
+- **Sync client**: `SyncBrightDataClient.discover()`, `discover_trigger()`, `discover_status()`, `discover_wait()`, `discover_fetch()` and `discover_to_result()`
+- **Exported models**: `DiscoverResult`, `DiscoverJob` and `DiscoverSnapshot` are no longer exported from `brightdata`
+- **Module**: the `brightdata.discover` package (`DiscoverService` and its models) is deleted
+
+**Migration**: use `client.search.google()` / `bing()` / `yandex()` to find sources and `client.scrape_url()` to read them.
+
+Unaffected: the dataset *discovery* endpoints (`client.search.instagram.posts()`, `discover_by_category()`, the `InstagramPostsDiscoverPayload` / `InstagramReelsDiscoverPayload` payloads, and every `discover_by` / `discover_new` dataset trigger) are a different feature and are untouched.
+
 ## Version 2.5.1 - Lint cleanup
 
 - **Chore**: pinned an explicit `ruff` lint rule scope (`select`) and sorted imports repo-wide. No behavior changes.

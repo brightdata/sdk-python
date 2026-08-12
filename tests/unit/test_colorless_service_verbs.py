@@ -4,7 +4,6 @@ Tests for the colorless-job service verbs (slice 1 of the colorless refactor).
 Covers the additive service-level verbs that let a triggered job be driven by
 its id alone:
   - BaseWebScraper.status / wait / fetch / to_result(snapshot_id)
-  - DiscoverService.status / wait / fetch / to_result(task_id)
 
 Also guards that the existing colored ScrapeJob methods still work (no
 regression) and that the relocated logic matches the job's behavior.
@@ -12,12 +11,10 @@ regression) and that the relocated logic matches the job's behavior.
 Mocked at the api_client / _poll_once seam (not raw aiohttp), per the plan.
 """
 
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 
-from brightdata.discover.models import DiscoverResult
-from brightdata.discover.service import DiscoverService
 from brightdata.exceptions import APIError
 from brightdata.models import ScrapeResult
 from brightdata.scrapers.amazon import AmazonScraper
@@ -122,54 +119,3 @@ class TestParityAndRegression:
         job = ScrapeJob(snapshot_id="snap_1", api_client=api)
         assert await s.fetch("snap_1") == await job.fetch()
         assert await s.status("snap_1") == await job.status()
-
-
-# ---------------------------------------------------------------------------
-# DiscoverService service verbs (the previously-missing id-based path)
-# ---------------------------------------------------------------------------
-
-
-class TestDiscoverServiceVerbs:
-    def _svc(self):
-        return DiscoverService(engine=MagicMock())
-
-    @pytest.mark.asyncio
-    async def test_status_by_task_id(self):
-        svc = self._svc()
-        svc._poll_once = AsyncMock(return_value={"status": "done", "results": []})
-        assert await svc.status("t1") == "done"
-        svc._poll_once.assert_awaited_once_with("t1")
-
-    @pytest.mark.asyncio
-    async def test_fetch_by_task_id(self):
-        svc = self._svc()
-        svc._poll_once = AsyncMock(return_value={"status": "done", "results": [{"r": 1}]})
-        assert await svc.fetch("t1") == [{"r": 1}]
-
-    @pytest.mark.asyncio
-    async def test_wait_by_task_id(self):
-        svc = self._svc()
-        svc._poll_until_done = AsyncMock(return_value={"status": "done", "results": []})
-        assert await svc.wait("t1") == "done"
-        svc._poll_until_done.assert_awaited_once()
-
-    @pytest.mark.asyncio
-    async def test_to_result_by_task_id(self):
-        svc = self._svc()
-        svc._poll_until_done = AsyncMock(
-            return_value={"status": "done", "results": [{"r": 1}], "duration_seconds": 1.2}
-        )
-        res = await svc.to_result("t1")
-        assert isinstance(res, DiscoverResult)
-        assert res.success is True
-        assert res.total_results == 1
-        assert res.task_id == "t1"
-
-    @pytest.mark.asyncio
-    async def test_to_result_failure_is_caught(self):
-        svc = self._svc()
-        svc._poll_until_done = AsyncMock(side_effect=APIError("Discover task failed: boom"))
-        res = await svc.to_result("t1")
-        assert res.success is False
-        assert res.task_id == "t1"
-        assert res.error and "boom" in res.error
