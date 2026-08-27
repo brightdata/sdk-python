@@ -6,9 +6,16 @@ import ssl
 import warnings
 from typing import Optional, Dict, Any
 from .. import __version__
-from ..exceptions import AuthenticationError, NetworkError, SSLError
+from ..exceptions import (
+    APIError,
+    AuthenticationError,
+    NetworkError,
+    RateLimitError,
+    SSLError,
+)
 from http import HTTPStatus
 from ..utils.ssl_helpers import is_ssl_certificate_error, get_ssl_error_message
+from ..utils.http import parse_retry_after, status_phrase
 
 # Rate limiting support
 try:
@@ -409,19 +416,43 @@ class AsyncEngine:
                         headers=self._headers,
                         timeout=self._timeout,
                     )
-                    # Check status codes that should raise exceptions
-                    if self._response.status == HTTPStatus.UNAUTHORIZED:
-                        text = await self._response.text()
-                        await self._response.release()
-                        raise AuthenticationError(
-                            f"Unauthorized ({HTTPStatus.UNAUTHORIZED}): {text}"
-                        )
-                    elif self._response.status == HTTPStatus.FORBIDDEN:
-                        text = await self._response.text()
-                        await self._response.release()
-                        raise AuthenticationError(f"Forbidden ({HTTPStatus.FORBIDDEN}): {text}")
+                    status = self._response.status
 
-                    return self._response
+                    # 202 MUST pass through. It is a success for
+                    # scraper_studio.trigger_immediate, and elsewhere it means
+                    # "ready but still building", which fetch_result turns into
+                    # DataNotReadyError -- the SDK's only recovery path.
+                    if status < 400 or status == HTTPStatus.ACCEPTED:
+                        return self._response
+
+                    text = await self._response.text()
+                    await self._response.release()
+
+                    context = {
+                        "status_code": status,
+                        "url": self._url,
+                        "method": self._method,
+                        "raw": text,
+                    }
+                    # A short body excerpt keeps a bare print(exc) useful; the
+                    # full (bounded) body stays on .raw.
+                    detail = " ".join(text.split())[:200]
+                    suffix = f": {detail}" if detail else ""
+
+                    if status in (HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN):
+                        raise AuthenticationError(f"{status_phrase(status)} ({status})", **context)
+
+                    if status == HTTPStatus.TOO_MANY_REQUESTS:
+                        # Never retryable: a 429 response itself consumes quota,
+                        # so retrying extends the lockout instead of waiting it out.
+                        raise RateLimitError(
+                            f"Rate limited ({status}){suffix}",
+                            retry_after=parse_retry_after(self._response.headers),
+                            **context,
+                        )
+
+                    # retryable resolves from status_code: 5xx yes, 4xx no.
+                    raise APIError(f"Request failed (HTTP {status}){suffix}", **context)
                 except asyncio.TimeoutError as e:
                     # Must be caught before OSError — on Python 3.11+,
                     # TimeoutError is a subclass of OSError

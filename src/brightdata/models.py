@@ -8,6 +8,8 @@ from typing import Any, Optional, List, Dict, Union, Literal
 import json
 from pathlib import Path
 
+from .exceptions import BrightDataError
+
 StatusType = Literal["ready", "error", "timeout", "in_progress"]
 PlatformType = Optional[Literal["linkedin", "amazon", "chatgpt", "instagram", "facebook"]]
 SearchEngineType = Optional[Literal["google", "bing", "yandex"]]
@@ -27,6 +29,10 @@ class BaseResult:
         error: Error message if operation failed, None otherwise.
         trigger_sent_at: Timestamp when the trigger request was sent to Bright Data (UTC-aware).
         data_fetched_at: Timestamp when data was fetched after polling completed (UTC-aware).
+        cause: The underlying exception when one was converted into this result.
+               `error` stays the human-readable message; `cause` is what code
+               branches on -- e.g. `isinstance(result.cause, RateLimitError)`
+               then `result.cause.retry_after`.
     """
 
     success: bool
@@ -34,6 +40,7 @@ class BaseResult:
     error: Optional[str] = None
     trigger_sent_at: Optional[datetime] = None
     data_fetched_at: Optional[datetime] = None
+    cause: Optional[BrightDataError] = field(default=None, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         """Validate data after initialization."""
@@ -83,6 +90,17 @@ class BaseResult:
                 result[key] = value.isoformat()
             elif isinstance(value, list) and value and isinstance(value[0], datetime):
                 result[key] = [v.isoformat() if isinstance(v, datetime) else v for v in value]
+
+        # An exception is not JSON-serializable; keep a summary so to_json()
+        # and save_to_file() still work.
+        if self.cause is not None:
+            result["cause"] = {
+                "type": type(self.cause).__name__,
+                "message": self.cause.message,
+                "status_code": self.cause.status_code,
+                "retry_after": self.cause.retry_after,
+                "retryable": self.cause.retryable,
+            }
         return result
 
     def to_json(self, indent: Optional[int] = None) -> str:

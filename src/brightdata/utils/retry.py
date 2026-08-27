@@ -2,9 +2,30 @@
 
 import asyncio
 from typing import Callable, Awaitable, TypeVar, Optional, List, Type
-from ..exceptions import APIError, NetworkError
+from ..exceptions import BrightDataError, NetworkError
 
 T = TypeVar("T")
+
+
+def is_retryable(exc: Exception) -> bool:
+    """
+    Decide whether repeating an operation is safe and worthwhile.
+
+    Retryability is NOT inferred from the exception type or from a missing
+    status code. Several SDK errors are raised *after* the server accepted the
+    work (e.g. "Failed to trigger scrape - no snapshot_id returned"), and
+    repeating those creates a duplicate billed job. So anything raised without
+    an explicit opinion defaults to not-retryable; only a raiser with enough
+    knowledge -- currently the engine, for 5xx -- opts in.
+
+    Rate limits are never retryable: on this API a 429 response itself consumes
+    quota, so retrying extends the lockout. Use `retry_after` to pause instead.
+    """
+    if isinstance(exc, (NetworkError, TimeoutError)):
+        return True
+    if isinstance(exc, BrightDataError):
+        return exc.retryable
+    return False
 
 
 async def retry_with_backoff(
@@ -32,9 +53,6 @@ async def retry_with_backoff(
     Raises:
         Last exception if all retries fail
     """
-    if retryable_exceptions is None:
-        retryable_exceptions = [NetworkError, TimeoutError, APIError]
-
     last_exception = None
     delay = initial_delay
 
@@ -45,7 +63,10 @@ async def retry_with_backoff(
             last_exception = e
 
             # Check if exception is retryable
-            if not any(isinstance(e, exc_type) for exc_type in retryable_exceptions):
+            if retryable_exceptions is None:
+                if not is_retryable(e):
+                    raise
+            elif not any(isinstance(e, exc_type) for exc_type in retryable_exceptions):
                 raise
 
             # Don't retry on last attempt

@@ -22,6 +22,34 @@ export BRIGHTDATA_API_TOKEN="your_api_token_here"
 **Already logged in with the CLI?** The SDK works with no configuration — it automatically
 falls back to the credentials stored by `brightdata login`.
 
+## Handling errors
+
+Failures carry structured data, not just a message:
+
+```python
+from brightdata import BrightDataClient, RateLimitError, APIError
+
+async with BrightDataClient() as client:
+    try:
+        data = await client.datasets.instagram_profiles.download(snapshot_id)
+    except RateLimitError as e:
+        await asyncio.sleep(e.retry_after or 60)   # the API told us how long
+    except APIError as e:
+        print(e.status_code, e.raw)                # not a message to parse
+```
+
+Methods that return a result instead of raising expose the same information on `cause`:
+
+```python
+result = await client.scrape.x.posts(url)
+if not result.success and isinstance(result.cause, RateLimitError):
+    await asyncio.sleep(result.cause.retry_after or 60)
+```
+
+Use `e.retryable` to decide whether repeating the call is safe. Rate limits are never
+retryable — a 429 response itself consumes quota, so retrying extends the lockout; wait
+`retry_after` instead.
+
 ## Quick Start
 
 This SDK is **async-native**. A sync client is also available (see [Sync Client](#sync-client)).
