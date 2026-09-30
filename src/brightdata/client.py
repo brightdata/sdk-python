@@ -227,7 +227,8 @@ class BrightDataClient:
             f"API token required but not found.\n\n"
             f"Provide token in one of these ways:\n"
             f"  1. Pass as parameter: BrightDataClient(token='your_token')\n"
-            f"  2. Set environment variable: {self.TOKEN_ENV_VAR}\n"
+            f"  2. Set environment variable: {self.TOKEN_ENV_VAR_ALT} (also read by the Bright Data CLI)\n"
+            f"     or {self.TOKEN_ENV_VAR}\n"
             f"  3. Log in with the Bright Data CLI: brightdata login\n\n"
             f"Get your API token from: https://brightdata.com/cp/setting/users"
         )

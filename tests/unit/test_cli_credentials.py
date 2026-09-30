@@ -164,6 +164,7 @@ class TestResolutionPrecedence:
         msg = str(exc_info.value)
         assert "brightdata login" in msg
         assert "BRIGHTDATA_API_TOKEN" in msg
+        assert "BRIGHTDATA_API_KEY" in msg
         assert "https://brightdata.com/cp/setting/users" in msg
 
     def test_sync_client_inherits_resolution(self, no_env, monkeypatch):
