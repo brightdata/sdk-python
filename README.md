@@ -159,6 +159,11 @@ async with BrightDataClient() as client:
 - `client.scrape.perplexity` — queries with AI-ranked results
 - `client.scrape.digikey` — electronic component products
 
+**Standalone scraper repos:** ready-to-run Python projects built on this SDK, each with a CLI, examples and a daily live check:
+- [brightdata/instagram-scraper](https://github.com/brightdata/instagram-scraper): profiles, posts, reels and comments
+- [brightdata/linkedin-scraper](https://github.com/brightdata/linkedin-scraper): profiles, companies, jobs and posts
+- [brightdata/amazon-scraper](https://github.com/brightdata/amazon-scraper): products, reviews, sellers and search
+
 ### Browser API
 
 Cloud-hosted Chrome instances accessible via the Chrome DevTools Protocol (CDP). The SDK builds the connection URL — you drive the browser with Playwright, Puppeteer, or Selenium.
