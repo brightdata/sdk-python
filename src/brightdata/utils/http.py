@@ -5,7 +5,19 @@ from __future__ import annotations
 from email.utils import parsedate_to_datetime
 from datetime import datetime, timezone
 from http import HTTPStatus
-from typing import Any, Optional
+from typing import Any, Dict, Optional
+
+
+def diagnostic_response_headers(headers: Any) -> Dict[str, str]:
+    """Keep documented diagnostics without retaining unrelated response headers."""
+    if not headers:
+        return {}
+    allowed = {"retry-after", "x-debug-trace", "x-debug-trace-page"}
+    return {
+        name.lower(): value
+        for name, value in headers.items()
+        if isinstance(name, str) and name.lower() in allowed and isinstance(value, str)
+    }
 
 
 def parse_retry_after(headers: Any) -> Optional[float]:

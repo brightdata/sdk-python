@@ -6,13 +6,14 @@ Provides sync interface using persistent event loop for optimal performance.
 
 import asyncio
 import logging
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Literal
 
 logger = logging.getLogger(__name__)
 
 from .client import BrightDataClient
 from .browser.service import BrowserService
 from .models import ScrapeResult, SearchResult
+from .bright_search.models import BrightSearchMode, BrightSearchPage, BrightSearchQuery
 from .discover.models import DiscoverResult, DiscoverSnapshot
 from .types import AccountInfo
 
@@ -263,7 +264,7 @@ class SyncBrightDataClient:
     @property
     def search(self) -> "SyncSearchService":
         """Access search services (sync)."""
-        if self._search is None:
+        if self._search is None or self._search._loop is not self._loop:
             self._search = SyncSearchService(self._async_client.search, self._loop)
         return self._search
 
@@ -977,6 +978,42 @@ class SyncSearchService:
         self._pinterest = None
         self._tiktok = None
         self._youtube = None
+
+    def _ensure_initialized(self) -> None:
+        if self._loop is None or self._loop.is_closed():
+            raise RuntimeError(
+                "SyncBrightDataClient not initialized. "
+                "Use: with SyncBrightDataClient() as client: ..."
+            )
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            return
+        raise RuntimeError(
+            "SyncBrightDataClient cannot be used inside an async context. "
+            "Use BrightDataClient with async/await instead."
+        )
+
+    def company(
+        self, query: BrightSearchQuery, *, mode: BrightSearchMode, **kwargs
+    ) -> BrightSearchPage:
+        """Return one company search page; options match client.search.company()."""
+        self._ensure_initialized()
+        return self._loop.run_until_complete(self._async.company(query, mode=mode, **kwargs))
+
+    def people(
+        self, query: BrightSearchQuery, *, mode: BrightSearchMode, **kwargs
+    ) -> BrightSearchPage:
+        """Return one people search page; options match client.search.people()."""
+        self._ensure_initialized()
+        return self._loop.run_until_complete(self._async.people(query, mode=mode, **kwargs))
+
+    def ecom(
+        self, query: Dict[str, Any], *, mode: Literal["ludicrous"], **kwargs
+    ) -> BrightSearchPage:
+        """Return one structured E-commerce search page, without automatic paging."""
+        self._ensure_initialized()
+        return self._loop.run_until_complete(self._async.ecom(query, mode=mode, **kwargs))
 
     def google(self, query, **kwargs) -> SearchResult:
         """Search Google."""

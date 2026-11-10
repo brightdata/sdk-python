@@ -212,6 +212,80 @@ async with async_playwright() as pw:
 
 **When to use:** sites that require full browser automation — JS rendering, login flows, interactive clicks. For plain HTML fetches, prefer `client.scrape_url()`.
 
+### Bright Search (Company, People, and E-commerce)
+
+Search supported records directly, returning one page per call. Use `company()` or
+`people()` with a structured query and `mode="ludicrous"`, or natural language and
+`mode="instant"` / `mode="smart"`. Natural-language queries allow up to 200 characters.
+
+```python
+from brightdata import BrightDataClient
+
+# Direct Bright Search requests do not need Web Unlocker or SERP zones.
+async with BrightDataClient(auto_create_zones=False) as client:
+    page = await client.search.company(
+        query="US software companies with 50 to 500 employees",
+        mode="instant",
+        view="summary",
+        limit=10,
+    )
+    for document in page.documents:
+        print(document["bright_id"], document["data"].get("name"))
+    print(page.req_id, page.meta["matched"], page.meta["coverage_percent"])
+
+    products = await client.search.ecom(
+        query={"and": [
+            {"equals": {"retailer": "Argos"}},
+            {"equals": {"sku": "4326522"}},
+        ]},
+        mode="ludicrous",
+        view="full",
+    )
+```
+
+The same methods return `BrightSearchPage` from the synchronous client:
+
+```python
+from brightdata import SyncBrightDataClient
+
+with SyncBrightDataClient(auto_create_zones=False) as client:
+    page = client.search.people(
+        "Product managers in the United States",
+        mode="instant",
+        view={"fields": ["name", "current_title", "url"]},
+    )
+```
+
+`source=None` uses the category's server default; `view=None` uses `id_only`.
+E-commerce supports only `ludicrous`, and its default `retail_products` source
+supports `id_only`, `full`, or a custom field list, but no `summary` view. Every
+document includes `bright_id`; fields inside `data` are optional. `page.raw`,
+`page.to_dict()`, and `page.to_json()` preserve the complete response body,
+including additional fields. Response headers are separate in `page.response_headers`.
+
+Use explicit `offset` and `limit` for paging. Ludicrous and Instant allow limits
+up to 100 and offsets up to 1000; Smart allows limits up to 10 and offsets up to
+100. `matched` is generally a reached-count lower bound, not a total, and partial
+coverage is reported in `coverage_percent`. Pages are separate searches against
+the current index and are billed separately, including served empty pages.
+
+The SDK does not automatically paginate or retry these calls. Redirects raise
+`APIError` without following another URL. On failure, catch
+the usual SDK exceptions; HTTP errors retain `req_id`, `response_json`, and
+selected response headers. A `RateLimitError` exposes `retry_after` for deciding
+when to make another explicit attempt. The generic retry helper's policy is
+unchanged. Interrupted successful response bodies raise `NetworkError`; malformed
+text or JSON raises `APIError`. HTTP errors retain their status classification and
+available headers even when the error body is damaged.
+
+For a debug-enabled account, the optional `debug` mapping accepts the wire keys
+`explain`, `benchmark`, `trace`, and `__overrides__`. These keys are omitted unless
+explicitly supplied; nested null, false, and zero values are preserved. Diagnostic
+output is available in `page.explain`, and its internal structure is unstable.
+Flights is experimental and is not exposed by these methods.
+
+See [the Bright Search example](examples/bright_search.py) for async and sync usage.
+
 ### Discover API
 
 AI-ranked web search. Unlike SERP (which returns engine-ordered results), Discover takes a `query` plus an `intent` phrase and re-ranks by relevance. Optionally extracts full page content as markdown.

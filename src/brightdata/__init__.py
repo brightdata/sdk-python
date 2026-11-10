@@ -29,6 +29,9 @@ from .scrapers.job import ScrapeJob
 # Export Discover API models
 from .discover.models import DiscoverResult, DiscoverJob, DiscoverSnapshot
 
+# Export direct Bright Search responses
+from .bright_search.models import BrightSearchPage
+
 # Export payload models (dataclasses)
 from .payloads import (
     # Base
@@ -83,6 +86,7 @@ from .scraper_studio.models import ScraperStudioJob, JobStatus
 from .web_unlocker.service import WebUnlockerService
 from .scraper_studio.service import ScraperStudioService
 from .browser.service import BrowserService
+from .bright_search.service import BrightSearchService
 from .core.zone_manager import ZoneManager
 
 __all__ = [
@@ -142,6 +146,9 @@ __all__ = [
     "DiscoverResult",
     "DiscoverJob",
     "DiscoverSnapshot",
+    # Bright Search
+    "BrightSearchPage",
+    "BrightSearchService",
     # Services
     "WebUnlockerService",
     "BrowserService",

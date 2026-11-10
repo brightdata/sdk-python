@@ -34,6 +34,9 @@ class BrightDataError(Exception):
                    Defaults to False — only a raiser with enough knowledge
                    (currently the engine, for 5xx) may set it True.
         raw: Response body, truncated to RAW_LIMIT.
+        req_id: Request identifier extracted before truncation, when opted in.
+        response_json: Parsed error response, when explicitly retained.
+        response_headers: Selected response headers, when explicitly retained.
     """
 
     def __init__(
@@ -46,6 +49,9 @@ class BrightDataError(Exception):
         retry_after: float | None = None,
         retryable: bool | None = None,
         raw: Any = None,
+        req_id: str | None = None,
+        response_json: Any = None,
+        response_headers: dict[str, str] | None = None,
         **kwargs,
     ):
         super().__init__(message, *args)
@@ -58,6 +64,9 @@ class BrightDataError(Exception):
             retryable = status_code is not None and status_code >= 500
         self.retryable = retryable
         self.raw = _truncate(raw)
+        self.req_id = req_id if isinstance(req_id, str) else None
+        self.response_json = response_json
+        self.response_headers = response_headers if response_headers is not None else {}
 
 
 class ValidationError(BrightDataError):
@@ -95,9 +104,8 @@ class RateLimitError(APIError):
     """
     HTTP 429 — request rate or quota exceeded.
 
-    Never retryable: on the Bright Data API a 429 response itself consumes
-    quota, so retrying extends the lockout rather than waiting it out. Use
-    `retry_after` to decide how long to pause instead.
+    Excluded from the generic retry helper. Use `retry_after` to decide how
+    long to pause before an explicit retry according to the service's contract.
     """
 
     def __init__(self, message: str, *args, **kwargs):
