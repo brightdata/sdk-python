@@ -8,8 +8,14 @@ from typing import Any, Dict, Optional
 import aiohttp
 
 from ..core.engine import AsyncEngine
-from ..exceptions import APIError, NetworkError, ValidationError
-from ..utils.http import diagnostic_response_headers
+from ..exceptions import (
+    APIError,
+    BrightDataError,
+    NetworkError,
+    RequestTimeoutError,
+    ValidationError,
+)
+from ..utils.http import diagnostic_response_headers, parse_retry_after
 from .models import (
     BrightSearchDebug,
     BrightSearchMode,
@@ -22,8 +28,9 @@ from .models import (
 class BrightSearchService:
     """Search a supported category and return one page directly.
 
-    Requests are not redirected, retried, or paginated automatically. Field/operator
-    validation, natural-language planning, and ranking remain with the API.
+    Requests are not redirected, retried, or paginated automatically. Failures
+    opt out of the generic retry helper because the search may have executed.
+    Field/operator validation, natural-language planning, and ranking remain with the API.
     The owning client manages the engine's session.
     """
 
@@ -69,14 +76,24 @@ class BrightSearchService:
             BrightSearchPage preserving request identity and coverage metadata.
 
         Raises:
-            ValidationError: Invalid outer request shape or known capability.
+            ValidationError: Invalid request shape, capability, or JSON payload.
             APIError: Upstream failure or malformed search response. Rate limits
                 raise RateLimitError with retry_after; callers control recovery.
             NetworkError: The response body could not be fully received.
-            TimeoutError: The request or response body exceeded the client timeout.
+            RequestTimeoutError: Request/body timeout with available context;
+                also catchable as the built-in TimeoutError.
         """
         payload = self._build_payload(category, query, mode, source, view, offset, limit, debug)
         endpoint = f"/search/{category}"
+        try:
+            return await self._request_page(endpoint, payload)
+        except BrightDataError as exc:
+            # This includes errors raised while entering the engine context.
+            # An HTTP failure or an unreadable response can follow execution.
+            exc.retryable = False
+            raise
+
+    async def _request_page(self, endpoint: str, payload: Dict[str, Any]) -> BrightSearchPage:
         async with self.engine.post(
             endpoint, json_data=payload, preserve_error_response=True, allow_redirects=False
         ) as response:
@@ -87,14 +104,15 @@ class BrightSearchService:
                 "method": "POST",
                 "retryable": False,
                 "response_headers": response_headers,
+                "retry_after": parse_retry_after(response.headers),
             }
             try:
                 text = await response.text()
                 context["raw"] = text
                 data = json.loads(text)
             except asyncio.TimeoutError as exc:
-                raise TimeoutError(
-                    f"Request timeout after {self.engine.timeout.total} seconds"
+                raise RequestTimeoutError(
+                    f"Request timeout after {self.engine.timeout.total} seconds", **context
                 ) from exc
             except (aiohttp.ClientError, OSError) as exc:
                 raise NetworkError(
@@ -180,4 +198,24 @@ class BrightSearchService:
             payload["view"] = view
         if debug is not None:
             payload.update(debug)
+        cls._validate_json_payload(payload)
         return payload
+
+    @staticmethod
+    def _validate_json_payload(payload: Dict[str, Any]) -> None:
+        """Reject invalid JSON and object-key coercion without changing the input."""
+        try:
+            # The encoder checks unsupported values, non-finite numbers, cycles,
+            # and nesting it cannot serialize before the request is dispatched.
+            json.dumps(payload, allow_nan=False)
+            pending = [payload]
+            while pending:
+                value = pending.pop()
+                if isinstance(value, dict):
+                    if any(not isinstance(key, str) for key in value):
+                        raise ValueError("JSON object keys must be strings")
+                    pending.extend(value.values())
+                elif isinstance(value, (list, tuple)):
+                    pending.extend(value)
+        except (TypeError, ValueError, OverflowError, RecursionError) as exc:
+            raise ValidationError(f"Bright Search payload must be valid JSON: {exc}") from exc

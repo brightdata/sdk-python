@@ -12,6 +12,7 @@ from ..exceptions import (
     AuthenticationError,
     NetworkError,
     RateLimitError,
+    RequestTimeoutError,
     SSLError,
 )
 from http import HTTPStatus
@@ -483,18 +484,14 @@ class AsyncEngine:
                     }
                     if preserve_error_response:
                         # Extract identity while the complete body is still
-                        # available; BrightDataError bounds its raw text.
-                        try:
-                            error_data = json.loads(text)
-                        except (ValueError, RecursionError):
-                            error_data = None
+                        # available; replacement-decoded text is diagnostic only.
+                        error_data = None
+                        if body_error is None:
+                            try:
+                                error_data = json.loads(text)
+                            except (ValueError, RecursionError):
+                                pass
                         req_id = error_data.get("req_id") if isinstance(error_data, dict) else None
-                        if (
-                            isinstance(body_error, UnicodeDecodeError)
-                            and isinstance(req_id, str)
-                            and "\ufffd" in req_id
-                        ):
-                            req_id = None  # Do not expose a repaired ID as the original identity.
                         context.update(
                             req_id=req_id,
                             response_json=error_data,
@@ -526,9 +523,19 @@ class AsyncEngine:
                 except asyncio.TimeoutError as e:
                     # Must be caught before OSError — on Python 3.11+,
                     # TimeoutError is a subclass of OSError
-                    raise TimeoutError(
-                        f"Request timeout after {self._timeout.total} seconds"
-                    ) from e
+                    message = f"Request timeout after {self._timeout.total} seconds"
+                    if preserve_error_response:
+                        response = self._response
+                        headers = response.headers if response is not None else None
+                        raise RequestTimeoutError(
+                            message,
+                            status_code=response.status if response is not None else None,
+                            url=self._url,
+                            method=self._method,
+                            response_headers=diagnostic_response_headers(headers),
+                            retry_after=parse_retry_after(headers),
+                        ) from e
+                    raise TimeoutError(message) from e
                 except (aiohttp.ClientError, ssl.SSLError, OSError) as e:
                     # Check for SSL certificate errors first
                     # aiohttp wraps SSL errors in ClientConnectorError or ClientSSLError

@@ -17,9 +17,16 @@ from multidict import CIMultiDict
 
 from brightdata import BrightDataClient, BrightSearchPage, BrightSearchService, SyncBrightDataClient
 from brightdata.core.engine import AsyncEngine
-from brightdata.exceptions import APIError, AuthenticationError, NetworkError, RateLimitError
+from brightdata.exceptions import (
+    APIError,
+    AuthenticationError,
+    BrightDataError,
+    NetworkError,
+    RateLimitError,
+)
 from brightdata.exceptions import ValidationError
 from brightdata.sync_client import SyncSearchService
+from brightdata.utils.retry import is_retryable, retry_with_backoff
 from tests.conftest import MockContextManager, MockResponse
 
 
@@ -181,6 +188,74 @@ async def test_invalid_outer_requests_fail_before_network(service, mock_engine, 
     with pytest.raises(ValidationError):
         await service.search(**arguments)
     mock_engine.post.assert_not_called()
+
+
+@pytest.mark.parametrize("target", ["query", "debug"])
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param(float("nan"), id="nan"),
+        pytest.param(float("inf"), id="infinity"),
+        pytest.param(float("-inf"), id="negative-infinity"),
+        pytest.param({1: "value"}, id="integer-key"),
+        pytest.param({False: "value"}, id="boolean-key"),
+        pytest.param({None: "value"}, id="null-key"),
+        pytest.param({1.5: "value"}, id="float-key"),
+        pytest.param({("key",): "value"}, id="tuple-key"),
+        pytest.param(b"bytes", id="bytes"),
+        pytest.param({1, 2}, id="set"),
+        pytest.param(object(), id="object"),
+    ],
+)
+async def test_nested_non_json_values_fail_before_dispatch(service, mock_engine, target, value):
+    query = {"future_field": [value]} if target == "query" else {}
+    debug = {"__overrides__": {"future_option": [value]}} if target == "debug" else None
+    with pytest.raises(ValidationError):
+        await service.search("company", query, mode="ludicrous", debug=debug)
+    mock_engine.post.assert_not_called()
+
+
+@pytest.mark.parametrize("target", ["query", "debug"])
+@pytest.mark.parametrize("container", ["list", "dict"])
+async def test_circular_payload_fails_before_dispatch(service, mock_engine, target, container):
+    if container == "list":
+        value = []
+        value.append(value)
+    else:
+        value = {}
+        value["self"] = value
+    query = {"future_field": value} if target == "query" else {}
+    debug = {"__overrides__": value} if target == "debug" else None
+    with pytest.raises(ValidationError):
+        await service.search("company", query, mode="ludicrous", debug=debug)
+    mock_engine.post.assert_not_called()
+    assert (value[0] if container == "list" else value["self"]) is value
+
+
+async def test_deep_payload_fails_before_dispatch(service, mock_engine):
+    query = {}
+    for _ in range(1500):
+        query = {"nested": query}
+    with pytest.raises(ValidationError):
+        await service.search("company", query, mode="ludicrous")
+    mock_engine.post.assert_not_called()
+
+
+async def test_json_validation_preserves_nested_values_and_shared_containers(service, mock_engine):
+    shared = {"future_field": [None, False, 0, [], {}, "text", 1.5]}
+    query = {"future_query": [shared, shared]}
+    debug = {"__overrides__": {"future_debug": shared}, "trace": False, "benchmark": 0}
+    before = deepcopy((query, debug))
+
+    await service.search("company", query, mode="ludicrous", debug=debug)
+
+    sent = mock_engine.post.call_args.kwargs["json_data"]
+    assert (query, debug) == before
+    assert sent["query"] == before[0]
+    assert sent["query"]["future_query"][0] is shared
+    assert sent["__overrides__"] == before[1]["__overrides__"]
+    assert sent["trace"] is False and sent["benchmark"] == 0
+    assert json.loads(json.dumps(sent, allow_nan=False)) == sent
 
 
 @pytest.mark.parametrize("mode,limit,offset", [("instant", 100, 1000), ("smart", 10, 100)])
@@ -346,8 +421,9 @@ async def test_engine_preserves_error_identity_before_truncation_without_retry(s
     }
     assert exc.status_code == status and exc.method == "POST"
     assert exc.url == "https://api.brightdata.com/search/company"
+    assert exc.retryable is False
     if status == 429:
-        assert exc.retry_after == 2 and exc.retryable is False
+        assert exc.retry_after == 2
 
 
 async def test_error_capture_is_opt_in_and_non_json_errors_keep_their_type():
@@ -380,9 +456,57 @@ async def test_transport_failures_are_not_replayed(failure, expected):
     engine = AsyncEngine("test_token")
     async with engine:
         engine._session.request = AsyncMock(side_effect=failure)
-        with pytest.raises(expected):
-            await BrightSearchService(engine).search("company", "query", mode="instant")
+        with pytest.raises(expected) as error:
+            await retry_with_backoff(
+                lambda: BrightSearchService(engine).search("company", "query", mode="instant"),
+                max_retries=1,
+                initial_delay=0,
+            )
         engine._session.request.assert_awaited_once()
+        assert not is_retryable(error.value)
+
+
+@pytest.mark.parametrize("status", [200, 429])
+async def test_body_timeout_keeps_known_context(status):
+    failure = asyncio.TimeoutError("body timed out")
+    resp = response({}, status, CIMultiDict({"Retry-After": "2", "X-Debug-Trace": "trace"}))
+    resp.text = AsyncMock(side_effect=failure)
+    async with AsyncEngine("test_token") as engine:
+        engine._session.request = AsyncMock(return_value=resp)
+        with pytest.raises(TimeoutError) as error:
+            await retry_with_backoff(
+                lambda: BrightSearchService(engine).search("company", "query", mode="instant"),
+                max_retries=1,
+                initial_delay=0,
+            )
+        engine._session.request.assert_awaited_once()
+        assert resp.closed
+    exc = error.value
+    assert isinstance(exc, BrightDataError)
+    assert exc.status_code == status
+    assert exc.response_headers == {"retry-after": "2", "x-debug-trace": "trace"}
+    assert exc.retry_after == 2
+    assert exc.url == "https://api.brightdata.com/search/company" and exc.method == "POST"
+    assert exc.req_id is None and exc.response_json is None
+    assert exc.__cause__ is failure
+    assert not is_retryable(exc)
+
+
+async def test_legacy_request_timeout_remains_plain_and_retryable():
+    failure = asyncio.TimeoutError("connection timed out")
+    async with AsyncEngine("test_token") as engine:
+        engine._session.request = AsyncMock(side_effect=failure)
+
+        async def request():
+            async with engine.post("/legacy"):
+                pytest.fail("The mocked request should time out")
+
+        with pytest.raises(TimeoutError) as error:
+            await retry_with_backoff(request, max_retries=1, initial_delay=0)
+        assert engine._session.request.await_count == 2
+        assert type(error.value) is TimeoutError
+        assert error.value.__cause__ is failure
+        assert is_retryable(error.value)
 
 
 @pytest.mark.parametrize("name", ["company", "people", "ecom"])
@@ -544,6 +668,39 @@ def assert_wire_error_context(exc, peer, status):
     assert peer.requests[0][:2] == ("POST", "/search/company")
 
 
+@pytest.mark.parametrize("status", [500, 502])
+async def test_wire_http_failure_is_not_replayed_through_generic_backoff(wire_server, status):
+    payload = b'{"req_id": "failed-search", "error": "upstream failed"}'
+    async with wire_server(status, payload) as peer:
+        async with BrightDataClient(token="local_test_token", auto_create_zones=False) as client:
+            client.engine.BASE_URL = peer.url
+            with pytest.raises(APIError) as error:
+                await retry_with_backoff(
+                    lambda: client.search.company("query", mode="instant"),
+                    max_retries=1,
+                    initial_delay=0,
+                )
+            assert_wire_error_context(error.value, peer, status)
+            assert error.value.req_id == "failed-search"
+            assert error.value.retryable is False
+
+
+@pytest.mark.parametrize("status", [500, 502])
+async def test_wire_legacy_http_failure_still_retries(wire_server, status):
+    async with wire_server(status, b'{"error": "upstream failed"}') as peer:
+        async with AsyncEngine("local_test_token") as engine:
+            engine.BASE_URL = peer.url
+
+            async def request():
+                async with engine.post("/legacy"):
+                    pytest.fail("The HTTP error should be raised during entry")
+
+            with pytest.raises(APIError) as error:
+                await retry_with_backoff(request, max_retries=1, initial_delay=0)
+            assert len(peer.requests) == 2
+            assert error.value.retryable is True
+
+
 @pytest.mark.parametrize("status", [301, 302, 303, 307, 308])
 async def test_wire_redirect_is_an_error_without_another_request(wire_server, status):
     async with wire_server(status, headers={"Location": "/redirected"}) as peer:
@@ -584,7 +741,11 @@ async def test_wire_body_failures_use_sdk_errors(
         async with BrightDataClient(token="local_test_token", auto_create_zones=False) as client:
             client.engine.BASE_URL = peer.url
             with pytest.raises(error_type) as error:
-                await client.search.company("query", mode="instant")
+                await retry_with_backoff(
+                    lambda: client.search.company("query", mode="instant"),
+                    max_retries=1,
+                    initial_delay=0,
+                )
             assert_wire_error_context(error.value, peer, 200)
             assert isinstance(error.value.__cause__, cause_type)
             assert error.value.retryable is False
@@ -601,33 +762,43 @@ async def test_wire_body_failures_use_sdk_errors(
         (502, APIError),
     ],
 )
+@pytest.mark.parametrize(
+    "payload",
+    [
+        b'{"req_id": "recoverable", "error": "\xff"}',
+        b'{"req_id": "corrupt\xff", "error": "failed"}',
+    ],
+    ids=["outside-request-id", "inside-request-id"],
+)
 async def test_wire_invalid_error_encoding_keeps_http_classification(
-    wire_server, status, error_type
+    wire_server, status, error_type, payload
 ):
-    payload = b'{"req_id": "recoverable", "error": "\xff"}'
     async with wire_server(status, payload) as peer:
         async with BrightDataClient(token="local_test_token", auto_create_zones=False) as client:
             client.engine.BASE_URL = peer.url
             with pytest.raises(error_type) as error:
                 await client.search.company("query", mode="instant")
             assert_wire_error_context(error.value, peer, status)
-            assert error.value.req_id == "recoverable"
-            assert error.value.response_json == {"req_id": "recoverable", "error": "\ufffd"}
+            assert error.value.req_id is None
+            assert error.value.response_json is None
+            assert "\ufffd" in error.value.raw
             assert isinstance(error.value.__cause__, UnicodeDecodeError)
             if status == 429:
                 assert error.value.retry_after == 2
                 assert error.value.retryable is False
 
 
-async def test_wire_invalid_encoding_does_not_fabricate_a_request_id(wire_server):
-    async with wire_server(500, b'{"req_id": "corrupt\xff", "error": "failed"}') as peer:
+async def test_wire_valid_unicode_error_json_remains_authoritative(wire_server):
+    data = {"req_id": "valid-\ufffd", "error": "failed"}
+    async with wire_server(500, json.dumps(data).encode()) as peer:
         async with BrightDataClient(token="local_test_token", auto_create_zones=False) as client:
             client.engine.BASE_URL = peer.url
             with pytest.raises(APIError) as error:
                 await client.search.company("query", mode="instant")
             assert_wire_error_context(error.value, peer, 500)
-            assert error.value.req_id is None
-            assert isinstance(error.value.__cause__, UnicodeDecodeError)
+            assert error.value.req_id == data["req_id"]
+            assert error.value.response_json == data
+            assert error.value.__cause__ is None
 
 
 @pytest.mark.parametrize("status,error_type", [(429, RateLimitError), (500, APIError)])
@@ -660,8 +831,17 @@ async def test_wire_body_timeout_stays_timeout_and_closes_response(wire_server, 
         async with BrightDataClient(token="local_test_token", auto_create_zones=False) as client:
             client.engine.BASE_URL = peer.url
             client.engine.timeout = aiohttp.ClientTimeout(total=0.2)
-            with pytest.raises(TimeoutError):
-                await client.search.company("query", mode="instant")
+            with pytest.raises(TimeoutError) as error:
+                await retry_with_backoff(
+                    lambda: client.search.company("query", mode="instant"),
+                    max_retries=1,
+                    initial_delay=0,
+                )
+            assert_wire_error_context(error.value, peer, status)
+            assert error.value.retry_after == 2
+            assert error.value.req_id is None and error.value.response_json is None
+            assert isinstance(error.value.__cause__, asyncio.TimeoutError)
+            assert not is_retryable(error.value)
             await asyncio.wait_for(peer.disconnected.wait(), timeout=2)
             assert len(peer.requests) == 1
             assert not client.engine._session.closed

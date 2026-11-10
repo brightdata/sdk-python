@@ -9,6 +9,7 @@ from .errors import (
     DataNotReadyError,
     ZoneError,
     NetworkError,
+    RequestTimeoutError,
     SSLError,
 )
 
@@ -21,5 +22,6 @@ __all__ = [
     "DataNotReadyError",
     "ZoneError",
     "NetworkError",
+    "RequestTimeoutError",
     "SSLError",
 ]

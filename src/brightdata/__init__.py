@@ -76,6 +76,7 @@ from .exceptions import (
     DataNotReadyError,
     ZoneError,
     NetworkError,
+    RequestTimeoutError,
     SSLError,
 )
 
@@ -137,6 +138,7 @@ __all__ = [
     "DataNotReadyError",
     "ZoneError",
     "NetworkError",
+    "RequestTimeoutError",
     "SSLError",
     # Scraper Studio
     "ScraperStudioJob",

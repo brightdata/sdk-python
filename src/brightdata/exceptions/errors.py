@@ -30,9 +30,9 @@ class BrightDataError(Exception):
         url: URL of the failing request, when known.
         method: HTTP method of the failing request, when known.
         retry_after: Seconds parsed from a Retry-After header, when present.
-        retryable: Whether repeating the operation is safe and worthwhile.
-                   Defaults to False — only a raiser with enough knowledge
-                   (currently the engine, for 5xx) may set it True.
+        retryable: Whether the generic helper should repeat the operation.
+                   Defaults from the HTTP status (5xx). NetworkError defaults
+                   to True to match legacy retry behavior. Services can opt out.
         raw: Response body, truncated to RAW_LIMIT.
         req_id: Request identifier extracted before truncation, when opted in.
         response_json: Parsed error response, when explicitly retained.
@@ -126,7 +126,16 @@ class ZoneError(BrightDataError):
 
 
 class NetworkError(BrightDataError):
-    """Network connectivity issue."""
+    """Network failure; retain legacy retries unless explicitly disabled."""
+
+    def __init__(self, message: str, *args, retryable: bool | None = None, **kwargs):
+        super().__init__(
+            message, *args, retryable=True if retryable is None else retryable, **kwargs
+        )
+
+
+class RequestTimeoutError(BrightDataError, TimeoutError):
+    """Request/body timeout with context, also catchable as built-in TimeoutError."""
 
     pass
 

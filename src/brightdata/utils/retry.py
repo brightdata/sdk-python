@@ -2,7 +2,7 @@
 
 import asyncio
 from typing import Callable, Awaitable, TypeVar, Optional, List, Type
-from ..exceptions import BrightDataError, NetworkError
+from ..exceptions import BrightDataError
 
 T = TypeVar("T")
 
@@ -11,20 +11,16 @@ def is_retryable(exc: Exception) -> bool:
     """
     Decide whether repeating an operation is safe and worthwhile.
 
-    Retryability is NOT inferred from the exception type or from a missing
-    status code. Several SDK errors are raised *after* the server accepted the
-    work (e.g. "Failed to trigger scrape - no snapshot_id returned"), and
-    repeating those creates a duplicate billed job. So anything raised without
-    an explicit opinion defaults to not-retryable; only a raiser with enough
-    knowledge -- currently the engine, for 5xx -- opts in.
-
-    Rate limits are never retryable: on this API a 429 response itself consumes
-    quota, so retrying extends the lockout. Use `retry_after` to pause instead.
+    Honor SDK errors' retryable flag, including explicit service policies.
+    NetworkError defaults to retryable and plain built-in timeouts keep their
+    legacy retry behavior. Other errors need an explicit retryable decision.
+    A failed response does not prove that the server did not execute the work.
+    RateLimitError stays non-retryable; callers can inspect retry_after.
     """
-    if isinstance(exc, (NetworkError, TimeoutError)):
-        return True
     if isinstance(exc, BrightDataError):
         return exc.retryable
+    if isinstance(exc, TimeoutError):
+        return True
     return False
 
 
@@ -45,7 +41,8 @@ async def retry_with_backoff(
         initial_delay: Initial delay in seconds
         max_delay: Maximum delay in seconds
         backoff_factor: Multiplier for exponential backoff
-        retryable_exceptions: List of exception types to retry on
+        retryable_exceptions: Explicit exception-type override of the default
+            retry policy. Supplying this list opts into retries for those types.
 
     Returns:
         Result from successful function call

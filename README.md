@@ -269,14 +269,28 @@ up to 100 and offsets up to 1000; Smart allows limits up to 10 and offsets up to
 coverage is reported in `coverage_percent`. Pages are separate searches against
 the current index and are billed separately, including served empty pages.
 
-The SDK does not automatically paginate or retry these calls. Redirects raise
-`APIError` without following another URL. On failure, catch
-the usual SDK exceptions; HTTP errors retain `req_id`, `response_json`, and
-selected response headers. A `RateLimitError` exposes `retry_after` for deciding
-when to make another explicit attempt. The generic retry helper's policy is
-unchanged. Interrupted successful response bodies raise `NetworkError`; malformed
-text or JSON raises `APIError`. HTTP errors retain their status classification and
-available headers even when the error body is damaged.
+The SDK does not automatically paginate these calls. Bright Search failures set
+`retryable=False`, so the generic `retry_with_backoff` helper does not replay them
+under its default policy, including HTTP 5xx and response-body failures. A failed
+response can follow an executed search. Callers can make another explicit request;
+supplying `retryable_exceptions` to the helper is an explicit policy override.
+
+Redirects raise `APIError` without following another URL. HTTP errors retain
+available `req_id`, `response_json`, and selected response headers. A
+`RateLimitError` exposes `retry_after` for deciding when to make another request.
+Interrupted successful response bodies raise `NetworkError`; malformed text or
+JSON raises `APIError`. If an error body has invalid text encoding, `raw` contains
+readable diagnostic text, while `response_json` and `req_id` remain unset.
+
+Request and body timeouts raise `RequestTimeoutError`, which is also catchable
+as the built-in `TimeoutError`. It retains the URL, method, and any known HTTP
+status, selected headers, and `retry_after`. Unread bodies do not supply a request
+ID or parsed JSON. Legacy engine calls keep their existing timeout behavior.
+
+The complete request payload must be JSON-compatible. Non-finite numbers,
+non-string object keys, unsupported objects, circular references, and structures
+the JSON encoder cannot serialize raise `ValidationError` before dispatch. Valid
+nested values and unknown field names are passed through without changing them.
 
 For a debug-enabled account, the optional `debug` mapping accepts the wire keys
 `explain`, `benchmark`, `trace`, and `__overrides__`. These keys are omitted unless
