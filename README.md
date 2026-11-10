@@ -299,6 +299,8 @@ output is available in `page.explain`, and its internal structure is unstable.
 Flights is experimental and is not exposed by these methods.
 
 See [the Bright Search example](examples/bright_search.py) for async and sync usage.
+The [Business Search notebook](notebooks/10_bright_search.ipynb) walks through a
+simple company search and a structured search with selected fields and pagination.
 
 ### Discover API
 
