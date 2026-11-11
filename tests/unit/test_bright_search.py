@@ -266,12 +266,33 @@ async def test_json_validation_preserves_nested_values_and_shared_containers(ser
     assert json.loads(json.dumps(sent, allow_nan=False)) == sent
 
 
-@pytest.mark.parametrize("mode,limit,offset", [("instant", 100, 1000), ("smart", 10, 100)])
+@pytest.mark.parametrize("category", ["company", "people"])
+@pytest.mark.parametrize("mode", ["instant", "smart"])
+@pytest.mark.parametrize("offset,limit", [(91, 10), (100, 1)])
+async def test_natural_language_window_fails_before_network(
+    service, mock_engine, category, mode, offset, limit
+):
+    with pytest.raises(ValidationError, match=r"offset.*limit.*100"):
+        await service.search(category, "US companies", mode=mode, offset=offset, limit=limit)
+    mock_engine.post.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "mode,limit,offset",
+    [
+        ("ludicrous", 100, 1000),
+        ("instant", 100, 0),
+        ("instant", 1, 99),
+        ("smart", 10, 90),
+        ("smart", 1, 99),
+    ],
+)
 async def test_documented_boundaries_are_inclusive(service, mock_engine, mode, limit, offset):
-    await service.search("company", "x" * 200, mode=mode, limit=limit, offset=offset)
+    query = {"equals": {"headquarters_country_code": "US"}} if mode == "ludicrous" else "x" * 200
+    await service.search("company", query, mode=mode, limit=limit, offset=offset)
     sent = mock_engine.post.call_args.kwargs["json_data"]
     assert sent["limit"] == limit and sent["offset"] == offset
-    assert len(sent["query"]) == 200
+    assert sent["query"] == query
 
 
 @pytest.mark.parametrize("mode,query", [("instant", ""), ("ludicrous", {})])

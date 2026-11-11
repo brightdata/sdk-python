@@ -39,7 +39,7 @@ class BrightSearchService:
         "people": ("ludicrous", "instant", "smart"),
         "ecommerce": ("ludicrous",),
     }
-    _MODE_CAPS = {"ludicrous": (100, 1000), "instant": (100, 1000), "smart": (10, 100)}
+    _MODE_CAPS = {"ludicrous": (100, 1000), "instant": (100, 100), "smart": (10, 100)}
     _DEBUG_KEYS = frozenset({"explain", "benchmark", "trace", "__overrides__"})
 
     def __init__(self, engine: AsyncEngine):
@@ -67,7 +67,8 @@ class BrightSearchService:
             mode: Explicit search mode. E-commerce supports ludicrous only.
             source: Source name; None uses the category's server default.
             view: View profile or {"fields": [...]}; None uses id_only.
-            offset: Page offset, up to 1000 (100 for smart).
+            offset: Page offset, up to 1000 for ludicrous. Instant and smart
+                require offset + limit <= 100.
             limit: Page size, up to 100 (10 for smart).
             debug: Explicit diagnostic wire keys for a debug-enabled account.
                 Nested null, false, and zero values are preserved.
@@ -173,6 +174,8 @@ class BrightSearchService:
                 or value > maximum
             ):
                 raise ValidationError(f"{name} must be an integer between 0 and {maximum}")
+        if mode in ("instant", "smart") and offset + limit > 100:
+            raise ValidationError("instant and smart require offset + limit <= 100")
         if source is not None and not isinstance(source, str):
             raise ValidationError("source must be a string")
         if view is not None and not isinstance(view, str):

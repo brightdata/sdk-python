@@ -267,9 +267,10 @@ document includes `bright_id`; fields inside `data` are optional. `page.raw`,
 `page.to_dict()`, and `page.to_json()` preserve the complete response body,
 including additional fields. Response headers are separate in `page.response_headers`.
 
-Use explicit `offset` and `limit` for paging. Ludicrous and Instant allow limits
-up to 100 and offsets up to 1000; Smart allows limits up to 10 and offsets up to
-100. `matched` is generally a reached-count lower bound, not a total, and partial
+Use explicit `offset` and `limit` for paging. Ludicrous allows limits up to 100
+and offsets up to 1000. Instant and Smart expose a 100-record window:
+`offset + limit` must not exceed 100, with a maximum page size of 100 for Instant
+and 10 for Smart. `matched` is generally a reached-count lower bound, not a total, and partial
 coverage is reported in `coverage_percent`. Pages are separate searches against
 the current index and are billed separately, including served empty pages.
 
