@@ -966,6 +966,47 @@ class SyncXScraper:
 # ============================================================================
 
 
+class SyncBusinessSearchService:
+    """Synchronous company and professional search through search.business."""
+
+    def __init__(self, search_service: "SyncSearchService"):
+        self._search_service = search_service
+
+    def companies(
+        self, query: BrightSearchQuery, *, mode: BrightSearchMode, **kwargs
+    ) -> BrightSearchPage:
+        """Return one company page; options match search.business.companies()."""
+        self._search_service._ensure_initialized()
+        return self._search_service._loop.run_until_complete(
+            self._search_service._async.business.companies(query, mode=mode, **kwargs)
+        )
+
+    def people(
+        self, query: BrightSearchQuery, *, mode: BrightSearchMode, **kwargs
+    ) -> BrightSearchPage:
+        """Return one professional page; options match search.business.people()."""
+        self._search_service._ensure_initialized()
+        return self._search_service._loop.run_until_complete(
+            self._search_service._async.business.people(query, mode=mode, **kwargs)
+        )
+
+
+class SyncEcommerceSearchService:
+    """Synchronous product search through search.ecommerce."""
+
+    def __init__(self, search_service: "SyncSearchService"):
+        self._search_service = search_service
+
+    def products(
+        self, query: Dict[str, Any], *, mode: Literal["ludicrous"], **kwargs
+    ) -> BrightSearchPage:
+        """Return one product page; options match search.ecommerce.products()."""
+        self._search_service._ensure_initialized()
+        return self._search_service._loop.run_until_complete(
+            self._search_service._async.ecommerce.products(query, mode=mode, **kwargs)
+        )
+
+
 class SyncSearchService:
     """Sync wrapper for SearchService - COMPLETE."""
 
@@ -978,6 +1019,9 @@ class SyncSearchService:
         self._pinterest = None
         self._tiktok = None
         self._youtube = None
+
+        self._business: Optional["SyncBusinessSearchService"] = None
+        self._ecommerce: Optional["SyncEcommerceSearchService"] = None
 
     def _ensure_initialized(self) -> None:
         if self._loop is None or self._loop.is_closed():
@@ -994,26 +1038,19 @@ class SyncSearchService:
             "Use BrightDataClient with async/await instead."
         )
 
-    def company(
-        self, query: BrightSearchQuery, *, mode: BrightSearchMode, **kwargs
-    ) -> BrightSearchPage:
-        """Return one company search page; options match client.search.company()."""
-        self._ensure_initialized()
-        return self._loop.run_until_complete(self._async.company(query, mode=mode, **kwargs))
+    @property
+    def business(self) -> "SyncBusinessSearchService":
+        """Business Search: companies() and people()."""
+        if self._business is None:
+            self._business = SyncBusinessSearchService(self)
+        return self._business
 
-    def people(
-        self, query: BrightSearchQuery, *, mode: BrightSearchMode, **kwargs
-    ) -> BrightSearchPage:
-        """Return one people search page; options match client.search.people()."""
-        self._ensure_initialized()
-        return self._loop.run_until_complete(self._async.people(query, mode=mode, **kwargs))
-
-    def ecom(
-        self, query: Dict[str, Any], *, mode: Literal["ludicrous"], **kwargs
-    ) -> BrightSearchPage:
-        """Return one structured E-commerce search page, without automatic paging."""
-        self._ensure_initialized()
-        return self._loop.run_until_complete(self._async.ecom(query, mode=mode, **kwargs))
+    @property
+    def ecommerce(self) -> "SyncEcommerceSearchService":
+        """E-commerce search: products()."""
+        if self._ecommerce is None:
+            self._ecommerce = SyncEcommerceSearchService(self)
+        return self._ecommerce
 
     def google(self, query, **kwargs) -> SearchResult:
         """Search Google."""

@@ -12,7 +12,7 @@ from brightdata import BrightDataClient, BrightSearchPage, SyncBrightDataClient
 async def company_search() -> BrightSearchPage:
     """Make one request, leaving paging and recovery under caller control."""
     async with BrightDataClient(auto_create_zones=False) as client:
-        page = await client.search.company(
+        page = await client.search.business.companies(
             "US software companies with 50 to 500 employees",
             mode="instant",
             view="summary",
@@ -28,7 +28,7 @@ async def company_search() -> BrightSearchPage:
 def people_search_sync() -> BrightSearchPage:
     """Use the same page contract from an ordinary synchronous script."""
     with SyncBrightDataClient(auto_create_zones=False) as client:
-        return client.search.people(
+        return client.search.business.people(
             "Product managers in the United States",
             mode="instant",
             view={"fields": ["name", "current_title", "url"]},
@@ -38,7 +38,7 @@ def people_search_sync() -> BrightSearchPage:
 async def product_search() -> BrightSearchPage:
     """Send the native structured query without a separate query-builder API."""
     async with BrightDataClient(auto_create_zones=False) as client:
-        return await client.search.ecom(
+        return await client.search.ecommerce.products(
             query={
                 "and": [
                     {"equals": {"retailer": "Argos"}},

@@ -9,6 +9,7 @@ import json
 from contextlib import asynccontextmanager
 from copy import deepcopy
 from types import SimpleNamespace
+from typing import Any, Dict, Literal, get_type_hints
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import aiohttp
@@ -28,6 +29,12 @@ from brightdata.exceptions import ValidationError
 from brightdata.sync_client import SyncSearchService
 from brightdata.utils.retry import is_retryable, retry_with_backoff
 from tests.conftest import MockContextManager, MockResponse
+
+PUBLIC_SEARCHES = [
+    ("business", "companies", "company"),
+    ("business", "people", "people"),
+    ("ecommerce", "products", "ecommerce"),
+]
 
 
 @pytest.fixture
@@ -63,7 +70,7 @@ def service(mock_engine, body):
         ("people", "ludicrous"),
         ("people", "instant"),
         ("people", "smart"),
-        ("ecom", "ludicrous"),
+        ("ecommerce", "ludicrous"),
     ],
 )
 async def test_supported_requests_are_one_native_post(service, mock_engine, body, category, mode):
@@ -140,11 +147,12 @@ async def test_explicit_false_and_null_debug_are_retained(service, mock_engine):
     "changes",
     [
         {"category": "flights"},
+        {"category": "ecom"},  # The API accepts ecommerce, not the old spelling.
         {"category": ["company"]},
         {"mode": "fast"},
         {"mode": None},
-        {"category": "ecom", "mode": "instant"},
-        {"category": "ecom", "mode": "smart"},
+        {"category": "ecommerce", "mode": "instant"},
+        {"category": "ecommerce", "mode": "smart"},
         {"mode": "ludicrous", "query": "text"},
         {"mode": "ludicrous", "query": []},
         {"query": {}},
@@ -168,12 +176,12 @@ async def test_explicit_false_and_null_debug_are_retained(service, mock_engine):
         {"view": {"fields": [1]}},
         {"view": {"other": []}},
         {"view": {"fields": [], "other": 1}},
-        {"category": "ecom", "mode": "ludicrous", "query": {}, "view": "summary"},
+        {"category": "ecommerce", "mode": "ludicrous", "query": {}, "view": "summary"},
         {
-            "category": "ecom",
+            "category": "ecommerce",
             "mode": "ludicrous",
             "query": {},
-            "source": "retail_products",
+            "source": "retail_products_live",
             "view": "summary",
         },
         {"debug": False},
@@ -276,7 +284,7 @@ async def test_unspecified_zero_and_empty_semantics_are_left_to_server(
 
 
 async def test_future_source_view_rules_are_server_owned(service, mock_engine):
-    await service.search("ecom", {}, mode="ludicrous", source="future_retail", view="summary")
+    await service.search("ecommerce", {}, mode="ludicrous", source="future_retail", view="summary")
     assert mock_engine.post.call_args.kwargs["json_data"]["view"] == "summary"
 
 
@@ -509,51 +517,91 @@ async def test_legacy_request_timeout_remains_plain_and_retryable():
         assert is_retryable(error.value)
 
 
-@pytest.mark.parametrize("name", ["company", "people", "ecom"])
-async def test_async_facade_uses_shared_engine_and_no_zones(body, name):
+@pytest.mark.parametrize("client_type", [BrightDataClient, SyncBrightDataClient])
+def test_search_categories_are_lazy_cached_and_separate(client_type):
+    client = client_type(token="test_token_12345", auto_create_zones=False)
+    search = client.search
+    assert search.business is search.business
+    assert search.ecommerce is search.ecommerce
+    assert search.business is not search.ecommerce
+    assert callable(search.business.companies)
+    assert callable(search.business.people)
+    assert callable(search.ecommerce.products)
+    for name in ("company", "people", "ecom"):
+        assert not hasattr(search, name)
+    assert not hasattr(search.business, "company")
+    assert not hasattr(search.business, "products")
+    assert not hasattr(search.ecommerce, "companies")
+    assert not hasattr(search.ecommerce, "people")
+    async_search = search if client_type is BrightDataClient else search._async
+    assert async_search._bright_search_service is None
+
+
+@pytest.mark.parametrize("client_type", [BrightDataClient, SyncBrightDataClient])
+def test_ecommerce_product_annotations_match_supported_inputs(client_type):
+    client = client_type(token="test_token_12345", auto_create_zones=False)
+    hints = get_type_hints(client.search.ecommerce.products)
+    assert hints["query"] == Dict[str, Any]
+    assert hints["mode"] == Literal["ludicrous"]
+    assert hints["return"] is BrightSearchPage
+
+
+@pytest.mark.parametrize("namespace,name,category", PUBLIC_SEARCHES)
+async def test_async_facade_uses_shared_engine_and_no_zones(body, namespace, name, category):
     client = BrightDataClient(token="test_token_12345", auto_create_zones=False)
+    search = getattr(client.search, namespace)
     with patch(
         "brightdata.client.ZoneManager.ensure_required_zones", new_callable=AsyncMock
     ) as zones:
         async with client:
+            assert search is getattr(client.search, namespace)
             session = client.engine._session
             session.request = AsyncMock(
                 return_value=response(body, headers={"X-Debug-Trace-Page": "trace"})
             )
-            page = await getattr(client.search, name)({}, mode="ludicrous", view="full")
+            page = await getattr(search, name)({}, mode="ludicrous", view="full")
             assert page.to_dict() == body
             assert page.response_headers == {"x-debug-trace-page": "trace"}
             assert client.search._bright_search_service.engine is client.engine
             cached = client.search._bright_search_service
-            await getattr(client.search, name)({}, mode="ludicrous")
+            await getattr(search, name)({}, mode="ludicrous")
             assert client.search._bright_search_service is cached
             assert not session.closed
             assert session.request.await_count == 2
-            assert session.request.call_args.kwargs["url"].endswith(f"/search/{name}")
+            assert session.request.call_args.kwargs["url"].endswith(f"/search/{category}")
         assert session.closed
         zones.assert_not_awaited()
 
 
-async def test_async_facade_requires_initialization():
+@pytest.mark.parametrize("namespace,name,category", PUBLIC_SEARCHES)
+async def test_async_facade_requires_initialization(namespace, name, category):
     client = BrightDataClient(token="test_token_12345", auto_create_zones=False)
     with pytest.raises(RuntimeError, match="not initialized"):
-        await client.search.company("query", mode="instant")
+        await getattr(getattr(client.search, namespace), name)({}, mode="ludicrous")
 
 
-@pytest.mark.parametrize("name", ["company", "people", "ecom"])
-def test_sync_facade_has_the_same_wire_contract_and_page(body, name):
+@pytest.mark.parametrize("namespace,name,category", PUBLIC_SEARCHES)
+def test_sync_facade_has_the_same_wire_contract_and_page(body, namespace, name, category):
     client = SyncBrightDataClient(token="test_token_12345", auto_create_zones=False)
-    before_enter = client.search
+    before_enter = getattr(client.search, namespace)
     with pytest.raises(RuntimeError, match="not initialized"):
         getattr(before_enter, name)({}, mode="ludicrous")
+    retired = None
     with patch(
         "brightdata.client.ZoneManager.ensure_required_zones", new_callable=AsyncMock
     ) as zones:
-        for _ in range(2):  # cached facade must use the live loop when the client is re-entered
+        for _ in range(2):
             with client:
+                search = getattr(client.search, namespace)
+                assert search is getattr(client.search, namespace)
+                assert search is not before_enter
+                if retired is not None:
+                    assert search is not retired
+                    with pytest.raises(RuntimeError, match="not initialized"):
+                        getattr(retired, name)({}, mode="ludicrous")
                 session = client._async_client.engine._session
                 session.request = AsyncMock(return_value=response(body))
-                page = getattr(client.search, name)(
+                page = getattr(search, name)(
                     {},
                     mode="ludicrous",
                     source="future_source",
@@ -563,7 +611,7 @@ def test_sync_facade_has_the_same_wire_contract_and_page(body, name):
                 assert isinstance(page, BrightSearchPage) and page.to_dict() == body
                 session.request.assert_awaited_once()
                 sent = session.request.call_args.kwargs
-                assert sent["url"].endswith(f"/search/{name}")
+                assert sent["url"].endswith(f"/search/{category}")
                 assert sent["json"] == {
                     "mode": "ludicrous",
                     "query": {},
@@ -572,20 +620,24 @@ def test_sync_facade_has_the_same_wire_contract_and_page(body, name):
                     "offset": 0,
                     "limit": 20,
                 }
+                retired = search
             assert session.closed
         zones.assert_not_awaited()
     with pytest.raises(RuntimeError, match="not initialized"):
-        getattr(client.search, name)({}, mode="ludicrous")
+        getattr(getattr(client.search, namespace), name)({}, mode="ludicrous")
 
 
-async def test_sync_call_in_async_context_fails_before_creating_a_coroutine():
+@pytest.mark.parametrize("namespace,name,category", PUBLIC_SEARCHES)
+async def test_sync_call_in_async_context_fails_before_creating_a_coroutine(
+    namespace, name, category
+):
     loop = asyncio.new_event_loop()
     async_service = MagicMock()
     try:
         service = SyncSearchService(async_service, loop)
         with pytest.raises(RuntimeError, match="async context"):
-            service.company("query", mode="instant")
-        async_service.company.assert_not_called()
+            getattr(getattr(service, namespace), name)({}, mode="ludicrous")
+        getattr(getattr(async_service, namespace), name).assert_not_called()
     finally:
         loop.close()
 
@@ -676,7 +728,7 @@ async def test_wire_http_failure_is_not_replayed_through_generic_backoff(wire_se
             client.engine.BASE_URL = peer.url
             with pytest.raises(APIError) as error:
                 await retry_with_backoff(
-                    lambda: client.search.company("query", mode="instant"),
+                    lambda: client.search.business.companies("query", mode="instant"),
                     max_retries=1,
                     initial_delay=0,
                 )
@@ -707,7 +759,7 @@ async def test_wire_redirect_is_an_error_without_another_request(wire_server, st
         async with BrightDataClient(token="local_test_token", auto_create_zones=False) as client:
             client.engine.BASE_URL = peer.url
             with pytest.raises(APIError, match="Unexpected Bright Search status") as error:
-                await client.search.company("query", mode="instant")
+                await client.search.business.companies("query", mode="instant")
             assert_wire_error_context(error.value, peer, status)
             assert error.value.retryable is False
 
@@ -742,7 +794,7 @@ async def test_wire_body_failures_use_sdk_errors(
             client.engine.BASE_URL = peer.url
             with pytest.raises(error_type) as error:
                 await retry_with_backoff(
-                    lambda: client.search.company("query", mode="instant"),
+                    lambda: client.search.business.companies("query", mode="instant"),
                     max_retries=1,
                     initial_delay=0,
                 )
@@ -777,7 +829,7 @@ async def test_wire_invalid_error_encoding_keeps_http_classification(
         async with BrightDataClient(token="local_test_token", auto_create_zones=False) as client:
             client.engine.BASE_URL = peer.url
             with pytest.raises(error_type) as error:
-                await client.search.company("query", mode="instant")
+                await client.search.business.companies("query", mode="instant")
             assert_wire_error_context(error.value, peer, status)
             assert error.value.req_id is None
             assert error.value.response_json is None
@@ -794,7 +846,7 @@ async def test_wire_valid_unicode_error_json_remains_authoritative(wire_server):
         async with BrightDataClient(token="local_test_token", auto_create_zones=False) as client:
             client.engine.BASE_URL = peer.url
             with pytest.raises(APIError) as error:
-                await client.search.company("query", mode="instant")
+                await client.search.business.companies("query", mode="instant")
             assert_wire_error_context(error.value, peer, 500)
             assert error.value.req_id == data["req_id"]
             assert error.value.response_json == data
@@ -807,7 +859,7 @@ async def test_wire_truncated_error_keeps_known_status_and_headers(wire_server, 
         async with BrightDataClient(token="local_test_token", auto_create_zones=False) as client:
             client.engine.BASE_URL = peer.url
             with pytest.raises(error_type) as error:
-                await client.search.company("query", mode="instant")
+                await client.search.business.companies("query", mode="instant")
             assert_wire_error_context(error.value, peer, status)
             assert isinstance(error.value.__cause__, aiohttp.ClientPayloadError)
             assert error.value.req_id is None and error.value.response_json is None
@@ -833,7 +885,7 @@ async def test_wire_body_timeout_stays_timeout_and_closes_response(wire_server, 
             client.engine.timeout = aiohttp.ClientTimeout(total=0.2)
             with pytest.raises(TimeoutError) as error:
                 await retry_with_backoff(
-                    lambda: client.search.company("query", mode="instant"),
+                    lambda: client.search.business.companies("query", mode="instant"),
                     max_retries=1,
                     initial_delay=0,
                 )
@@ -862,7 +914,7 @@ async def test_wire_body_cancellation_propagates_and_closes_response(
     async with wire_server(status, length=100, hold_open=True) as peer:
         async with BrightDataClient(token="local_test_token", auto_create_zones=False) as client:
             client.engine.BASE_URL = peer.url
-            task = asyncio.create_task(client.search.company("query", mode="instant"))
+            task = asyncio.create_task(client.search.business.companies("query", mode="instant"))
             try:
                 await asyncio.wait_for(reading.wait(), timeout=2)
                 task.cancel()

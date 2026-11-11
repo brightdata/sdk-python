@@ -212,18 +212,22 @@ async with async_playwright() as pw:
 
 **When to use:** sites that require full browser automation — JS rendering, login flows, interactive clicks. For plain HTML fetches, prefer `client.scrape_url()`.
 
-### Bright Search (Company, People, and E-commerce)
+### Indexed Search: Business and E-commerce
 
-Search supported records directly, returning one page per call. Use `company()` or
-`people()` with a structured query and `mode="ludicrous"`, or natural language and
+Business Search groups company and professional records under
+`client.search.business.companies()` and `client.search.business.people()`. Use
+structured queries with `mode="ludicrous"`, or natural language with
 `mode="instant"` / `mode="smart"`. Natural-language queries allow up to 200 characters.
+
+Product search is a separate category: `client.search.ecommerce.products()`.
+It accepts structured queries with `mode="ludicrous"`. Each method returns one page.
 
 ```python
 from brightdata import BrightDataClient
 
 # Direct Bright Search requests do not need Web Unlocker or SERP zones.
 async with BrightDataClient(auto_create_zones=False) as client:
-    page = await client.search.company(
+    page = await client.search.business.companies(
         query="US software companies with 50 to 500 employees",
         mode="instant",
         view="summary",
@@ -233,7 +237,7 @@ async with BrightDataClient(auto_create_zones=False) as client:
         print(document["bright_id"], document["data"].get("name"))
     print(page.req_id, page.meta["matched"], page.meta["coverage_percent"])
 
-    products = await client.search.ecom(
+    products = await client.search.ecommerce.products(
         query={"and": [
             {"equals": {"retailer": "Argos"}},
             {"equals": {"sku": "4326522"}},
@@ -249,7 +253,7 @@ The same methods return `BrightSearchPage` from the synchronous client:
 from brightdata import SyncBrightDataClient
 
 with SyncBrightDataClient(auto_create_zones=False) as client:
-    page = client.search.people(
+    page = client.search.business.people(
         "Product managers in the United States",
         mode="instant",
         view={"fields": ["name", "current_title", "url"]},
@@ -257,7 +261,7 @@ with SyncBrightDataClient(auto_create_zones=False) as client:
 ```
 
 `source=None` uses the category's server default; `view=None` uses `id_only`.
-E-commerce supports only `ludicrous`, and its default `retail_products` source
+E-commerce supports only `ludicrous`, and its default `retail_products_live` source
 supports `id_only`, `full`, or a custom field list, but no `summary` view. Every
 document includes `bright_id`; fields inside `data` are optional. `page.raw`,
 `page.to_dict()`, and `page.to_json()` preserve the complete response body,

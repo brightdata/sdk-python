@@ -1,4 +1,4 @@
-"""Direct Company, People, and E-commerce search through Bright Search."""
+"""Business and E-commerce record search through Bright Search."""
 
 from .models import BrightSearchPage
 from .service import BrightSearchService

@@ -1,25 +1,18 @@
 """
-Search service namespace for search engines, platform discovery, and Bright Search.
+Search namespace for Business, E-commerce, search engines, and platform discovery.
 
-Provides access to search engine result scrapers with normalized
-data across different search engines.
+Groups indexed record search, search engine results, and platform discovery.
 All methods are async-only. For sync usage, use SyncBrightDataClient.
 """
 
-from typing import Optional, Union, List, Dict, Any, Literal, TYPE_CHECKING
+from typing import Optional, Union, List, TYPE_CHECKING
 
 from ..models import SearchResult
-from ..bright_search.models import (
-    BrightSearchDebug,
-    BrightSearchMode,
-    BrightSearchPage,
-    BrightSearchQuery,
-    BrightSearchView,
-)
 
 if TYPE_CHECKING:
     from ..client import BrightDataClient
     from ..bright_search.service import BrightSearchService
+    from ..bright_search.namespaces import BusinessSearchService, EcommerceSearchService
     from .google import GoogleSERPService
     from .bing import BingSERPService
     from .yandex import YandexSERPService
@@ -33,10 +26,10 @@ if TYPE_CHECKING:
 
 class SearchService:
     """
-    Search service namespace, including direct entity search through Bright Search.
+    Search namespace with Business and E-commerce categories.
 
-    Provides access to search engine result scrapers with normalized
-    data across different search engines.
+    Use business.companies() and business.people() for business records,
+    ecommerce.products() for products, or the existing provider search methods.
 
     Example:
         >>> # Google search
@@ -64,6 +57,8 @@ class SearchService:
         self._youtube_search: Optional["YouTubeSearchScraper"] = None
         self._pinterest_search = None
         self._bright_search_service: Optional["BrightSearchService"] = None
+        self._business: Optional["BusinessSearchService"] = None
+        self._ecommerce: Optional["EcommerceSearchService"] = None
 
     def _bright_search(self) -> "BrightSearchService":
         self._client._ensure_initialized()
@@ -73,96 +68,23 @@ class SearchService:
             self._bright_search_service = BrightSearchService(self._client.engine)
         return self._bright_search_service
 
-    async def company(
-        self,
-        query: BrightSearchQuery,
-        *,
-        mode: BrightSearchMode,
-        source: Optional[str] = None,
-        view: Optional[BrightSearchView] = None,
-        offset: int = 0,
-        limit: int = 10,
-        debug: Optional[BrightSearchDebug] = None,
-    ) -> BrightSearchPage:
-        """Search company records and return one Bright Search page.
+    @property
+    def business(self) -> "BusinessSearchService":
+        """Search company and professional records with companies() and people()."""
+        if self._business is None:
+            from ..bright_search.namespaces import BusinessSearchService
 
-        Use a structured query with mode="ludicrous", or natural language
-        with mode="instant" or "smart". Source and view default on the server
-        to linkedin_company and id_only. Each call makes one search request;
-        pagination and retries are explicit caller decisions.
+            self._business = BusinessSearchService(self)
+        return self._business
 
-        Example:
-            >>> async with BrightDataClient(auto_create_zones=False) as client:
-            ...     page = await client.search.company(
-            ...         "US software companies", mode="instant", view="summary"
-            ...     )
-            ...     for document in page.documents:
-            ...         print(document["bright_id"], document["data"].get("name"))
-        """
-        return await self._bright_search().search(
-            "company",
-            query,
-            mode=mode,
-            source=source,
-            view=view,
-            offset=offset,
-            limit=limit,
-            debug=debug,
-        )
+    @property
+    def ecommerce(self) -> "EcommerceSearchService":
+        """Search product records with products()."""
+        if self._ecommerce is None:
+            from ..bright_search.namespaces import EcommerceSearchService
 
-    async def people(
-        self,
-        query: BrightSearchQuery,
-        *,
-        mode: BrightSearchMode,
-        source: Optional[str] = None,
-        view: Optional[BrightSearchView] = None,
-        offset: int = 0,
-        limit: int = 10,
-        debug: Optional[BrightSearchDebug] = None,
-    ) -> BrightSearchPage:
-        """Search people records using the same options as company().
-
-        The default source is linkedin_people. All projected entity fields
-        are optional; matched is a reached count, not generally a total.
-        """
-        return await self._bright_search().search(
-            "people",
-            query,
-            mode=mode,
-            source=source,
-            view=view,
-            offset=offset,
-            limit=limit,
-            debug=debug,
-        )
-
-    async def ecom(
-        self,
-        query: Dict[str, Any],
-        *,
-        mode: Literal["ludicrous"],
-        source: Optional[str] = None,
-        view: Optional[BrightSearchView] = None,
-        offset: int = 0,
-        limit: int = 10,
-        debug: Optional[BrightSearchDebug] = None,
-    ) -> BrightSearchPage:
-        """Search product records with a structured query and mode="ludicrous".
-
-        The default source retail_products supports id_only, full, and custom
-        field lists; it does not publish a summary view.
-        """
-        return await self._bright_search().search(
-            "ecom",
-            query,
-            mode=mode,
-            source=source,
-            view=view,
-            offset=offset,
-            limit=limit,
-            debug=debug,
-        )
+            self._ecommerce = EcommerceSearchService(self)
+        return self._ecommerce
 
     async def google(
         self,

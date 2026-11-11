@@ -37,7 +37,7 @@ class BrightSearchService:
     _CATEGORY_MODES = {
         "company": ("ludicrous", "instant", "smart"),
         "people": ("ludicrous", "instant", "smart"),
-        "ecom": ("ludicrous",),
+        "ecommerce": ("ludicrous",),
     }
     _MODE_CAPS = {"ludicrous": (100, 1000), "instant": (100, 1000), "smart": (10, 100)}
     _DEBUG_KEYS = frozenset({"explain", "benchmark", "trace", "__overrides__"})
@@ -60,7 +60,7 @@ class BrightSearchService:
         """POST one query to Company, People, or E-commerce search.
 
         Args:
-            category: company, people, or ecom. Flights is experimental and
+            category: company, people, or ecommerce. Flights is experimental and
                 is not exposed by this service.
             query: A native structured object for ludicrous mode, or a string
                 of at most 200 characters for instant/smart.
@@ -152,7 +152,7 @@ class BrightSearchService:
         debug: Optional[BrightSearchDebug],
     ) -> Dict[str, Any]:
         if not isinstance(category, str) or category not in cls._CATEGORY_MODES:
-            raise ValidationError("category must be company, people, or ecom")
+            raise ValidationError("category must be company, people, or ecommerce")
         if not isinstance(mode, str) or mode not in cls._CATEGORY_MODES[category]:
             raise ValidationError(
                 f"Unsupported mode {mode!r} for {category}; "
@@ -183,8 +183,12 @@ class BrightSearchService:
                 or not all(isinstance(name, str) for name in view["fields"])
             ):
                 raise ValidationError('view must be a profile name or {"fields": [...]}')
-        if category == "ecom" and source in (None, "retail_products") and view == "summary":
-            raise ValidationError("retail_products does not support the summary view")
+        if (
+            category == "ecommerce"
+            and source in (None, "retail_products_live")
+            and view == "summary"
+        ):
+            raise ValidationError("retail_products_live does not support the summary view")
         if debug is not None:
             if not isinstance(debug, dict) or not cls._DEBUG_KEYS.issuperset(debug):
                 raise ValidationError(
