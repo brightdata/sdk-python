@@ -11,7 +11,7 @@ from typing import List, Dict, Any, Optional
 
 from ..core.engine import AsyncEngine
 from http import HTTPStatus
-from ..exceptions import APIError, DataNotReadyError
+from ..exceptions import APIError, DataNotReadyError, RateLimitError
 
 
 class DatasetAPIClient:
@@ -108,12 +108,22 @@ class DatasetAPIClient:
         """
         url = f"{self.STATUS_URL}/{snapshot_id}"
 
-        async with self.engine.get_from_url(url) as response:
-            if response.status == HTTPStatus.OK:
+        # Do NOT collapse transport failures into a job status. Returning
+        # "error" here made an expired token look like a failed scrape; the
+        # engine raises for non-2xx, and re-raising keeps the endpoint context.
+        try:
+            async with self.engine.get_from_url(url) as response:
                 data = await response.json()
                 return data.get("status", "unknown")
-            else:
-                return "error"
+        except RateLimitError:
+            raise
+        except APIError as exc:
+            raise APIError(
+                f"Status check failed (HTTP {exc.status_code})",
+                status_code=exc.status_code,
+                raw=exc.raw,
+                retryable=exc.retryable,
+            ) from exc
 
     async def fetch_result(self, snapshot_id: str, format: str = "json") -> Any:
         """

@@ -114,7 +114,13 @@ class TestRequestRouting:
             with patch.object(engine, "request", return_value="cm") as mock_req:
                 result = engine.post("/endpoint", json_data={"k": "v"})
                 mock_req.assert_called_once_with(
-                    "POST", "/endpoint", json_data={"k": "v"}, params=None, headers=None
+                    "POST",
+                    "/endpoint",
+                    json_data={"k": "v"},
+                    params=None,
+                    headers=None,
+                    preserve_error_response=False,
+                    allow_redirects=True,
                 )
 
     @pytest.mark.asyncio

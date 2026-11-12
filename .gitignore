@@ -2,6 +2,13 @@
 archive/
 tests
 
+# Track the Business Search contract tests; keep local test artifacts ignored.
+!tests/
+tests/*
+!tests/unit/
+tests/unit/*
+!tests/unit/test_bright_search.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
