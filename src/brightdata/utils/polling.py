@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 
 from ..models import ScrapeResult
 from ..constants import DEFAULT_POLL_INTERVAL, DEFAULT_POLL_TIMEOUT
-from ..exceptions import DataNotReadyError
+from ..exceptions import BrightDataError, DataNotReadyError
 
 
 async def poll_until_ready(
@@ -108,6 +108,7 @@ async def poll_until_ready(
                 url="",
                 status="error",
                 error=f"Failed to get status: {str(e)}",
+                cause=e if isinstance(e, BrightDataError) else None,
                 snapshot_id=snapshot_id,
                 platform=platform,
                 method=method or "web_scraper",
@@ -135,6 +136,7 @@ async def poll_until_ready(
                     url="",
                     status="error",
                     error=f"Failed to fetch results: {str(e)}",
+                    cause=e if isinstance(e, BrightDataError) else None,
                     snapshot_id=snapshot_id,
                     platform=platform,
                     method=method or "web_scraper",

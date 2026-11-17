@@ -89,6 +89,7 @@ class WorkflowExecutor:
                 url="",
                 status="error",
                 error=f"Trigger failed: {str(e)}",
+                cause=e,
                 platform=self.platform_name,
                 method="web_scraper",
                 trigger_sent_at=trigger_sent_at,

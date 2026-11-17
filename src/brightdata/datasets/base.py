@@ -3,19 +3,42 @@ Base dataset class - provides common functionality for all datasets.
 """
 
 import asyncio
+import json
 import time
 from typing import Dict, List, Any, Optional, Literal, TYPE_CHECKING
 
 from .models import DatasetMetadata, SnapshotStatus
+from ..exceptions import APIError, BrightDataError, RateLimitError
 
 if TYPE_CHECKING:
     from ..core.engine import AsyncEngine
 
 
-class DatasetError(Exception):
+class DatasetError(BrightDataError):
     """Error related to dataset operations."""
 
     pass
+
+
+def _as_dataset_error(exc: APIError, what: str) -> DatasetError:
+    """
+    Re-type an engine-raised APIError as a DatasetError, preserving context.
+
+    The engine classifies every non-2xx centrally, so by the time a failure
+    reaches this layer it is already structured. Callers of the datasets API
+    catch DatasetError, though, so convert rather than let a sibling type
+    escape. RateLimitError is deliberately NOT converted: it is the more
+    specific, actionable type and users are told to catch it directly.
+    """
+    return DatasetError(
+        f"{what} failed (HTTP {exc.status_code})",
+        status_code=exc.status_code,
+        url=exc.url,
+        method=exc.method,
+        retry_after=exc.retry_after,
+        retryable=exc.retryable,
+        raw=exc.raw,
+    )
 
 
 class BaseDataset:
@@ -95,11 +118,17 @@ class BaseDataset:
         if records_limit is not None:
             payload["records_limit"] = records_limit
 
-        async with self._engine.post_to_url(
-            f"{self.BASE_URL}/datasets/filter",
-            json_data=payload,
-        ) as response:
-            data = await response.json()
+        try:
+            async with self._engine.post_to_url(
+                f"{self.BASE_URL}/datasets/filter",
+                json_data=payload,
+            ) as response:
+                body = await response.text()
+                data = json.loads(body) if body.strip() else {}
+        except RateLimitError:
+            raise
+        except APIError as exc:
+            raise _as_dataset_error(exc, "Filter request") from exc
 
         if "snapshot_id" not in data:
             error_msg = (
@@ -142,10 +171,16 @@ class BaseDataset:
         Returns:
             SnapshotStatus with status field: "scheduled", "building", "ready", or "failed"
         """
-        async with self._engine.get_from_url(
-            f"{self.BASE_URL}/datasets/snapshots/{snapshot_id}"
-        ) as response:
-            data = await response.json()
+        try:
+            async with self._engine.get_from_url(
+                f"{self.BASE_URL}/datasets/snapshots/{snapshot_id}"
+            ) as response:
+                body = await response.text()
+                data = json.loads(body) if body.strip() else {}
+        except RateLimitError:
+            raise
+        except APIError as exc:
+            raise _as_dataset_error(exc, "Snapshot status check") from exc
         return SnapshotStatus.from_dict(data)
 
     async def download(
@@ -197,8 +232,6 @@ class BaseDataset:
             f"{self.BASE_URL}/datasets/snapshots/{snapshot_id}/download",
             params={"format": format},
         ) as response:
-            import json
-
             # Check for HTTP errors
             if response.status >= 400:
                 error_text = await response.text()

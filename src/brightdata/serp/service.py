@@ -1,8 +1,7 @@
 """
-Search service namespace (SERP API).
+Search namespace for Business, E-commerce, search engines, and platform discovery.
 
-Provides access to search engine result scrapers with normalized
-data across different search engines.
+Groups indexed record search, search engine results, and platform discovery.
 All methods are async-only. For sync usage, use SyncBrightDataClient.
 """
 
@@ -12,6 +11,8 @@ from ..models import SearchResult
 
 if TYPE_CHECKING:
     from ..client import BrightDataClient
+    from ..bright_search.service import BrightSearchService
+    from ..bright_search.namespaces import BusinessSearchService, EcommerceSearchService
     from .google import GoogleSERPService
     from .bing import BingSERPService
     from .yandex import YandexSERPService
@@ -25,10 +26,10 @@ if TYPE_CHECKING:
 
 class SearchService:
     """
-    Search service namespace (SERP API).
+    Search namespace with Business and E-commerce categories.
 
-    Provides access to search engine result scrapers with normalized
-    data across different search engines.
+    Use business.companies() and business.people() for business records,
+    ecommerce.products() for products, or the existing provider search methods.
 
     Example:
         >>> # Google search
@@ -55,6 +56,35 @@ class SearchService:
         self._tiktok_search: Optional["TikTokSearchScraper"] = None
         self._youtube_search: Optional["YouTubeSearchScraper"] = None
         self._pinterest_search = None
+        self._bright_search_service: Optional["BrightSearchService"] = None
+        self._business: Optional["BusinessSearchService"] = None
+        self._ecommerce: Optional["EcommerceSearchService"] = None
+
+    def _bright_search(self) -> "BrightSearchService":
+        self._client._ensure_initialized()
+        if self._bright_search_service is None:
+            from ..bright_search.service import BrightSearchService
+
+            self._bright_search_service = BrightSearchService(self._client.engine)
+        return self._bright_search_service
+
+    @property
+    def business(self) -> "BusinessSearchService":
+        """Search company and professional records with companies() and people()."""
+        if self._business is None:
+            from ..bright_search.namespaces import BusinessSearchService
+
+            self._business = BusinessSearchService(self)
+        return self._business
+
+    @property
+    def ecommerce(self) -> "EcommerceSearchService":
+        """Search product records with products()."""
+        if self._ecommerce is None:
+            from ..bright_search.namespaces import EcommerceSearchService
+
+            self._ecommerce = EcommerceSearchService(self)
+        return self._ecommerce
 
     async def google(
         self,

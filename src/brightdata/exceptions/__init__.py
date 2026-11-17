@@ -5,9 +5,11 @@ from .errors import (
     ValidationError,
     AuthenticationError,
     APIError,
+    RateLimitError,
     DataNotReadyError,
     ZoneError,
     NetworkError,
+    RequestTimeoutError,
     SSLError,
 )
 
@@ -16,8 +18,10 @@ __all__ = [
     "ValidationError",
     "AuthenticationError",
     "APIError",
+    "RateLimitError",
     "DataNotReadyError",
     "ZoneError",
     "NetworkError",
+    "RequestTimeoutError",
     "SSLError",
 ]

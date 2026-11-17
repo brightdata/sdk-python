@@ -1,5 +1,24 @@
 # Bright Data Python SDK Changelog
 
+## Version 2.6.0 - Structured errors
+
+- **Every non-2xx is now a typed exception.** `AsyncEngine` previously converted only 401/403 and handed every other failure back as a normal response, leaving each subsystem to improvise. Classification now happens once, at the single point every request passes through: `429` → the new **`RateLimitError`** (with `retry_after` parsed from the header), other 4xx/5xx → `APIError`.
+- **Exceptions carry data, not just prose.** `BrightDataError` gained `status_code`, `url`, `method`, `retry_after`, `retryable` and `raw` (the response body, bounded to 4 KB). Callers can branch on the failure instead of parsing its message.
+- **Fixed**: a rate-limited dataset request surfaced as an aiohttp *content-type* error, because the 429 body is a bare string and the response was parsed as JSON before its status was checked. It now raises `RateLimitError`.
+- **Fixed**: a token expiring mid-poll was reported as `"Job failed with status: error"` — blaming the user's scrape for an authentication problem. `DatasetAPIClient.get_status` no longer collapses every non-200 into the status string `"error"`.
+- **Results carry the failure too.** `ScrapeResult` / `CrawlResult` gained `cause`, the originating exception, populated wherever one is converted into a result. `error` remains the human-readable message:
+  ```python
+  result = await client.scrape.x.posts(url)
+  if not result.success and isinstance(result.cause, RateLimitError):
+      await asyncio.sleep(result.cause.retry_after or 60)
+  ```
+- **Retry is now opt-in.** `retry_with_backoff` no longer retries by exception type. An error with no status code is raised locally — sometimes *after* the server accepted the work — so repeating it could create a duplicate billed job; those are never retried. Explicit 5xx still is. **429 never is**, because those responses consume quota and retrying extends the lockout.
+- `DatasetError` now subclasses `BrightDataError` (still catchable as before). `RateLimitError` and `DataNotReadyError` are exported from `brightdata` top level.
+- **Note on messages**: error messages are shorter and more uniform, with detail moved to attributes. Code matching on message *text* may need updating; use `status_code` instead.
+- **Known limit**: this is status-based, so it cannot see HTTP 200 responses carrying an error in the body (SERP's inner envelope, Web Unlocker error content). Those remain string-shaped.
+
+---
+
 ## Version 2.4.0 - Sync parity, colorless job verbs, dataset error reporting
 
 - **Sync client parity**: `SyncBrightDataClient` now mirrors the async surface. Added `client.datasets` (fixes the `SyncBrightDataClient` `datasets` `AttributeError`), the 5 missing scrapers (`scrape.tiktok` / `youtube` / `reddit` / `perplexity` / `digikey`), the 2 missing search verticals (`search.tiktok` / `youtube`), Pinterest trigger/status/fetch, and Instagram-search `profiles` / `reels_all`.

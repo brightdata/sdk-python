@@ -2,13 +2,22 @@
 
 import asyncio
 import aiohttp
+import json
 import ssl
 import warnings
 from typing import Optional, Dict, Any
 from .. import __version__
-from ..exceptions import AuthenticationError, NetworkError, SSLError
+from ..exceptions import (
+    APIError,
+    AuthenticationError,
+    NetworkError,
+    RateLimitError,
+    RequestTimeoutError,
+    SSLError,
+)
 from http import HTTPStatus
 from ..utils.ssl_helpers import is_ssl_certificate_error, get_ssl_error_message
+from ..utils.http import diagnostic_response_headers, parse_retry_after, status_phrase
 
 # Rate limiting support
 try:
@@ -182,6 +191,9 @@ class AsyncEngine:
         json_data: Optional[Dict[str, Any]] = None,
         params: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, str]] = None,
+        *,
+        preserve_error_response: bool = False,
+        allow_redirects: bool = True,
     ):
         """
         Make an async HTTP request.
@@ -194,6 +206,10 @@ class AsyncEngine:
             json_data: Optional JSON payload.
             params: Optional query parameters.
             headers: Optional additional headers.
+            preserve_error_response: Retain parsed error JSON, request ID, and
+                selected response headers in addition to the bounded raw body.
+            allow_redirects: Follow HTTP redirects. Disable for operations that
+                must make at most one upstream request.
 
         Returns:
             Context manager for aiohttp ClientResponse (use with async with).
@@ -221,6 +237,8 @@ class AsyncEngine:
             params=params,
             headers=request_headers,
             rate_limiter=self._rate_limiter,
+            preserve_error_response=preserve_error_response,
+            allow_redirects=allow_redirects,
         )
 
     def post(
@@ -229,9 +247,20 @@ class AsyncEngine:
         json_data: Optional[Dict[str, Any]] = None,
         params: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, str]] = None,
+        *,
+        preserve_error_response: bool = False,
+        allow_redirects: bool = True,
     ):
         """Make POST request. Returns context manager."""
-        return self.request("POST", endpoint, json_data=json_data, params=params, headers=headers)
+        return self.request(
+            "POST",
+            endpoint,
+            json_data=json_data,
+            params=params,
+            headers=headers,
+            preserve_error_response=preserve_error_response,
+            allow_redirects=allow_redirects,
+        )
 
     def get(
         self,
@@ -356,6 +385,9 @@ class AsyncEngine:
         headers: Optional[Dict[str, str]] = None,
         timeout: Optional[aiohttp.ClientTimeout] = None,
         rate_limiter: Optional[Any] = None,
+        preserve_error_response: bool = False,
+        *,
+        allow_redirects: bool = True,
     ):
         """
         Internal method to make HTTP request with error handling.
@@ -368,6 +400,8 @@ class AsyncEngine:
             headers: Request headers
             timeout: Optional timeout override
             rate_limiter: Optional rate limiter to apply
+            preserve_error_response: Retain structured error context when opted in
+            allow_redirects: Whether the HTTP client may follow redirects
 
         Returns:
             Context manager for aiohttp ClientResponse
@@ -408,26 +442,100 @@ class AsyncEngine:
                         params=self._params,
                         headers=self._headers,
                         timeout=self._timeout,
+                        allow_redirects=allow_redirects,
                     )
-                    # Check status codes that should raise exceptions
-                    if self._response.status == HTTPStatus.UNAUTHORIZED:
-                        text = await self._response.text()
-                        await self._response.release()
-                        raise AuthenticationError(
-                            f"Unauthorized ({HTTPStatus.UNAUTHORIZED}): {text}"
-                        )
-                    elif self._response.status == HTTPStatus.FORBIDDEN:
-                        text = await self._response.text()
-                        await self._response.release()
-                        raise AuthenticationError(f"Forbidden ({HTTPStatus.FORBIDDEN}): {text}")
+                    status = self._response.status
 
-                    return self._response
+                    # 202 MUST pass through. It is a success for
+                    # scraper_studio.trigger_immediate, and elsewhere it means
+                    # "ready but still building", which fetch_result turns into
+                    # DataNotReadyError -- the SDK's only recovery path.
+                    if status < 400 or status == HTTPStatus.ACCEPTED:
+                        return self._response
+
+                    body_error = None
+                    if preserve_error_response:
+                        try:
+                            text = await self._response.text()
+                        except UnicodeDecodeError as e:
+                            # Keep the known HTTP classification even when an
+                            # error message contains invalid text bytes.
+                            text = e.object.decode(e.encoding, errors="replace")
+                            body_error = e
+                        except asyncio.TimeoutError:
+                            raise
+                        except (aiohttp.ClientError, OSError) as e:
+                            # A broken error stream must not turn a known 429
+                            # into a generic network error and lose Retry-After.
+                            text = ""
+                            body_error = e
+                        finally:
+                            # __aexit__ is not called when entry raises.
+                            self._response.close()
+                    else:
+                        text = await self._response.text()
+                        await self._response.release()
+
+                    context = {
+                        "status_code": status,
+                        "url": self._url,
+                        "method": self._method,
+                        "raw": text,
+                    }
+                    if preserve_error_response:
+                        # Extract identity while the complete body is still
+                        # available; replacement-decoded text is diagnostic only.
+                        error_data = None
+                        if body_error is None:
+                            try:
+                                error_data = json.loads(text)
+                            except (ValueError, RecursionError):
+                                pass
+                        req_id = error_data.get("req_id") if isinstance(error_data, dict) else None
+                        context.update(
+                            req_id=req_id,
+                            response_json=error_data,
+                            response_headers=diagnostic_response_headers(self._response.headers),
+                        )
+                    # A short body excerpt keeps a bare print(exc) useful; the
+                    # full (bounded) body stays on .raw.
+                    detail = " ".join(text.split())[:200]
+                    suffix = f": {detail}" if detail else ""
+
+                    if status in (HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN):
+                        raise AuthenticationError(
+                            f"{status_phrase(status)} ({status})", **context
+                        ) from body_error
+
+                    if status == HTTPStatus.TOO_MANY_REQUESTS:
+                        # Keep generic retries disabled; callers can use
+                        # Retry-After with their service's recovery policy.
+                        raise RateLimitError(
+                            f"Rate limited ({status}){suffix}",
+                            retry_after=parse_retry_after(self._response.headers),
+                            **context,
+                        ) from body_error
+
+                    # retryable resolves from status_code: 5xx yes, 4xx no.
+                    raise APIError(
+                        f"Request failed (HTTP {status}){suffix}", **context
+                    ) from body_error
                 except asyncio.TimeoutError as e:
                     # Must be caught before OSError — on Python 3.11+,
                     # TimeoutError is a subclass of OSError
-                    raise TimeoutError(
-                        f"Request timeout after {self._timeout.total} seconds"
-                    ) from e
+                    message = f"Request timeout after {self._timeout.total} seconds"
+                    if preserve_error_response:
+                        response = self._response
+                        headers = response.headers if response is not None else None
+                        raise RequestTimeoutError(
+                            message,
+                            status_code=response.status if response is not None else None,
+                            url=self._url,
+                            method=self._method,
+                            response_headers=diagnostic_response_headers(headers),
+                            retry_after=parse_retry_after(headers),
+                        ) from e
+                    raise TimeoutError(message) from e
                 except (aiohttp.ClientError, ssl.SSLError, OSError) as e:
                     # Check for SSL certificate errors first
                     # aiohttp wraps SSL errors in ClientConnectorError or ClientSSLError

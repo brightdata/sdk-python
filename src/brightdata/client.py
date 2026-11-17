@@ -279,9 +279,12 @@ class BrightDataClient:
     @property
     def search(self) -> SearchService:
         """
-        Access search services (SERP API).
+        Access indexed search, search engines, and platform discovery.
 
-        Provides access to search engine result scrapers:
+        Search through the appropriate category or provider:
+        - client.search.business.companies(query="...", mode="instant")
+        - client.search.business.people(query="...", mode="instant")
+        - client.search.ecommerce.products(query={...}, mode="ludicrous")
         - client.search.google(query="...")
         - client.search.bing(query="...")
         - client.search.linkedin.jobs(...)

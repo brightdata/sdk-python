@@ -141,16 +141,21 @@ class AsyncUnblockerClient:
         if customer:
             params["customer"] = customer
 
-        async with self.engine.get_from_url(
-            f"{self.engine.BASE_URL}{self.FETCH_ENDPOINT}", params=params
-        ) as response:
-            if response.status == 200:
-                return "ready"
-            elif response.status == 202:
-                return "pending"
-            else:
-                # Any other status (4xx, 5xx) is treated as error
+        try:
+            async with self.engine.get_from_url(
+                f"{self.engine.BASE_URL}{self.FETCH_ENDPOINT}", params=params
+            ) as response:
+                if response.status == 200:
+                    return "ready"
+                elif response.status == 202:
+                    return "pending"
+                # Unreachable in practice: the engine raises for other statuses.
                 return "error"
+        except APIError:
+            # This method's contract is a status string, not an exception -- its
+            # caller is a poll loop. The engine now raises for 4xx/5xx, so map
+            # that back to the documented "error" value.
+            return "error"
 
     async def fetch_result(
         self,

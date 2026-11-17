@@ -4,9 +4,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from brightdata.utils.retry import retry_with_backoff
+from brightdata.utils.retry import is_retryable, retry_with_backoff
 from brightdata.exceptions import APIError, NetworkError, AuthenticationError, ValidationError
-
 
 # ---------------------------------------------------------------------------
 # Happy path
@@ -38,6 +37,26 @@ class TestRetrySuccess:
 
 
 class TestRetryableExceptions:
+    @pytest.mark.parametrize("retryable,attempts", [(False, 1), (True, 2), (None, 2)])
+    async def test_explicit_network_retry_policy(self, retryable, attempts):
+        error = NetworkError("response failed", retryable=retryable)
+        func = AsyncMock(side_effect=error)
+        with pytest.raises(NetworkError):
+            await retry_with_backoff(func, max_retries=1, initial_delay=0)
+        assert func.await_count == attempts
+        assert is_retryable(error) is (attempts == 2)
+        assert error.retryable is is_retryable(error)
+
+    async def test_custom_exception_list_remains_an_explicit_policy_override(self):
+        func = AsyncMock(side_effect=[NetworkError("read failed", retryable=False), "ok"])
+        assert (
+            await retry_with_backoff(
+                func, max_retries=1, initial_delay=0, retryable_exceptions=[NetworkError]
+            )
+            == "ok"
+        )
+        assert func.await_count == 2
+
     @pytest.mark.asyncio
     async def test_retries_on_network_error(self):
         func = AsyncMock(side_effect=[NetworkError("net"), "ok"])
