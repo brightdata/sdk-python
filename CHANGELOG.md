@@ -1,5 +1,28 @@
 # Bright Data Python SDK Changelog
 
+## Version 2.6.0 - Business Search and structured errors
+
+- **Business Search**: `client.search.business.companies()` and `.people()` search indexed company and professional records using structured Ludicrous queries or natural-language Instant/Smart queries. Both async and sync clients return one `BrightSearchPage` with records, request ID, paging metadata, and index coverage.
+- **E-commerce search**: `client.search.ecommerce.products()` supports structured Ludicrous queries. Search calls use the shared engine without requiring zones; pagination and retries are explicit caller decisions.
+- **Search request and response handling**: validate JSON payloads before dispatch, preserve available HTTP diagnostics, and retain timeout context through `RequestTimeoutError`, also catchable as `TimeoutError`.
+- **Examples**: README usage, an executable example, and a notebook with simple and paginated company searches and plain-text results.
+- **HTTP errors now raise typed exceptions.** `AsyncEngine` previously converted only 401/403 and handed every other failure back as a normal response, leaving each subsystem to improvise. Classification now happens once, at the single point every request passes through: `429` → the new **`RateLimitError`** (with `retry_after` parsed from the header), other 4xx/5xx → `APIError`.
+- **Exceptions carry data, not just prose.** `BrightDataError` gained `status_code`, `url`, `method`, `retry_after`, `retryable` and `raw` (the response body, bounded to 4 KB). Callers can branch on the failure instead of parsing its message.
+- **Fixed**: a rate-limited dataset request surfaced as an aiohttp *content-type* error, because the 429 body is a bare string and the response was parsed as JSON before its status was checked. It now raises `RateLimitError`.
+- **Fixed**: a token expiring mid-poll was reported as `"Job failed with status: error"` — blaming the user's scrape for an authentication problem. `DatasetAPIClient.get_status` no longer collapses every non-200 into the status string `"error"`.
+- **Results carry the failure too.** `ScrapeResult` / `CrawlResult` gained `cause`, the originating exception, populated wherever one is converted into a result. `error` remains the human-readable message:
+  ```python
+  result = await client.scrape.x.posts(url)
+  if not result.success and isinstance(result.cause, RateLimitError):
+      await asyncio.sleep(result.cause.retry_after or 60)
+  ```
+- **Retry decisions respect service policy.** `retry_with_backoff` honors SDK errors' `retryable` flag. Outside Bright Search, HTTP 5xx, network errors, and plain timeouts retain their default retries; 429 is excluded from the default policy. Bright Search sets `retryable=False` because an unsuccessful response can follow an executed search. An explicit `retryable_exceptions` list overrides the default policy.
+- `DatasetError` now subclasses `BrightDataError` (still catchable as before). `RateLimitError` and `DataNotReadyError` are exported from `brightdata` top level.
+- **Note on messages**: error messages are shorter and more uniform, with detail moved to attributes. Code matching on message *text* may need updating; use `status_code` instead.
+- **Known limit**: this is status-based, so it cannot see HTTP 200 responses carrying an error in the body (SERP's inner envelope, Web Unlocker error content). Those remain string-shaped.
+
+---
+
 ## Version 2.5.2 - Safer CSV exports
 
 - **Security fix**: `export_csv()` (and `export()` for `.csv` files) now automatically escapes cell values that spreadsheet apps like Excel, Google Sheets, or LibreOffice could otherwise misinterpret as formulas, so scraped data can't unexpectedly trigger links or formulas when the exported file is opened.
