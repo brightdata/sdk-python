@@ -9,6 +9,9 @@ except PackageNotFoundError:
     __version__ = "0.0.0.dev"
 
 # Export main client (async)
+# Export direct Bright Search responses
+from .bright_search.models import BrightSearchPage
+from .bright_search.service import BrightSearchService
 from .browser.service import BrowserService
 from .client import BrightDataClient
 from .core.zone_manager import ZoneManager
@@ -21,7 +24,10 @@ from .exceptions import (
     APIError,
     AuthenticationError,
     BrightDataError,
+    DataNotReadyError,
     NetworkError,
+    RateLimitError,
+    RequestTimeoutError,
     SSLError,
     ValidationError,
     ZoneError,
@@ -127,8 +133,11 @@ __all__ = [
     "ValidationError",
     "AuthenticationError",
     "APIError",
+    "RateLimitError",
+    "DataNotReadyError",
     "ZoneError",
     "NetworkError",
+    "RequestTimeoutError",
     "SSLError",
     # Scraper Studio
     "ScraperStudioJob",
@@ -138,6 +147,9 @@ __all__ = [
     "DiscoverResult",
     "DiscoverJob",
     "DiscoverSnapshot",
+    # Bright Search
+    "BrightSearchPage",
+    "BrightSearchService",
     # Services
     "WebUnlockerService",
     "BrowserService",

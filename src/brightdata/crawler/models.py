@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from ..exceptions import BrightDataError
+
 
 @dataclass
 class CrawlResult:
@@ -22,6 +24,9 @@ class CrawlResult:
     trigger_sent_at: Optional[datetime] = None
     data_fetched_at: Optional[datetime] = None
     error: Optional[str] = None
+    # Underlying exception when one was converted into this result; `error`
+    # stays the message, `cause` is what code branches on.
+    cause: Optional[BrightDataError] = field(default=None, repr=False, compare=False)
 
     def __repr__(self) -> str:
         sid = f" snapshot_id={self.snapshot_id}" if self.snapshot_id else ""

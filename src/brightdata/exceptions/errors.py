@@ -2,13 +2,71 @@
 
 from __future__ import annotations
 
+from typing import Any
+
+# Bound how much of a response body an exception retains. Error pages from
+# proxies (trust_env=True is on) or CDNs can be hundreds of KB, and exceptions
+# are routinely captured by loggers and error trackers.
+RAW_LIMIT = 4096
+
+
+def _truncate(raw: Any) -> Any:
+    """Bound a retained response body, marking it when shortened."""
+    if isinstance(raw, str) and len(raw) > RAW_LIMIT:
+        return f"{raw[:RAW_LIMIT]}…[truncated {len(raw) - RAW_LIMIT} bytes]"
+    return raw
+
 
 class BrightDataError(Exception):
-    """Base exception for all Bright Data errors."""
+    """
+    Base exception for all Bright Data errors.
 
-    def __init__(self, message: str, *args, **kwargs):
+    Carries structured context alongside the human message so callers can react
+    programmatically instead of parsing the message string.
+
+    Attributes:
+        message: Short human-readable description.
+        status_code: HTTP status, when the failure came from a response.
+        url: URL of the failing request, when known.
+        method: HTTP method of the failing request, when known.
+        retry_after: Seconds parsed from a Retry-After header, when present.
+        retryable: Whether the generic helper should repeat the operation.
+                   Defaults from the HTTP status (5xx). NetworkError defaults
+                   to True to match legacy retry behavior. Services can opt out.
+        raw: Response body, truncated to RAW_LIMIT.
+        req_id: Request identifier extracted before truncation, when opted in.
+        response_json: Parsed error response, when explicitly retained.
+        response_headers: Selected response headers, when explicitly retained.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *args,
+        status_code: int | None = None,
+        url: str | None = None,
+        method: str | None = None,
+        retry_after: float | None = None,
+        retryable: bool | None = None,
+        raw: Any = None,
+        req_id: str | None = None,
+        response_json: Any = None,
+        response_headers: dict[str, str] | None = None,
+        **kwargs,
+    ):
         super().__init__(message, *args)
         self.message = message
+        self.status_code = status_code
+        self.url = url
+        self.method = method
+        self.retry_after = retry_after
+        if retryable is None:
+            retryable = status_code is not None and status_code >= 500
+        self.retryable = retryable
+        self.raw = _truncate(raw)
+        self.req_id = req_id if isinstance(req_id, str) else None
+        self.response_json = response_json
+        self.response_headers = response_headers if response_headers is not None else {}
 
 
 class ValidationError(BrightDataError):
@@ -34,9 +92,25 @@ class APIError(BrightDataError):
         *args,
         **kwargs,
     ):
-        super().__init__(message, *args, **kwargs)
-        self.status_code = status_code
+        # status_code stays the second positional parameter for backwards
+        # compatibility (APIError("msg", 429) is legal); drop any duplicate
+        # keyword before forwarding it to the base.
+        kwargs.pop("status_code", None)
+        super().__init__(message, *args, status_code=status_code, **kwargs)
         self.response_text = response_text
+
+
+class RateLimitError(APIError):
+    """
+    HTTP 429 — request rate or quota exceeded.
+
+    Excluded from the generic retry helper. Use `retry_after` to decide how
+    long to pause before an explicit retry according to the service's contract.
+    """
+
+    def __init__(self, message: str, *args, **kwargs):
+        kwargs["retryable"] = False  # not overridable — see the class docstring
+        super().__init__(message, *args, **kwargs)
 
 
 class DataNotReadyError(BrightDataError):
@@ -52,7 +126,16 @@ class ZoneError(BrightDataError):
 
 
 class NetworkError(BrightDataError):
-    """Network connectivity issue."""
+    """Network failure; retain legacy retries unless explicitly disabled."""
+
+    def __init__(self, message: str, *args, retryable: bool | None = None, **kwargs):
+        super().__init__(
+            message, *args, retryable=True if retryable is None else retryable, **kwargs
+        )
+
+
+class RequestTimeoutError(BrightDataError, TimeoutError):
+    """Request/body timeout with context, also catchable as built-in TimeoutError."""
 
     pass
 

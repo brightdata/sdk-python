@@ -22,6 +22,34 @@ export BRIGHTDATA_API_TOKEN="your_api_token_here"
 **Already logged in with the CLI?** The SDK works with no configuration — it automatically
 falls back to the credentials stored by `brightdata login`.
 
+## Handling errors
+
+Failures carry structured data, not just a message:
+
+```python
+from brightdata import BrightDataClient, RateLimitError, APIError
+
+async with BrightDataClient() as client:
+    try:
+        data = await client.datasets.instagram_profiles.download(snapshot_id)
+    except RateLimitError as e:
+        await asyncio.sleep(e.retry_after or 60)   # the API told us how long
+    except APIError as e:
+        print(e.status_code, e.raw)                # not a message to parse
+```
+
+Methods that return a result instead of raising expose the same information on `cause`:
+
+```python
+result = await client.scrape.x.posts(url)
+if not result.success and isinstance(result.cause, RateLimitError):
+    await asyncio.sleep(result.cause.retry_after or 60)
+```
+
+Use `e.retryable` to decide whether repeating the call is safe. Rate limits are never
+retryable — a 429 response itself consumes quota, so retrying extends the lockout; wait
+`retry_after` instead.
+
 ## Quick Start
 
 This SDK is **async-native**. A sync client is also available (see [Sync Client](#sync-client)).
@@ -183,6 +211,101 @@ async with async_playwright() as pw:
 ```
 
 **When to use:** sites that require full browser automation — JS rendering, login flows, interactive clicks. For plain HTML fetches, prefer `client.scrape_url()`.
+
+### Indexed Search: Business and E-commerce
+
+Business Search groups company and professional records under
+`client.search.business.companies()` and `client.search.business.people()`. Use
+structured queries with `mode="ludicrous"`, or natural language with
+`mode="instant"` / `mode="smart"`. Natural-language queries allow up to 200 characters.
+
+Product search is a separate category: `client.search.ecommerce.products()`.
+It accepts structured queries with `mode="ludicrous"`. Each method returns one page.
+
+```python
+from brightdata import BrightDataClient
+
+# Direct Bright Search requests do not need Web Unlocker or SERP zones.
+async with BrightDataClient(auto_create_zones=False) as client:
+    page = await client.search.business.companies(
+        query="US software companies with 50 to 500 employees",
+        mode="instant",
+        view="summary",
+        limit=10,
+    )
+    for document in page.documents:
+        print(document["bright_id"], document["data"].get("name"))
+    print(page.req_id, page.meta["matched"], page.meta["coverage_percent"])
+
+    products = await client.search.ecommerce.products(
+        query={"and": [
+            {"equals": {"retailer": "Argos"}},
+            {"equals": {"sku": "4326522"}},
+        ]},
+        mode="ludicrous",
+        view="full",
+    )
+```
+
+The same methods return `BrightSearchPage` from the synchronous client:
+
+```python
+from brightdata import SyncBrightDataClient
+
+with SyncBrightDataClient(auto_create_zones=False) as client:
+    page = client.search.business.people(
+        "Product managers in the United States",
+        mode="instant",
+        view={"fields": ["name", "current_title", "url"]},
+    )
+```
+
+`source=None` uses the category's server default; `view=None` uses `id_only`.
+E-commerce supports only `ludicrous`, and its default `retail_products_live` source
+supports `id_only`, `full`, or a custom field list, but no `summary` view. Every
+document includes `bright_id`; fields inside `data` are optional. `page.raw`,
+`page.to_dict()`, and `page.to_json()` preserve the complete response body,
+including additional fields. Response headers are separate in `page.response_headers`.
+
+Use explicit `offset` and `limit` for paging. Ludicrous allows limits up to 100
+and offsets up to 1000. Instant and Smart expose a 100-record window:
+`offset + limit` must not exceed 100, with a maximum page size of 100 for Instant
+and 10 for Smart. `matched` is generally a reached-count lower bound, not a total, and partial
+coverage is reported in `coverage_percent`. Pages are separate searches against
+the current index and are billed separately, including served empty pages.
+
+The SDK does not automatically paginate these calls. Bright Search failures set
+`retryable=False`, so the generic `retry_with_backoff` helper does not replay them
+under its default policy, including HTTP 5xx and response-body failures. A failed
+response can follow an executed search. Callers can make another explicit request;
+supplying `retryable_exceptions` to the helper is an explicit policy override.
+
+Redirects raise `APIError` without following another URL. HTTP errors retain
+available `req_id`, `response_json`, and selected response headers. A
+`RateLimitError` exposes `retry_after` for deciding when to make another request.
+Interrupted successful response bodies raise `NetworkError`; malformed text or
+JSON raises `APIError`. If an error body has invalid text encoding, `raw` contains
+readable diagnostic text, while `response_json` and `req_id` remain unset.
+
+Request and body timeouts raise `RequestTimeoutError`, which is also catchable
+as the built-in `TimeoutError`. It retains the URL, method, and any known HTTP
+status, selected headers, and `retry_after`. Unread bodies do not supply a request
+ID or parsed JSON. Legacy engine calls keep their existing timeout behavior.
+
+The complete request payload must be JSON-compatible. Non-finite numbers,
+non-string object keys, unsupported objects, circular references, and structures
+the JSON encoder cannot serialize raise `ValidationError` before dispatch. Valid
+nested values and unknown field names are passed through without changing them.
+
+For a debug-enabled account, the optional `debug` mapping accepts the wire keys
+`explain`, `benchmark`, `trace`, and `__overrides__`. These keys are omitted unless
+explicitly supplied; nested null, false, and zero values are preserved. Diagnostic
+output is available in `page.explain`, and its internal structure is unstable.
+Flights is experimental and is not exposed by these methods.
+
+See [the Bright Search example](examples/bright_search.py) for async and sync usage.
+The [Business Search notebook](notebooks/10_bright_search.ipynb) walks through a
+simple company search and a structured search with selected fields and pagination.
 
 ### Discover API
 
