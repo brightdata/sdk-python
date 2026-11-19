@@ -81,11 +81,13 @@ def export_csv(
     Args:
         data: List of records from download()
         filepath: Output file path
-        fields: Specific fields to export (default: all fields from first record)
+        fields: Specific fields to export (default: every field seen across all
+            records, in first-seen order)
         flatten_nested: Convert nested objects/arrays to JSON strings (default: True)
-        sanitize: Escape cell values that would be interpreted as formulas by
-            spreadsheet applications (leading '=', '+', '-', '@', tab, or CR),
-            preventing CSV/formula injection (CWE-1236). Default: True.
+        sanitize: Escape header and cell values that would be interpreted as
+            formulas by spreadsheet applications (leading '=', '+', '-', '@',
+            tab, or CR), preventing CSV/formula injection (CWE-1236).
+            Default: True.
 
     Returns:
         Path to the created file
@@ -97,9 +99,11 @@ def export_csv(
 
     filepath = Path(filepath)
 
-    # Determine fields
+    # Determine fields. Scraped records are heterogeneous: optional keys are
+    # absent when a page does not have them, so the union across all records
+    # is used, in first-seen order, rather than just the first record's keys.
     if fields is None:
-        fields = list(data[0].keys())
+        fields = list(dict.fromkeys(key for record in data for key in record))
 
     # Process data
     processed_data = []
@@ -117,7 +121,12 @@ def export_csv(
     # Write CSV
     with open(filepath, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fields)
-        writer.writeheader()
+        if sanitize:
+            # Field names come from the scraped payload too, so the header row
+            # needs the same treatment as the cells below it.
+            writer.writerow({field: _sanitize_csv_cell(field) for field in fields})
+        else:
+            writer.writeheader()
         writer.writerows(processed_data)
 
     return filepath

