@@ -16,8 +16,11 @@ pip install brightdata-sdk
 Get your API Token from the [Bright Data Control Panel](https://brightdata.com/cp/setting/users):
 
 ```bash
-export BRIGHTDATA_API_TOKEN="your_api_token_here"
+export BRIGHTDATA_API_KEY="your_api_token_here"
 ```
+
+`BRIGHTDATA_API_KEY` is the variable the Bright Data CLI reads, so one export covers both.
+The SDK also reads `BRIGHTDATA_API_TOKEN`, which wins when both are set.
 
 **Already logged in with the CLI?** The SDK works with no configuration — it automatically
 falls back to the credentials stored by `brightdata login`.
